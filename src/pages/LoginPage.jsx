@@ -43,7 +43,7 @@ function LoginPage() {
       </header>
 
       <div className="content-area">
-        <button className="back-button">
+        <button className="back-button" onClick={() => navigate('/')}>
           <span className="back-arrow">←</span>
           <span>Back to Home</span>
         </button>
