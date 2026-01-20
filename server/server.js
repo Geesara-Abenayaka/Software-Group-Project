@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import authRoutes from './routes/auth.js';
+import programRoutes from './routes/programs.js';
 
 dotenv.config();
 
@@ -18,6 +19,7 @@ connectDB();
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/programs', programRoutes);
 
 // Test route
 app.get('/api/health', (req, res) => {
