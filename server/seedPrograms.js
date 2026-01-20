@@ -36,7 +36,11 @@ const seedPrograms = async () => {
         detailedDescription: 'MSc in CS degree program is a comprehensive advanced program that covers both theoretical and practical aspects of computer science, preparing students for careers in software development, research, and technology leadership.',
         deadline: '05th November 2025',
         resourcesCount: 3,
-        specializations: [],
+        specializations: [
+          { name: 'Software Engineering' },
+          { name: 'Artificial Intelligence' },
+          { name: 'Cybersecurity' }
+        ],
         deadlines: {
           application: '05th November 2025',
           selectionExams: '08th and 09th November 2025'
@@ -69,7 +73,10 @@ const seedPrograms = async () => {
         detailedDescription: 'MBA in eGovernance program focuses on the strategic application of information technology in government operations, digital transformation, and public sector management.',
         deadline: '05th November 2025',
         resourcesCount: 3,
-        specializations: [],
+        specializations: [
+          { name: 'Digital Government' },
+          { name: 'Public Policy & IT' }
+        ],
         deadlines: {
           application: '05th November 2025',
           selectionExams: '08th and 09th November 2025'
@@ -102,7 +109,11 @@ const seedPrograms = async () => {
         detailedDescription: 'MSc in DS & AI is a comprehensive program that combines cutting-edge data science techniques with artificial intelligence, machine learning, and deep learning methodologies.',
         deadline: '05th November 2025',
         resourcesCount: 3,
-        specializations: [],
+        specializations: [
+          { name: 'Machine Learning' },
+          { name: 'Deep Learning' },
+          { name: 'Big Data Analytics' }
+        ],
         deadlines: {
           application: '05th November 2025',
           selectionExams: '08th and 09th November 2025'
@@ -182,7 +193,10 @@ const seedPrograms = async () => {
         detailedDescription: 'A professional master\'s program designed for working professionals, focusing on practical applications of data science and artificial intelligence in industry settings.',
         deadline: '05th November 2025',
         resourcesCount: 3,
-        specializations: [],
+        specializations: [
+          { name: 'Applied Data Science' },
+          { name: 'AI for Business' }
+        ],
         deadlines: {
           application: '05th November 2025',
           selectionExams: '08th and 09th November 2025'
