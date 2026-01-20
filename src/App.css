@@ -8,6 +8,238 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: #e8e8e8;
+}
+
+.header {
+  background-color: #8b1a1a;
+  padding: 18px 40px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.graduation-cap-icon {
+  font-size: 32px;
+  filter: brightness(0) invert(1);
+}
+
+.header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.university-name {
+  color: white;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: 0.3px;
+}
+
+.portal-subtitle {
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 12px;
+  margin: 0;
+  font-weight: 300;
+}
+
+.admin-login-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: white;
+  color: #8b1a1a;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.admin-login-btn:hover {
+  background-color: #f8f8f8;
+  transform: translateY(-1px);
+}
+
+.login-icon {
+  font-size: 16px;
+}
+
+.content-area {
+  flex: 1;
+  padding: 40px;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.programs-header {
+  margin-bottom: 35px;
+}
+
+.programs-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #2d2d2d;
+  margin-bottom: 8px;
+}
+
+.programs-subtitle {
+  font-size: 14px;
+  color: #666;
+  font-weight: 400;
+}
+
+.programs-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 25px;
+  margin-bottom: 40px;
+}
+
+@media (max-width: 1200px) {
+  .programs-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .programs-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.program-card {
+  background: white;
+  border-radius: 6px;
+  padding: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.program-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.card-header {
+  background: linear-gradient(135deg, #5a6c7d 0%, #6b7c8d 100%);
+  padding: 25px 20px;
+  border-radius: 6px 6px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.card-icon {
+  font-size: 28px;
+  filter: brightness(0) invert(1);
+}
+
+.card-title {
+  color: white;
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.card-description {
+  padding: 20px 20px 15px 20px;
+  font-size: 13px;
+  color: #555;
+  line-height: 1.6;
+  margin: 0;
+  min-height: 65px;
+}
+
+.specializations {
+  padding: 0 20px 15px 20px;
+}
+
+.specializations-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.specialization-tag {
+  display: inline-block;
+  background-color: #e8eef3;
+  color: #4a5568;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  margin-right: 6px;
+  margin-bottom: 6px;
+}
+
+.card-info {
+  padding: 15px 20px;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #666;
+}
+
+.info-icon {
+  font-size: 14px;
+}
+
+.info-text {
+  color: #555;
+}
+
+.view-details-btn {
+  width: calc(100% - 40px);
+  margin: 0 20px 20px 20px;
+  padding: 12px;
+  background: linear-gradient(135deg, #5a6c7d 0%, #6b7c8d 100%);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.view-details-btn:hover {
+  background: linear-gradient(135deg, #4a5c6d 0%, #5b6c7d 100%);
+  transform: translateY(-1px);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   background-color: #f5f5f5;
 }
 
