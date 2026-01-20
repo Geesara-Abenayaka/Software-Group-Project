@@ -1,0 +1,5 @@
+khIiMw5g1LBgQrhN  
+// db password
+
+admin
+// db username
