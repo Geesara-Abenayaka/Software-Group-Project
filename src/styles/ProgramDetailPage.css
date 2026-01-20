@@ -1,25 +1,25 @@
 .detail-container {
-  max-width: 900px;
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 2px;
 }
 
 .back-to-home-btn {
   background: none;
   border: none;
-  color: #1e40af;
-  font-size: 16px;
+  color: #878c9d;
+  font-size: 14px;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 8px 0;
-  margin-bottom: 20px;
+  margin-bottom: 15px;
   transition: color 0.2s;
 }
 
 .back-to-home-btn:hover {
-  color: #1e3a8a;
+  color: #434648;
 }
 
 .back-arrow {
@@ -29,7 +29,7 @@
 .detail-content {
   background: #fff;
   border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  border-radius: 5px;
   padding: 40px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
@@ -46,6 +46,7 @@
   color: #4b5563;
   line-height: 1.6;
   margin-bottom: 30px;
+  margin-left: 20px;
 }
 
 .detail-section {
@@ -57,6 +58,7 @@
   font-weight: 600;
   color: #1f2937;
   margin: 0 0 15px 0;
+  
 }
 
 .specializations-list,
@@ -69,7 +71,7 @@
 .specializations-list li,
 .deadlines-list li {
   padding: 10px 0;
-  padding-left: 25px;
+  padding-left: 35px;
   position: relative;
   color: #4b5563;
   font-size: 15px;
@@ -79,7 +81,7 @@
 .deadlines-list li:before {
   content: '';
   position: absolute;
-  left: 0;
+  left: 20px;
   top: 18px;
   width: 6px;
   height: 6px;
