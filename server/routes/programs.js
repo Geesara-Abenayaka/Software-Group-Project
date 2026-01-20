@@ -6,7 +6,7 @@ const router = express.Router();
 // Get all programs
 router.get('/', async (req, res) => {
   try {
-    const programs = await Program.find().select('-resources -specializations -deadlines -detailedDescription');
+    const programs = await Program.find().select('-resources -deadlines -detailedDescription');
     res.json({ success: true, data: programs });
   } catch (error) {
     console.error('Error fetching programs:', error);
