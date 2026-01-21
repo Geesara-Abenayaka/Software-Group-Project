@@ -22,8 +22,8 @@ function LoginPage() {
       if (response.data) {
         // Store user data if needed
         localStorage.setItem('user', JSON.stringify(response.data.user))
-        // Navigate to home page
-        navigate('/home')
+        // Navigate to admin dashboard
+        navigate('/admin/dashboard')
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed')
