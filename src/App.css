@@ -262,7 +262,7 @@
   align-items: center;
   gap: 15px;
   max-width: 1200px;
-  margin: 0 auto;
+  /* margin: 0 auto; */
 }
 
 .graduation-cap-icon {
