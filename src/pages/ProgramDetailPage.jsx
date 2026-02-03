@@ -115,7 +115,16 @@ function ProgramDetailPage() {
               <h3 className="section-title">Resources</h3>
               <div className="resources-grid">
                 {program.resources && program.resources.map((resource, index) => (
-                  <div key={index} className="resource-card">
+                  <div 
+                    key={index} 
+                    className="resource-card"
+                    onClick={() => {
+                      if (resource.name === 'Online Application' || resource.type === 'form') {
+                        navigate('/apply');
+                      }
+                    }}
+                    style={{ cursor: resource.name === 'Online Application' || resource.type === 'form' ? 'pointer' : 'default' }}
+                  >
                     <div className="resource-icon">
                       {resource.type === 'pdf' ? '📄' : 
                        resource.type === 'doc' ? '📝' : 

@@ -189,6 +189,36 @@
   background-color: #1e3a8a;
 }
 
+.application-section {
+  margin-top: 40px;
+  text-align: center;
+  padding-top: 30px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.online-application-btn {
+  padding: 15px 40px;
+  background: linear-gradient(135deg, #8b0000 0%, #a00000 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+  transition: all 0.3s;
+  box-shadow: 0 4px 6px rgba(139, 0, 0, 0.2);
+}
+
+.online-application-btn:hover {
+  background: linear-gradient(135deg, #a00000 0%, #8b0000 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(139, 0, 0, 0.3);
+}
+
+.online-application-btn:active {
+  transform: translateY(0);
+}
+
 @media (max-width: 768px) {
   .detail-content {
     padding: 20px;
