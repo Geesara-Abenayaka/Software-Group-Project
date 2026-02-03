@@ -156,22 +156,21 @@ function ApplicationFormPage() {
         <div className="form-section">
           <h3 className="section-title required">Personal Particulars</h3>
           
-          <div className="form-row">
-            <div className="form-group">
-              <label>Title</label>
-              <select
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-              >
-                <option value="">Select</option>
-                <option value="mr">Mr</option>
-                <option value="mrs">Mrs</option>
-                <option value="ms">Ms</option>
-                <option value="dr">Dr</option>
-                <option value="prof">Prof</option>
-              </select>
-            </div>
+          <div className="form-group">
+            <label>Title</label>
+            <select
+              name="title"
+              value={formData.title}
+              onChange={handleInputChange}
+              style={{ width: '200px' }}
+            >
+              <option value="">Select</option>
+              <option value="mr">Mr</option>
+              <option value="mrs">Mrs</option>
+              <option value="ms">Ms</option>
+              <option value="dr">Dr</option>
+              <option value="prof">Prof</option>
+            </select>
           </div>
 
           <div className="form-group">
@@ -286,7 +285,7 @@ function ApplicationFormPage() {
                 </div>
               </div>
 
-              <div className="form-row">
+              <div className="form-row-three">
                 <div className="form-group">
                   <label>Specialization / Minor</label>
                   <input
@@ -309,16 +308,15 @@ function ApplicationFormPage() {
                     <option value="5">5 Years</option>
                   </select>
                 </div>
-              </div>
-
-              <div className="form-group">
-                <label>Graduation Date</label>
-                <input
-                  type="month"
-                  value={qual.graduationDate}
-                  onChange={(e) => handleQualificationChange(index, 'graduationDate', e.target.value)}
-                  placeholder="mm/dd/yyyy"
-                />
+                <div className="form-group">
+                  <label>Graduation Date</label>
+                  <input
+                    type="text"
+                    value={qual.graduationDate}
+                    onChange={(e) => handleQualificationChange(index, 'graduationDate', e.target.value)}
+                    placeholder="mm/dd/yyyy"
+                  />
+                </div>
               </div>
             </div>
           ))}
@@ -358,7 +356,7 @@ function ApplicationFormPage() {
           
           {formData.memberships.map((membership, index) => (
             <div key={index} className="membership-item">
-              <div className="form-row">
+              <div className="form-row-three">
                 <div className="form-group">
                   <label>Professional Organization</label>
                   <input
@@ -378,7 +376,7 @@ function ApplicationFormPage() {
                 <div className="form-group">
                   <label>Date Joined</label>
                   <input
-                    type="month"
+                    type="text"
                     value={membership.dateJoined}
                     onChange={(e) => handleMembershipChange(index, 'dateJoined', e.target.value)}
                     placeholder="mm/dd/yyyy"
@@ -399,7 +397,7 @@ function ApplicationFormPage() {
           
           {formData.experiences.map((exp, index) => (
             <div key={index} className="experience-item">
-              <div className="form-row">
+              <div className="form-row-six">
                 <div className="form-group">
                   <label>From Month</label>
                   <select
