@@ -3,6 +3,7 @@ import LoginPage from './pages/LoginPage'
 import HomePage from './pages/HomePage'
 import ProgramDetailPage from './pages/ProgramDetailPage'
 import AdminDashboard from './pages/AdminDashboard'
+import ApplicationFormPage from './pages/ApplicationFormPage'
 
 import './App.css'
 
@@ -12,6 +13,7 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/programs/:shortCode" element={<ProgramDetailPage />} />
+        <Route path="/apply" element={<ApplicationFormPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
       </Routes>
