@@ -353,19 +353,19 @@ function AdminDashboard() {
             <span className="nav-icon">📋</span>
             Applications
           </button>
-          <button className="nav-btn">
+          <button className="nav-btn" onClick={() => navigate('/admin/search')}>
             <span className="nav-icon">🔍</span>
             Search
           </button>
-          <button className="nav-btn">
+          <button className="nav-btn" onClick={() => navigate('/admin/download')}>
             <span className="nav-icon">📥</span>
             Download
           </button>
-          <button className="nav-btn">
+          <button className="nav-btn" onClick={() => navigate('/admin/marks')}>
             <span className="nav-icon">🏷️</span>
             Marks
           </button>
-          <button className="nav-btn">
+          <button className="nav-btn" onClick={() => navigate('/admin/settings')}>
             <span className="nav-icon">⚙️</span>
             Settings
           </button>

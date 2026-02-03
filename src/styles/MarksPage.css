@@ -1,0 +1,285 @@
+.marks-main {
+  background: #f5f5f5;
+}
+
+.marks-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.search-wrapper {
+  width: 100%;
+}
+
+.marks-search {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  padding-left: 2.5rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+  background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%236b7280' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E") no-repeat 1rem center;
+  transition: border-color 0.2s;
+}
+
+.marks-search:focus {
+  border-color: #8b0000;
+}
+
+.course-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.course-selector label {
+  font-size: 0.95rem;
+  color: #374151;
+  font-weight: 500;
+}
+
+.course-dropdown {
+  padding: 0.625rem 2rem 0.625rem 0.75rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  background: white;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23374151' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+}
+
+.course-dropdown:focus {
+  border-color: #8b0000;
+}
+
+.marks-table-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+
+.marks-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.marks-table thead {
+  background: #f9fafb;
+}
+
+.marks-table th {
+  padding: 1rem;
+  text-align: left;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4b5563;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.marks-table tbody tr {
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.marks-table td {
+  padding: 1rem;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.no-data {
+  text-align: center;
+  color: #9ca3af;
+  font-style: italic;
+  padding: 3rem !important;
+}
+
+.table-footer-simple {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #f9fafb;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.pagination-simple {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.nav-arrow {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  border-radius: 4px;
+  font-size: 1.2rem;
+  color: #374151;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.nav-arrow:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.marks-form-container {
+  background: white;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.marks-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-field.full-width {
+  grid-column: span 2;
+}
+
+.form-field label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #374151;
+}
+
+.form-field input[type="text"],
+.form-field input[type="date"] {
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-field input[type="text"]:focus,
+.form-field input[type="date"]:focus {
+  border-color: #8b0000;
+}
+
+.form-field input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+}
+
+.status-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.status-btn {
+  padding: 0.625rem 1.25rem;
+  border: 2px solid #8b0000;
+  background: white;
+  color: #8b0000;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-btn:hover {
+  background: #fff5f5;
+}
+
+.status-btn.active {
+  background: #8b0000;
+  color: white;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.save-btn,
+.update-btn {
+  padding: 0.75rem 2rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.save-btn {
+  background: #6b7280;
+  color: white;
+}
+
+.save-btn:hover {
+  background: #4b5563;
+  transform: translateY(-1px);
+}
+
+.update-btn {
+  background: #8b0000;
+  color: white;
+}
+
+.update-btn:hover {
+  background: #a30000;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 1024px) {
+  .marks-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .form-field.full-width {
+    grid-column: span 1;
+  }
+
+  .marks-table-container {
+    overflow-x: auto;
+  }
+}
+
+@media (max-width: 768px) {
+  .status-buttons {
+    flex-direction: column;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .save-btn,
+  .update-btn {
+    width: 100%;
+  }
+}
