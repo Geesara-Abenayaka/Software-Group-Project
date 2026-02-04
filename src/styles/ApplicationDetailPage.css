@@ -1,0 +1,286 @@
+/* Import AdminDashboard styles for consistency */
+@import './AdminDashboard.css';
+
+.detail-main {
+  padding: 1.5rem;
+  background: #f5f5f5;
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.back-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: white;
+  border-radius: 8px;
+  font-size: 1.5rem;
+  color: #8b0000;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+}
+
+.back-btn:hover {
+  background: #f5f5f5;
+  transform: translateX(-2px);
+}
+
+.detail-title-section {
+  flex: 1;
+}
+
+.detail-title {
+  font-size: 1.5rem;
+  color: #8b0000;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.detail-subtitle {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin: 0.25rem 0 0 0;
+}
+
+.user-icon-header {
+  width: 48px;
+  height: 48px;
+  background: #f3f4f6;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.stats-cards-detail {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card-detail {
+  background: white;
+  border-radius: 8px;
+  padding: 1.25rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.stat-label-detail {
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.stat-value-detail {
+  font-size: 2rem;
+  color: #1f2937;
+  font-weight: 700;
+}
+
+.approved-card .stat-value-detail {
+  color: #059669;
+}
+
+.pending-card .stat-value-detail {
+  color: #d97706;
+}
+
+.rejected-card .stat-value-detail {
+  color: #dc2626;
+}
+
+.search-filter-bar {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.search-input-detail {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  outline: none;
+  background: white;
+  transition: border-color 0.2s;
+}
+
+.search-input-detail:focus {
+  border-color: #8b0000;
+}
+
+.filter-select {
+  padding: 0.75rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  background: white;
+  outline: none;
+  cursor: pointer;
+  min-width: 150px;
+  transition: border-color 0.2s;
+}
+
+.filter-select:focus {
+  border-color: #8b0000;
+}
+
+.export-btn-detail {
+  padding: 0.75rem 1.5rem;
+  background: #4b5563;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.export-btn-detail:hover {
+  background: #374151;
+  transform: translateY(-1px);
+}
+
+.applications-table-detail {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.applications-table-detail table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.applications-table-detail thead {
+  background: #f9fafb;
+}
+
+.applications-table-detail th {
+  padding: 1rem;
+  text-align: left;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #4b5563;
+  border-bottom: 2px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.applications-table-detail tbody tr {
+  border-bottom: 1px solid #f3f4f6;
+  transition: background-color 0.2s;
+}
+
+.applications-table-detail tbody tr:hover {
+  background: #f9fafb;
+}
+
+.applications-table-detail td {
+  padding: 1rem;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+.app-id-cell {
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.category-badge {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  background: #fef3c7;
+  color: #92400e;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status-badge-detail {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-approved {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status-rejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.bulk-email-btn {
+  padding: 0.875rem 2rem;
+  background: #8b0000;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  float: right;
+}
+
+.bulk-email-btn:hover {
+  background: #a30000;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 1200px) {
+  .stats-cards-detail {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-cards-detail {
+    grid-template-columns: 1fr;
+  }
+
+  .search-filter-bar {
+    flex-direction: column;
+  }
+
+  .filter-select {
+    width: 100%;
+  }
+
+  .applications-table-detail {
+    overflow-x: auto;
+  }
+}

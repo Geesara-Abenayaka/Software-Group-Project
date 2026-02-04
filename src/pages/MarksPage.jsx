@@ -105,32 +105,36 @@ function MarksPage() {
           </div>
         </div>
       </header>
-
-      <div className="admin-content">
-        <div className="admin-nav">
-          <button className="nav-btn" onClick={() => navigate('/admin/dashboard')}>
+      <nav className="admin-navbar">
+        <div className="navbar-content">
+          <button className="navbar-btn" onClick={() => navigate('/admin/dashboard')}>
+            <span className="nav-icon">📋</span>
+            Programs
+          </button>
+          <button className="navbar-btn" onClick={() => navigate('/admin/applications')}>
             <span className="nav-icon">📋</span>
             Applications
           </button>
-          <button className="nav-btn" onClick={() => navigate('/admin/search')}>
+          <button className="navbar-btn" onClick={() => navigate('/admin/search')}>
             <span className="nav-icon">🔍</span>
             Search
           </button>
-          <button className="nav-btn" onClick={() => navigate('/admin/download')}>
+          <button className="navbar-btn" onClick={() => navigate('/admin/download')}>
             <span className="nav-icon">📥</span>
             Download
           </button>
-          <button className="nav-btn nav-btn-active">
-            <span className="nav-icon">🏷️</span>
+          <button className="navbar-btn active">
+            <span className="nav-icon">📠</span>
             Marks
           </button>
-          <button className="nav-btn" onClick={() => navigate('/admin/settings')}>
+          <button className="navbar-btn" onClick={() => navigate('/admin/settings')}>
             <span className="nav-icon">⚙️</span>
             Settings
           </button>
         </div>
-
-        <main className="admin-main marks-main">
+      </nav>
+      <div className="admin-content-full">
+        <main className="admin-main-full marks-main">
           <div className="marks-controls">
             <div className="search-wrapper">
               <input
