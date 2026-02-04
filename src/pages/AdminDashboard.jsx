@@ -349,8 +349,8 @@ function AdminDashboard() {
       <nav className="admin-navbar">
         <div className="navbar-content">
           <button className="navbar-btn active">
-            <span className="nav-icon">📋</span>
-            Applications
+            <span className="nav-icon">🎓</span>
+            Programs
           </button>
           <button className="navbar-btn" onClick={() => navigate('/admin/applications')}>
             <span className="nav-icon">📋</span>
@@ -365,7 +365,7 @@ function AdminDashboard() {
             Download
           </button>
           <button className="navbar-btn" onClick={() => navigate('/admin/marks')}>
-            <span className="nav-icon">📠</span>
+            <span className="nav-icon">📊</span>
             Marks
           </button>
           <button className="navbar-btn" onClick={() => navigate('/admin/settings')}>
@@ -417,13 +417,6 @@ function AdminDashboard() {
                       <span className="info-text-admin">{program.resourcesCount} Resources Available</span>
                     </div>
                   </div>
-                  
-                  <button 
-                    className="view-applications-btn-admin"
-                    onClick={() => handleViewApplications(program.shortCode)}
-                  >
-                    View Applications
-                  </button>
 
                   <button 
                     className="edit-program-btn-admin"
