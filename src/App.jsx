@@ -4,6 +4,8 @@ import HomePage from './pages/HomePage'
 import ProgramDetailPage from './pages/ProgramDetailPage'
 import AdminDashboard from './pages/AdminDashboard'
 import ApplicationFormPage from './pages/ApplicationFormPage'
+import ApplicationsPage from './pages/ApplicationsPage'
+import ApplicationDetailPage from './pages/ApplicationDetailPage'
 import SearchApplicationsPage from './pages/SearchApplicationsPage'
 import DownloadFormsPage from './pages/DownloadFormsPage'
 import MarksPage from './pages/MarksPage'
@@ -20,6 +22,8 @@ function App() {
         <Route path="/apply" element={<ApplicationFormPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/applications" element={<ApplicationsPage />} />
+        <Route path="/admin/applications/:programId" element={<ApplicationDetailPage />} />
         <Route path="/admin/search" element={<SearchApplicationsPage />} />
         <Route path="/admin/download" element={<DownloadFormsPage />} />
         <Route path="/admin/marks" element={<MarksPage />} />

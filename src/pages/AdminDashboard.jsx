@@ -323,7 +323,6 @@ function AdminDashboard() {
       <header className="admin-header">
         <div className="admin-header-content">
           <div className="header-left">
-            <div className="graduation-cap-icon">🎓</div>
             <div className="header-text">
               <h1 className="university-name">University of Moratuwa</h1>
               <p className="portal-subtitle">Postgraduate Management Information System</p>
@@ -347,31 +346,37 @@ function AdminDashboard() {
         </div>
       </header>
 
-      <div className="admin-content">
-        <div className="admin-nav">
-          <button className="nav-btn nav-btn-active">
+      <nav className="admin-navbar">
+        <div className="navbar-content">
+          <button className="navbar-btn active">
             <span className="nav-icon">📋</span>
             Applications
           </button>
-          <button className="nav-btn" onClick={() => navigate('/admin/search')}>
+          <button className="navbar-btn" onClick={() => navigate('/admin/applications')}>
+            <span className="nav-icon">📋</span>
+            Applications
+          </button>
+          <button className="navbar-btn" onClick={() => navigate('/admin/search')}>
             <span className="nav-icon">🔍</span>
             Search
           </button>
-          <button className="nav-btn" onClick={() => navigate('/admin/download')}>
+          <button className="navbar-btn" onClick={() => navigate('/admin/download')}>
             <span className="nav-icon">📥</span>
             Download
           </button>
-          <button className="nav-btn" onClick={() => navigate('/admin/marks')}>
-            <span className="nav-icon">🏷️</span>
+          <button className="navbar-btn" onClick={() => navigate('/admin/marks')}>
+            <span className="nav-icon">📠</span>
             Marks
           </button>
-          <button className="nav-btn" onClick={() => navigate('/admin/settings')}>
+          <button className="navbar-btn" onClick={() => navigate('/admin/settings')}>
             <span className="nav-icon">⚙️</span>
             Settings
           </button>
         </div>
+      </nav>
 
-        <main className="admin-main">
+      <div className="admin-content-full">
+        <main className="admin-main-full">
           <div className="programs-header-admin">
             <h2 className="programs-title-admin">Postgraduate Programs</h2>
             <button className="add-program-btn" onClick={handleOpenAddModal}>

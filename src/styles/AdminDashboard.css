@@ -13,7 +13,7 @@
 }
 
 .admin-header-content {
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
   display: flex;
   justify-content: space-between;
@@ -25,12 +25,57 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-shrink: 0;
 }
 
 .header-right {
   display: flex;
   align-items: center;
   gap: 1.5rem;
+  flex-shrink: 0;
+}
+
+/* Secondary Navigation Bar */
+.admin-navbar {
+  background: #8b0000;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0;
+}
+
+.navbar-content {
+  max-width: 1600px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 0 2rem;
+}
+
+.navbar-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.9rem 1.5rem;
+  background: transparent;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.navbar-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-bottom-color: rgba(255, 255, 255, 0.5);
+}
+
+.navbar-btn.active {
+  background: rgba(255, 255, 255, 0.15);
+  border-bottom-color: white;
+  font-weight: 600;
 }
 
 .user-info {
@@ -93,56 +138,14 @@
   font-size: 1.1rem;
 }
 
-.admin-content {
-  display: flex;
+.admin-content-full {
   flex: 1;
-  max-width: 1400px;
+  max-width: 1600px;
   width: 100%;
   margin: 0 auto;
 }
 
-.admin-nav {
-  width: 200px;
-  background-color: white;
-  padding: 2rem 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
-}
-
-.nav-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem 1.5rem;
-  background: none;
-  border: none;
-  border-left: 3px solid transparent;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #4a5568;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: left;
-}
-
-.nav-btn:hover {
-  background-color: #f7fafc;
-  color: #8b0000;
-}
-
-.nav-btn-active {
-  background-color: #fff5f5;
-  border-left-color: #8b0000;
-  color: #8b0000;
-}
-
-.nav-icon {
-  font-size: 1.2rem;
-}
-
-.admin-main {
+.admin-main-full {
   flex: 1;
   padding: 2rem;
   overflow-y: auto;
