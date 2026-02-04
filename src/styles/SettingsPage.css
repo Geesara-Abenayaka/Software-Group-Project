@@ -2,7 +2,7 @@
 @import './AdminDashboard.css';
 
 .settings-main {
-  max-width: 900px;
+  max-width: 100%;
 }
 
 .settings-section {
@@ -11,6 +11,7 @@
   padding: 2rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   margin-bottom: 2rem;
+  width: 100%;
 }
 
 .settings-title {
