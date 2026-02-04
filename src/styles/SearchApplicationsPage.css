@@ -1,3 +1,6 @@
+/* Import AdminDashboard styles for consistency */
+@import './AdminDashboard.css';
+
 .search-header {
   margin-bottom: 2rem;
 }

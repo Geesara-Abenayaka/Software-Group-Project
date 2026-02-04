@@ -1,3 +1,6 @@
+/* Import AdminDashboard styles for consistency */
+@import './AdminDashboard.css';
+
 .marks-main {
   background: #f5f5f5;
 }

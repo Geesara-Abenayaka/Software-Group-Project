@@ -125,32 +125,36 @@ function DownloadFormsPage() {
           </div>
         </div>
       </header>
-
-      <div className="admin-content">
-        <div className="admin-nav">
-          <button className="nav-btn" onClick={() => navigate('/admin/dashboard')}>
+      <nav className="admin-navbar">
+        <div className="navbar-content">
+          <button className="navbar-btn" onClick={() => navigate('/admin/dashboard')}>
+            <span className="nav-icon">📋</span>
+            Programs
+          </button>
+          <button className="navbar-btn" onClick={() => navigate('/admin/applications')}>
             <span className="nav-icon">📋</span>
             Applications
           </button>
-          <button className="nav-btn" onClick={() => navigate('/admin/search')}>
+          <button className="navbar-btn" onClick={() => navigate('/admin/search')}>
             <span className="nav-icon">🔍</span>
             Search
           </button>
-          <button className="nav-btn nav-btn-active">
+          <button className="navbar-btn active">
             <span className="nav-icon">📥</span>
             Download
           </button>
-          <button className="nav-btn" onClick={() => navigate('/admin/marks')}>
-            <span className="nav-icon">🏷️</span>
+          <button className="navbar-btn" onClick={() => navigate('/admin/marks')}>
+            <span className="nav-icon">📠</span>
             Marks
           </button>
-          <button className="nav-btn" onClick={() => navigate('/admin/settings')}>
+          <button className="navbar-btn" onClick={() => navigate('/admin/settings')}>
             <span className="nav-icon">⚙️</span>
             Settings
           </button>
         </div>
-
-        <main className="admin-main">
+      </nav>
+      <div className="admin-content-full">
+        <main className="admin-main-full">
           <div className="download-header">
             <h2 className="download-title">Download Forms</h2>
             <p className="download-subtitle">Download application forms, templates, and applicant data</p>
