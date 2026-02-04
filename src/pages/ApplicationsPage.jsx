@@ -91,7 +91,7 @@ function ApplicationsPage() {
       <nav className="admin-navbar">
         <div className="navbar-content">
           <button className="navbar-btn" onClick={() => navigate('/admin/dashboard')}>
-            <span className="nav-icon">📋</span>
+            <span className="nav-icon">🎓</span>
             Programs
           </button>
           <button className="navbar-btn active">
@@ -107,7 +107,7 @@ function ApplicationsPage() {
             Download
           </button>
           <button className="navbar-btn" onClick={() => navigate('/admin/marks')}>
-            <span className="nav-icon">📠</span>
+            <span className="nav-icon">📊</span>
             Marks
           </button>
           <button className="navbar-btn" onClick={() => navigate('/admin/settings')}>
