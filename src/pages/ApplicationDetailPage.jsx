@@ -148,7 +148,34 @@ function ApplicationDetailPage() {
       }
     } catch (error) {
       console.error('Error updating application status:', error);
-      alert('Error updating application status. Please try again.');
+      alert('Error updating application status');
+    }
+  };
+
+  const handleDeleteApplication = async (applicationId, fullName) => {
+    const confirmed = window.confirm(`Are you sure you want to delete the application for ${fullName}? This action cannot be undone.`);
+    
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/applications/${applicationId}`, {
+        method: 'DELETE'
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert('Application deleted successfully!');
+        // Refresh the applications list
+        fetchProgramAndApplications();
+      } else {
+        alert('Failed to delete application: ' + result.message);
+      }
+    } catch (error) {
+      console.error('Error deleting application:', error);
+      alert('Error deleting application');
     }
   };
 
@@ -310,7 +337,7 @@ function ApplicationDetailPage() {
                   <th>Name with Initials</th>
                   <th>Category</th>
                   <th>Status</th>
-                  <th>Action</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -340,21 +367,32 @@ function ApplicationDetailPage() {
                         </span>
                       </td>
                       <td>
-                        <select
-                          className="status-select"
-                          value={
-                            app.status === 'Pending' ? 'pending' :
-                            app.status === 'Under Review' ? 'under-review' :
-                            app.status === 'Approved' ? 'approved' :
-                            app.status === 'Rejected' ? 'rejected' : 'pending'
-                          }
-                          onChange={(e) => handleUpdateStatus(app.id, e.target.value)}
-                        >
-                          <option value="pending">Pending</option>
-                          <option value="under-review">Under Review</option>
-                          <option value="approved">Approved</option>
-                          <option value="rejected">Rejected</option>
-                        </select>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                          <select
+                            className="status-select"
+                            value={
+                              app.status === 'Pending' ? 'pending' :
+                              app.status === 'Under Review' ? 'under-review' :
+                              app.status === 'Approved' ? 'approved' :
+                              app.status === 'Rejected' ? 'rejected' : 'pending'
+                            }
+                            onChange={(e) => handleUpdateStatus(app.id, e.target.value)}
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="under-review">Under Review</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                          </select>
+                          <button 
+                            className="delete-btn-table"
+                            onClick={() => handleDeleteApplication(app.id, app.fullName)}
+                            title="Delete application"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                              <path d="M5.5 2.5V3h5v-.5a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 0-.5.5zm-1 0V3H2v1h1v9a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4h1V3h-2.5v-.5A1.5 1.5 0 0 0 10 1H6a1.5 1.5 0 0 0-1.5 1.5zM4 4h8v9H4V4zm1.5 1.5v6h1v-6h-1zm3 0v6h1v-6h-1z"/>
+                            </svg>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
