@@ -120,7 +120,7 @@ function ProgramDetailPage() {
                     className="resource-card"
                     onClick={() => {
                       if (resource.name === 'Online Application' || resource.type === 'form') {
-                        navigate('/apply');
+                        navigate('/apply', { state: { program: program.shortCode, programName: program.name } });
                       }
                     }}
                     style={{ cursor: resource.name === 'Online Application' || resource.type === 'form' ? 'pointer' : 'default' }}

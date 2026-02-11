@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '../styles/SearchApplicationsPage.css';
 
@@ -7,8 +7,11 @@ function SearchApplicationsPage() {
   const [user, setUser] = useState(null);
   const [applications, setApplications] = useState([]);
   const [filteredApplications, setFilteredApplications] = useState([]);
+  const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState('');
+  const [activeSearchText, setActiveSearchText] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [filters, setFilters] = useState({
     program: 'All Programs',
     category: 'All Categories',
@@ -24,44 +27,43 @@ function SearchApplicationsPage() {
     } else {
       navigate('/login');
     }
+    fetchPrograms();
     fetchApplications();
   }, [navigate]);
 
-  const fetchApplications = async () => {
-    try {
-      setLoading(true);
-      // Mock data for demonstration
-      const mockApplications = [
-        {
-          id: 'APP001',
-          program: 'MBA in Information Technology',
-          fullName: 'Kasun Perera Bandara',
-          nameWithInitials: 'K.P. Bandara',
-          nic: '199512345678',
-          telephone: '0112345678',
-          status: 'Pending',
-          submittedDate: '2026-01-15'
-        }
-      ];
-      setApplications(mockApplications);
-      setFilteredApplications(mockApplications);
-      setLoading(false);
-    } catch (err) {
-      console.error('Error fetching applications:', err);
-      setLoading(false);
-    }
-  };
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (!e.target.closest('.search-input-wrapper')) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
-  const handleSearch = () => {
+  const handleSearch = useCallback(() => {
     let filtered = [...applications];
 
-    if (searchText) {
-      filtered = filtered.filter(app =>
-        app.fullName.toLowerCase().includes(searchText.toLowerCase()) ||
-        app.nic.includes(searchText) ||
-        app.id.toLowerCase().includes(searchText.toLowerCase()) ||
-        app.telephone.includes(searchText)
-      );
+    if (activeSearchText && activeSearchText.trim()) {
+      const searchLower = activeSearchText.toLowerCase().trim();
+      
+      filtered = filtered.filter(app => {
+        const matchFullName = app.fullName && app.fullName.toLowerCase().includes(searchLower);
+        const matchInitials = app.nameWithInitials && app.nameWithInitials.toLowerCase().includes(searchLower);
+        const matchNic = app.nicNo && app.nicNo.toLowerCase().includes(searchLower);
+        const matchId = app._id && app._id.toLowerCase().includes(searchLower);
+        const matchTelephone = app.telephone && app.telephone.includes(activeSearchText.trim());
+        const matchMobile = app.mobile && app.mobile.includes(activeSearchText.trim());
+        const matchEmail = app.email && app.email.toLowerCase().includes(searchLower);
+        
+        // Add program/course search
+        const program = programs.find(p => p.shortCode === app.program);
+        const matchProgramName = program && program.title.toLowerCase().includes(searchLower);
+        const matchProgramCode = app.program && app.program.toLowerCase().includes(searchLower);
+        
+        return matchFullName || matchInitials || matchNic || matchId || matchTelephone || matchMobile || matchEmail || matchProgramName || matchProgramCode;
+      });
     }
 
     if (filters.program !== 'All Programs') {
@@ -69,18 +71,81 @@ function SearchApplicationsPage() {
     }
 
     if (filters.status !== 'All Status') {
-      filtered = filtered.filter(app => app.status === filters.status);
+      const statusLower = filters.status.toLowerCase();
+      filtered = filtered.filter(app => app.status.toLowerCase() === statusLower);
     }
 
     if (filters.fromDate) {
-      filtered = filtered.filter(app => new Date(app.submittedDate) >= new Date(filters.fromDate));
+      filtered = filtered.filter(app => new Date(app.createdAt) >= new Date(filters.fromDate));
     }
 
     if (filters.toDate) {
-      filtered = filtered.filter(app => new Date(app.submittedDate) <= new Date(filters.toDate));
+      filtered = filtered.filter(app => new Date(app.createdAt) <= new Date(filters.toDate));
     }
 
     setFilteredApplications(filtered);
+  }, [applications, activeSearchText, filters]);
+
+  useEffect(() => {
+    handleSearch();
+  }, [filters, applications, activeSearchText, handleSearch]);
+
+  const handleSearchButtonClick = () => {
+    setActiveSearchText(searchText);
+  };
+
+  const handleSearchInputChange = (e) => {
+    const value = e.target.value;
+    setSearchText(value);
+    setShowSuggestions(value.length > 0);
+    
+    // If search bar is cleared, reset to show all applications
+    if (value.trim() === '') {
+      setActiveSearchText('');
+    }
+  };
+
+  const handleSuggestionClick = (programTitle) => {
+    setSearchText(programTitle);
+    setShowSuggestions(false);
+  };
+
+  const getFilteredProgramSuggestions = () => {
+    if (!searchText) return programs;
+    const searchLower = searchText.toLowerCase();
+    return programs.filter(program => 
+      program.title.toLowerCase().includes(searchLower) ||
+      program.shortCode.toLowerCase().includes(searchLower)
+    );
+  };
+
+  const fetchPrograms = async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/programs');
+      const data = await response.json();
+      if (data.success && Array.isArray(data.data)) {
+        setPrograms(data.data);
+      }
+    } catch (err) {
+      console.error('Error fetching programs:', err);
+    }
+  };
+
+  const fetchApplications = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://localhost:5000/api/applications');
+      const data = await response.json();
+      
+      if (data.success) {
+        setApplications(data.data);
+        setFilteredApplications(data.data);
+      }
+      setLoading(false);
+    } catch (err) {
+      console.error('Error fetching applications:', err);
+      setLoading(false);
+    }
   };
 
   const handleLogout = () => {
@@ -88,12 +153,41 @@ function SearchApplicationsPage() {
     navigate('/login');
   };
 
+  const handleDeleteApplication = async (applicationId, fullName) => {
+    const confirmed = window.confirm(`Are you sure you want to delete the application for ${fullName}? This action cannot be undone.`);
+    
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/applications/${applicationId}`, {
+        method: 'DELETE'
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert('Application deleted successfully!');
+        // Refresh the applications list
+        fetchApplications();
+      } else {
+        alert('Failed to delete application: ' + result.message);
+      }
+    } catch (error) {
+      console.error('Error deleting application:', error);
+      alert('Error deleting application');
+    }
+  };
+
   const getStatusCounts = () => {
     return {
-      total: applications.length,
-      pending: applications.filter(app => app.status === 'Pending').length,
-      approved: applications.filter(app => app.status === 'Approved').length,
-      rejected: applications.filter(app => app.status === 'Rejected').length
+      total: filteredApplications.length,
+      pending: filteredApplications.filter(app => 
+        app.status.toLowerCase() === 'pending' || app.status.toLowerCase() === 'under-review'
+      ).length,
+      approved: filteredApplications.filter(app => app.status.toLowerCase() === 'approved').length,
+      rejected: filteredApplications.filter(app => app.status.toLowerCase() === 'rejected').length
     };
   };
 
@@ -179,14 +273,35 @@ function SearchApplicationsPage() {
               <input
                 type="text"
                 className="search-input"
-                placeholder="Search by name, NIC, application ID, email, or phone..."
+                placeholder="Search by name, NIC, application ID, email, phone, or program..."
                 value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                onChange={handleSearchInputChange}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    setActiveSearchText(searchText);
+                  }
+                }}
+                onFocus={() => setShowSuggestions(true)}
               />
-              <button className="search-btn" onClick={handleSearch}>
+              <button className="search-btn" onClick={handleSearchButtonClick}>
                 Search
               </button>
+              
+              {showSuggestions && searchText.length > 0 && getFilteredProgramSuggestions().length > 0 && (
+                <div className="autocomplete-dropdown">
+                  <div className="autocomplete-header">Available Programs/Courses:</div>
+                  {getFilteredProgramSuggestions().map((program) => (
+                    <div
+                      key={program.shortCode}
+                      className="autocomplete-item"
+                      onClick={() => handleSuggestionClick(program.title)}
+                    >
+                      <div className="autocomplete-program-name">{program.title}</div>
+                      <div className="autocomplete-program-code">{program.shortCode}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="filters-row">
@@ -196,10 +311,16 @@ function SearchApplicationsPage() {
                   value={filters.program}
                   onChange={(e) => setFilters({ ...filters, program: e.target.value })}
                 >
-                  <option>All Programs</option>
-                  <option>MBA in Information Technology</option>
-                  <option>MBA in eGovernance</option>
-                  <option>Mathematics Phd</option>
+                  <option value="All Programs">All Programs</option>
+                  {programs && programs.length > 0 ? (
+                    programs.map(program => (
+                      <option key={program.shortCode} value={program.shortCode}>
+                        {program.title}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="" disabled>Loading programs...</option>
+                  )}
                 </select>
               </div>
 
@@ -221,6 +342,7 @@ function SearchApplicationsPage() {
                 >
                   <option>All Status</option>
                   <option>Pending</option>
+                  <option>Under Review</option>
                   <option>Approved</option>
                   <option>Rejected</option>
                 </select>
@@ -308,30 +430,58 @@ function SearchApplicationsPage() {
                   <th>Name with Initials</th>
                   <th>NIC</th>
                   <th>Telephone</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
-                {filteredApplications.map((app) => (
-                  <tr key={app.id}>
-                    <td className="app-id">{app.id}</td>
-                    <td>{app.program}</td>
-                    <td>
-                      <span className={`status-badge status-${app.status.toLowerCase()}`}>
-                        {app.status}
-                      </span>
+                {filteredApplications.length === 0 ? (
+                  <tr>
+                    <td colSpan="8" style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+                      No applications found matching your search criteria.
                     </td>
-                    <td>{app.fullName}</td>
-                    <td>{app.nameWithInitials}</td>
-                    <td>{app.nic}</td>
-                    <td>{app.telephone}</td>
                   </tr>
-                ))}
+                ) : (
+                  filteredApplications.map((app) => {
+                    const program = programs.find(p => p.shortCode === app.program);
+                    const programDisplay = program?.title 
+                      ? program.title 
+                      : (app.program ? app.program.toUpperCase() : 'N/A');
+                    const statusDisplay = app.status === 'under-review' ? 'Under Review' : 
+                                         app.status.charAt(0).toUpperCase() + app.status.slice(1);
+                    return (
+                      <tr key={app._id}>
+                        <td className="app-id">{app._id.substring(0, 8).toUpperCase()}</td>
+                        <td title={programDisplay}>{programDisplay}</td>
+                        <td>
+                          <span className={`status-badge status-${app.status.toLowerCase()}`}>
+                            {statusDisplay}
+                          </span>
+                        </td>
+                        <td>{app.fullName}</td>
+                        <td>{app.nameWithInitials}</td>
+                        <td>{app.nicNo}</td>
+                        <td>{app.telephone}</td>
+                        <td>
+                          <button 
+                            className="delete-btn-search"
+                            onClick={() => handleDeleteApplication(app._id, app.fullName)}
+                            title="Delete application"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                              <path d="M5.5 2.5V3h5v-.5a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 0-.5.5zm-1 0V3H2v1h1v9a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4h1V3h-2.5v-.5A1.5 1.5 0 0 0 10 1H6a1.5 1.5 0 0 0-1.5 1.5zM4 4h8v9H4V4zm1.5 1.5v6h1v-6h-1zm3 0v6h1v-6h-1z"/>
+                            </svg>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
 
             <div className="table-footer">
               <div className="table-info">
-                Showing 1-5 of {filteredApplications.length} applications
+                Showing {filteredApplications.length > 0 ? `1-${filteredApplications.length}` : '0'} of {filteredApplications.length} applications
               </div>
               <div className="pagination">
                 <span className="page-info">Results per page:</span>

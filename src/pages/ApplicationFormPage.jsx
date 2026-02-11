@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/ApplicationFormPage.css';
 
 function ApplicationFormPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [mobileError, setMobileError] = useState('');
   const [telephoneError, setTelephoneError] = useState('');
   const [nicError, setNicError] = useState('');
@@ -13,7 +14,7 @@ function ApplicationFormPage() {
   const [fileErrors, setFileErrors] = useState({});
   
   const [formData, setFormData] = useState({
-    program: '',
+    program: location.state?.program || '',
     title: '',
     fullName: '',
     nameWithInitials: '',
@@ -54,6 +55,14 @@ function ApplicationFormPage() {
     declaration: false,
     captcha: ''
   });
+
+  // Check if program is provided, if not redirect to homepage
+  useEffect(() => {
+    if (!location.state?.program) {
+      alert('Please select a program from the programs page first.');
+      navigate('/');
+    }
+  }, [location.state, navigate]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -424,6 +433,12 @@ function ApplicationFormPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Validate program is selected
+    if (!formData.program) {
+      alert('Program information is missing. Please go back and select a program.');
+      return;
+    }
+    
     // Validate Personal Particulars - all fields must be filled
     if (!formData.title || !formData.fullName || !formData.nameWithInitials || 
         !formData.nicNo || !formData.telephone || !formData.mobile || 
@@ -524,26 +539,14 @@ function ApplicationFormPage() {
         <h2>FACULTY OF ENGINEERING</h2>
         <p>DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING</p>
         <h3>APPLICATION FOR POSTGRADUATE STUDIES</h3>
+        {location.state?.programName && (
+          <p style={{ marginTop: '10px', fontSize: '16px', fontWeight: '600' }}>
+            Program: {location.state.programName}
+          </p>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="application-form">
-        {/* Program Selection */}
-        <div className="form-section">
-          <label className="required">Program of Study Applying For</label>
-          <select
-            name="program"
-            value={formData.program}
-            onChange={handleInputChange}
-            required
-          >
-            <option value="">Select Program</option>
-            <option value="msc-cs">MSc in Computer Science</option>
-            <option value="msc-ai">MSc in Artificial Intelligence</option>
-            <option value="msc-ds">MSc in Data Science</option>
-            <option value="phd-cs">PhD in Computer Science</option>
-          </select>
-        </div>
-
         {/* Personal Particulars */}
         <div className="form-section">
           <h3 className="section-title required">Personal Particulars</h3>

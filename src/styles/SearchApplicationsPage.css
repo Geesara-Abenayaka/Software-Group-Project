@@ -247,6 +247,11 @@
   color: #92400e;
 }
 
+.status-under-review {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
 .status-approved {
   background: #d1fae5;
   color: #065f46;
@@ -339,6 +344,31 @@
   }
 }
 
+.delete-btn-search {
+  padding: 0.5rem;
+  border: none;
+  background: #dc2626;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  min-width: 36px;
+  height: 36px;
+  margin: 0 auto;
+}
+
+.delete-btn-search:hover {
+  background: #b91c1c;
+  transform: scale(1.05);
+}
+
+.delete-btn-search:active {
+  transform: scale(0.95);
+}
+
 @media (max-width: 768px) {
   .stats-cards {
     grid-template-columns: 1fr;
@@ -355,4 +385,82 @@
   .applications-table-container {
     overflow-x: auto;
   }
+}
+
+/* Autocomplete Dropdown Styles */
+.search-input-wrapper {
+  position: relative;
+}
+
+.autocomplete-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-height: 320px;
+  overflow-y: auto;
+  z-index: 1000;
+  margin-top: -8px;
+}
+
+.autocomplete-header {
+  padding: 0.75rem 1rem;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.autocomplete-item {
+  padding: 0.875rem 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.autocomplete-item:last-child {
+  border-bottom: none;
+}
+
+.autocomplete-item:hover {
+  background: #f9fafb;
+}
+
+.autocomplete-program-name {
+  font-size: 0.95rem;
+  color: #1f2937;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.autocomplete-program-code {
+  font-size: 0.8rem;
+  color: #6b7280;
+  font-family: monospace;
+}
+
+.autocomplete-dropdown::-webkit-scrollbar {
+  width: 8px;
+}
+
+.autocomplete-dropdown::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 0 0 8px 0;
+}
+
+.autocomplete-dropdown::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+.autocomplete-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
 }

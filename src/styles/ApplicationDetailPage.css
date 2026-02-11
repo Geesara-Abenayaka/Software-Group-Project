@@ -278,6 +278,30 @@
   box-shadow: 0 0 0 3px rgba(139, 0, 0, 0.1);
 }
 
+.delete-btn-table {
+  padding: 0.5rem;
+  border: none;
+  background: #dc2626;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  min-width: 36px;
+  height: 36px;
+}
+
+.delete-btn-table:hover {
+  background: #b91c1c;
+  transform: scale(1.05);
+}
+
+.delete-btn-table:active {
+  transform: scale(0.95);
+}
+
 .status-final {
   font-size: 0.85rem;
   font-weight: 600;
