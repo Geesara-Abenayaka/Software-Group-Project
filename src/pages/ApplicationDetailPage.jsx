@@ -37,71 +37,38 @@ function ApplicationDetailPage() {
         setProgram(programData.data);
       }
 
-      // Mock applications data
-      const mockApplications = [
-        {
-          id: 'APP001',
-          nic: '199512345678',
-          fullName: 'Kasun Perera Bandara',
-          nameWithInitials: 'K.P. Bandara',
-          category: 'Category 1',
-          status: 'Pending'
-        },
-        {
-          id: 'APP002',
-          nic: '199623456789',
-          fullName: 'Nimali Silva Wickramasinghe',
-          nameWithInitials: 'N.S. Wickramasinghe',
-          category: 'Category 2',
-          status: 'Approved'
-        },
-        {
-          id: 'APP003',
-          nic: '199734567890',
-          fullName: 'Ravindu Fernando',
-          nameWithInitials: 'R. Fernando',
-          category: 'Category 1',
-          status: 'Approved'
-        },
-        {
-          id: 'APP004',
-          nic: '199845678901',
-          fullName: 'Dilini Jayawardena',
-          nameWithInitials: 'D. Jayawardena',
-          category: 'Category 3',
-          status: 'Rejected'
-        },
-        {
-          id: 'APP005',
-          nic: '199956789012',
-          fullName: 'Chamara Rathnayake',
-          nameWithInitials: 'C. Rathnayake',
-          category: 'Category 2',
-          status: 'Pending'
-        },
-        {
-          id: 'APP006',
-          nic: '200067890123',
-          fullName: 'Thanushi Gunasekara',
-          nameWithInitials: 'T. Gunasekara',
-          category: 'Category 1',
-          status: 'Approved'
-        },
-        {
-          id: 'APP007',
-          nic: '200178901234',
-          fullName: 'Isuru Dissanayake',
-          nameWithInitials: 'I. Dissanayake',
-          category: 'Category 3',
-          status: 'Pending'
-        }
-      ];
-
-      setApplications(mockApplications);
-      setFilteredApplications(mockApplications);
+      // Fetch applications for this program
+      const applicationsResponse = await fetch(`http://localhost:5000/api/applications/program/${programId}`);
+      const applicationsData = await applicationsResponse.json();
+      
+      if (applicationsData.success) {
+        // Transform the data to match the expected format
+        const transformedApplications = applicationsData.data.map((app, index) => ({
+          id: app._id,
+          nic: app.nicNo,
+          fullName: app.fullName,
+          nameWithInitials: app.nameWithInitials,
+          category: app.program === 'msc-cs' ? 'Category 1' : 
+                   app.program === 'msc-ai' ? 'Category 2' : 'Category 3',
+          status: app.status.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+          email: app.email,
+          mobile: app.mobile,
+          submittedAt: new Date(app.submittedAt).toLocaleDateString()
+        }));
+        
+        setApplications(transformedApplications);
+        setFilteredApplications(transformedApplications);
+      } else {
+        // If no applications found, set empty array
+        setApplications([]);
+        setFilteredApplications([]);
+      }
+      
       setLoading(false);
     } catch (err) {
       console.error('Error fetching data:', err);
+      setApplications([]);
+      setFilteredApplications([]);
       setLoading(false);
     }
   };
@@ -143,8 +110,9 @@ function ApplicationDetailPage() {
     return {
       total: applications.length,
       approved: applications.filter(app => app.status === 'Approved').length,
-      pending: applications.filter(app => app.status === 'Pending').length,
-      rejected: applications.filter(app => app.status === 'Rejected').length
+      pending: applications.filter(app => app.status === 'Pending' || app.status === 'Under Review').length,
+      rejected: applications.filter(app => app.status === 'Rejected').length,
+      underReview: applications.filter(app => app.status === 'Under Review').length
     };
   };
 
@@ -154,6 +122,34 @@ function ApplicationDetailPage() {
 
   const handleSendBulkEmail = () => {
     alert('Opening bulk email composer...');
+  };
+
+  const handleUpdateStatus = async (applicationId, newStatus) => {
+    try {
+      const response = await fetch(`http://localhost:5000/api/applications/${applicationId}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Refresh the applications list
+        fetchProgramAndApplications();
+        const statusMessage = newStatus === 'approved' ? 'approved' : 
+                            newStatus === 'rejected' ? 'rejected' : 
+                            newStatus === 'under-review' ? 'marked as under review' : 'updated';
+        alert(`Application ${statusMessage} successfully!`);
+      } else {
+        alert('Failed to update application status: ' + result.message);
+      }
+    } catch (error) {
+      console.error('Error updating application status:', error);
+      alert('Error updating application status. Please try again.');
+    }
   };
 
   const handleLogout = () => {
@@ -259,7 +255,7 @@ function ApplicationDetailPage() {
             </div>
 
             <div className="stat-card-detail pending-card">
-              <span className="stat-label-detail">Pending</span>
+              <span className="stat-label-detail">Pending/Under Review</span>
               <span className="stat-value-detail">{statusCounts.pending}</span>
             </div>
 
@@ -294,6 +290,7 @@ function ApplicationDetailPage() {
             >
               <option>All</option>
               <option>Pending</option>
+              <option>Under Review</option>
               <option>Approved</option>
               <option>Rejected</option>
             </select>
@@ -313,28 +310,55 @@ function ApplicationDetailPage() {
                   <th>Name with Initials</th>
                   <th>Category</th>
                   <th>Status</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredApplications.map((app) => (
-                  <tr key={app.id}>
-                    <td className="app-id-cell">{app.id}</td>
-                    <td>{app.nic}</td>
-                    <td>{app.fullName}</td>
-                    <td>{app.nameWithInitials}</td>
-                    <td>
-                      <span className="category-badge">{app.category}</span>
-                    </td>
-                    <td>
-                      <span className={`status-badge-detail status-${app.status.toLowerCase()}`}>
-                        {app.status === 'Approved' && '✓ '}
-                        {app.status === 'Rejected' && '✕ '}
-                        {app.status === 'Pending' && '○ '}
-                        {app.status}
-                      </span>
+                {filteredApplications.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
+                      No applications found
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredApplications.map((app) => (
+                    <tr key={app.id}>
+                      <td className="app-id-cell">{app.id.substring(0, 8)}</td>
+                      <td>{app.nic}</td>
+                      <td>{app.fullName}</td>
+                      <td>{app.nameWithInitials}</td>
+                      <td>
+                        <span className="category-badge">{app.category}</span>
+                      </td>
+                      <td>
+                        <span className={`status-badge-detail status-${app.status.toLowerCase().replace(' ', '-')}`}>
+                          {app.status === 'Approved' && '✓ '}
+                          {app.status === 'Rejected' && '✕ '}
+                          {app.status === 'Pending' && '○ '}
+                          {app.status === 'Under Review' && '◷ '}
+                          {app.status}
+                        </span>
+                      </td>
+                      <td>
+                        <select
+                          className="status-select"
+                          value={
+                            app.status === 'Pending' ? 'pending' :
+                            app.status === 'Under Review' ? 'under-review' :
+                            app.status === 'Approved' ? 'approved' :
+                            app.status === 'Rejected' ? 'rejected' : 'pending'
+                          }
+                          onChange={(e) => handleUpdateStatus(app.id, e.target.value)}
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="under-review">Under Review</option>
+                          <option value="approved">Approved</option>
+                          <option value="rejected">Rejected</option>
+                        </select>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

@@ -25,11 +25,22 @@ function ApplicationsPage() {
       const data = await response.json();
       
       if (data.success) {
-        // Add mock pending counts for each program
-        const programsWithCounts = data.data.map(program => ({
-          ...program,
-          pendingCount: Math.floor(Math.random() * 3) // Random pending count 0-2
-        }));
+        // Fetch all applications to count pending ones per program
+        const appsResponse = await fetch('http://localhost:5000/api/applications');
+        const appsData = await appsResponse.json();
+        
+        const programsWithCounts = data.data.map(program => {
+          // Count pending applications for this program
+          const pendingCount = appsData.success ? 
+            appsData.data.filter(app => 
+              app.program === program.shortCode && app.status === 'pending'
+            ).length : 0;
+          
+          return {
+            ...program,
+            pendingCount
+          };
+        });
         setPrograms(programsWithCounts);
       }
     } catch (err) {
@@ -44,9 +55,9 @@ function ApplicationsPage() {
     navigate('/login');
   };
 
-  const handleViewApplications = (programId) => {
+  const handleViewApplications = (programShortCode) => {
     // Navigate to view applications for this program
-    navigate(`/admin/applications/${programId}`);
+    navigate(`/admin/applications/${programShortCode}`);
   };
 
   if (loading) {
@@ -138,7 +149,7 @@ function ApplicationsPage() {
 
                 <button 
                   className="view-applications-btn"
-                  onClick={() => handleViewApplications(program._id)}
+                  onClick={() => handleViewApplications(program.shortCode)}
                 >
                   View Applications
                   <span className="arrow-icon">→</span>
