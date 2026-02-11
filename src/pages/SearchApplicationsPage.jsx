@@ -450,7 +450,19 @@ function SearchApplicationsPage() {
                                          app.status.charAt(0).toUpperCase() + app.status.slice(1);
                     return (
                       <tr key={app._id}>
-                        <td className="app-id">{app._id.substring(0, 8).toUpperCase()}</td>
+                        <td className="app-id">
+                          <a 
+                            href="#" 
+                            onClick={(e) => {
+                              e.preventDefault();
+                              navigate(`/admin/application/${app._id}`);
+                            }}
+                            className="app-id-link"
+                            title="View full application details"
+                          >
+                            {app._id.substring(0, 8).toUpperCase()}
+                          </a>
+                        </td>
                         <td title={programDisplay}>{programDisplay}</td>
                         <td>
                           <span className={`status-badge status-${app.status.toLowerCase()}`}>

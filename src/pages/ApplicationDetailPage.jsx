@@ -350,7 +350,19 @@ function ApplicationDetailPage() {
                 ) : (
                   filteredApplications.map((app) => (
                     <tr key={app.id}>
-                      <td className="app-id-cell">{app.id.substring(0, 8)}</td>
+                      <td className="app-id-cell">
+                        <a 
+                          href="#" 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            navigate(`/admin/application/${app.id}`);
+                          }}
+                          className="app-id-link"
+                          title="View full application details"
+                        >
+                          {app.id.substring(0, 8)}
+                        </a>
+                      </td>
                       <td>{app.nic}</td>
                       <td>{app.fullName}</td>
                       <td>{app.nameWithInitials}</td>
