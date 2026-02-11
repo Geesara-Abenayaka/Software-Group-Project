@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import authRoutes from './routes/auth.js';
 import programRoutes from './routes/programs.js';
+import applicationRoutes from './routes/applications.js';
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ connectDB();
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/programs', programRoutes);
+app.use('/api/applications', applicationRoutes);
 
 // Test route
 app.get('/api/health', (req, res) => {
