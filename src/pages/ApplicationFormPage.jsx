@@ -4,6 +4,14 @@ import '../styles/ApplicationFormPage.css';
 
 function ApplicationFormPage() {
   const navigate = useNavigate();
+  const [mobileError, setMobileError] = useState('');
+  const [telephoneError, setTelephoneError] = useState('');
+  const [nicError, setNicError] = useState('');
+  const [emailError, setEmailError] = useState('');
+  const [graduationDateErrors, setGraduationDateErrors] = useState({});
+  const [membershipDateErrors, setMembershipDateErrors] = useState({});
+  const [fileErrors, setFileErrors] = useState({});
+  
   const [formData, setFormData] = useState({
     program: '',
     title: '',
@@ -55,14 +63,145 @@ function ApplicationFormPage() {
     }));
   };
 
-  const handleFileChange = (e, documentType) => {
+  const handleMobileChange = (e) => {
+    const value = e.target.value;
+    
+    // Check if value contains only digits
+    if (value && !/^\d*$/.test(value)) {
+      setMobileError('Enter valid phone number');
+      return; // Don't update the value if it contains non-digits
+    }
+    
+    // Check if length exceeds 10
+    if (value.length > 10) {
+      return; // Don't allow more than 10 digits
+    }
+    
+    // Update the form data
     setFormData(prev => ({
       ...prev,
-      documents: {
-        ...prev.documents,
-        [documentType]: e.target.files[0]
-      }
+      mobile: value
     }));
+    
+    // Set error state based on length
+    if (value.length > 0 && value.length < 10) {
+      setMobileError('Mobile number must be exactly 10 digits');
+    } else {
+      setMobileError(''); // Clear error when exactly 10 digits or empty
+    }
+  };
+
+  const handleTelephoneChange = (e) => {
+    const value = e.target.value;
+    
+    // Check if value contains only digits
+    if (value && !/^\d*$/.test(value)) {
+      setTelephoneError('Enter valid phone number');
+      return; // Don't update the value if it contains non-digits
+    }
+    
+    // Check if length exceeds 10
+    if (value.length > 10) {
+      return; // Don't allow more than 10 digits
+    }
+    
+    // Update the form data
+    setFormData(prev => ({
+      ...prev,
+      telephone: value
+    }));
+    
+    // Set error state based on length
+    if (value.length > 0 && value.length < 10) {
+      setTelephoneError('Telephone number must be exactly 10 digits');
+    } else {
+      setTelephoneError(''); // Clear error when exactly 10 digits or empty
+    }
+  };
+
+  const handleNicChange = (e) => {
+    const value = e.target.value.toUpperCase();
+    
+    // Allow only digits and V
+    if (value && !/^[0-9V]*$/.test(value)) {
+      setNicError('Enter valid NIC number');
+      return; // Don't update if invalid characters
+    }
+    
+    // Check length limits
+    if (value.length > 12) {
+      return; // Don't allow more than 12 characters
+    }
+    
+    // Update the form data
+    setFormData(prev => ({
+      ...prev,
+      nicNo: value
+    }));
+    
+    // Validate NIC format
+    if (value.length === 0) {
+      setNicError(''); // Clear error when empty
+    } else if (value.length === 10 && /^\d{9}V$/.test(value)) {
+      setNicError(''); // Valid old format: 9 digits + V
+    } else if (value.length === 12 && /^\d{12}$/.test(value)) {
+      setNicError(''); // Valid new format: 12 digits
+    } else {
+      setNicError('Enter valid NIC number (12 digits or 9 digits + V)');
+    }
+  };
+
+  const handleEmailChange = (e) => {
+    const value = e.target.value;
+    
+    // Update the form data
+    setFormData(prev => ({
+      ...prev,
+      email: value
+    }));
+    
+    // Email validation regex
+    const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    
+    if (value.length === 0) {
+      setEmailError(''); // Clear error when empty
+    } else if (!emailPattern.test(value)) {
+      setEmailError('Enter valid email address (e.g., name@gmail.com)');
+    } else {
+      setEmailError(''); // Clear error when valid
+    }
+  };
+
+  const handleFileChange = (e, documentType) => {
+    const file = e.target.files[0];
+    
+    if (file) {
+      // Check if file is PDF
+      if (file.type !== 'application/pdf') {
+        setFileErrors(prev => ({
+          ...prev,
+          [documentType]: 'Please upload a PDF file only'
+        }));
+        // Clear the file input
+        e.target.value = '';
+        return;
+      }
+      
+      // Clear error if file is valid
+      setFileErrors(prev => {
+        const updated = { ...prev };
+        delete updated[documentType];
+        return updated;
+      });
+      
+      setFormData(prev => ({
+        ...prev,
+        documents: {
+          ...prev.documents,
+          [documentType]: file
+        }
+      }));
+    }
   };
 
   const addQualification = () => {
@@ -78,6 +217,36 @@ function ApplicationFormPage() {
     }));
   };
 
+  const removeQualification = (index) => {
+    // Keep at least one qualification
+    if (formData.qualifications.length <= 1) {
+      alert('At least one qualification is required');
+      return;
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      qualifications: prev.qualifications.filter((_, i) => i !== index)
+    }));
+    
+    // Also remove the error for this index if it exists
+    setGraduationDateErrors(prev => {
+      const updated = { ...prev };
+      delete updated[index];
+      // Adjust remaining error indices
+      const adjusted = {};
+      Object.keys(updated).forEach(key => {
+        const keyIndex = parseInt(key);
+        if (keyIndex > index) {
+          adjusted[keyIndex - 1] = updated[key];
+        } else {
+          adjusted[keyIndex] = updated[key];
+        }
+      });
+      return adjusted;
+    });
+  };
+
   const addMembership = () => {
     setFormData(prev => ({
       ...prev,
@@ -87,6 +256,36 @@ function ApplicationFormPage() {
         dateJoined: ''
       }]
     }));
+  };
+
+  const removeMembership = (index) => {
+    // Keep at least one membership
+    if (formData.memberships.length <= 1) {
+      alert('At least one membership is required');
+      return;
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      memberships: prev.memberships.filter((_, i) => i !== index)
+    }));
+    
+    // Also remove the error for this index if it exists
+    setMembershipDateErrors(prev => {
+      const updated = { ...prev };
+      delete updated[index];
+      // Adjust remaining error indices
+      const adjusted = {};
+      Object.keys(updated).forEach(key => {
+        const keyIndex = parseInt(key);
+        if (keyIndex > index) {
+          adjusted[keyIndex - 1] = updated[key];
+        } else {
+          adjusted[keyIndex] = updated[key];
+        }
+      });
+      return adjusted;
+    });
   };
 
   const addExperience = () => {
@@ -103,16 +302,117 @@ function ApplicationFormPage() {
     }));
   };
 
+  const removeExperience = (index) => {
+    // Keep at least one experience
+    if (formData.experiences.length <= 1) {
+      alert('At least one work experience is required');
+      return;
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      experiences: prev.experiences.filter((_, i) => i !== index)
+    }));
+  };
+
   const handleQualificationChange = (index, field, value) => {
     const updated = [...formData.qualifications];
     updated[index][field] = value;
     setFormData(prev => ({ ...prev, qualifications: updated }));
+    
+    // Validate graduation date if that field is being changed
+    if (field === 'graduationDate') {
+      validateGraduationDate(value, index);
+    }
+  };
+
+  const validateGraduationDate = (value, index) => {
+    // Clear error first (will be set again if invalid)
+    setGraduationDateErrors(prev => {
+      const updated = { ...prev };
+      delete updated[index];
+      return updated;
+    });
+
+    // If empty, error is already cleared
+    if (!value) {
+      return;
+    }
+    
+    // Validate mm/dd/yyyy format
+    const datePattern = /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/\d{4}$/;
+    
+    if (!datePattern.test(value)) {
+      setGraduationDateErrors(prev => ({
+        ...prev,
+        [index]: 'Enter valid graduation date (mm/dd/yyyy)'
+      }));
+      return;
+    }
+    
+    // Additional validation: check if date is valid
+    const [month, day, year] = value.split('/');
+    const date = new Date(year, month - 1, day);
+    
+    if (date.getMonth() + 1 !== parseInt(month) || 
+        date.getDate() !== parseInt(day) || 
+        date.getFullYear() !== parseInt(year)) {
+      setGraduationDateErrors(prev => ({
+        ...prev,
+        [index]: 'Enter valid graduation date (mm/dd/yyyy)'
+      }));
+    }
+    // If we reach here without setting an error, the error was already cleared at the start
   };
 
   const handleMembershipChange = (index, field, value) => {
     const updated = [...formData.memberships];
     updated[index][field] = value;
     setFormData(prev => ({ ...prev, memberships: updated }));
+    
+    // Validate date joined if that field is being changed
+    if (field === 'dateJoined') {
+      validateMembershipDate(value, index);
+    }
+  };
+
+  const validateMembershipDate = (value, index) => {
+    // Clear error first (will be set again if invalid)
+    setMembershipDateErrors(prev => {
+      const updated = { ...prev };
+      delete updated[index];
+      return updated;
+    });
+
+    // If empty, error is already cleared
+    if (!value) {
+      return;
+    }
+    
+    // Validate mm/dd/yyyy format
+    const datePattern = /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/\d{4}$/;
+    
+    if (!datePattern.test(value)) {
+      setMembershipDateErrors(prev => ({
+        ...prev,
+        [index]: 'Enter valid date (mm/dd/yyyy)'
+      }));
+      return;
+    }
+    
+    // Additional validation: check if date is valid
+    const [month, day, year] = value.split('/');
+    const date = new Date(year, month - 1, day);
+    
+    if (date.getMonth() + 1 !== parseInt(month) || 
+        date.getDate() !== parseInt(day) || 
+        date.getFullYear() !== parseInt(year)) {
+      setMembershipDateErrors(prev => ({
+        ...prev,
+        [index]: 'Enter valid date (mm/dd/yyyy)'
+      }));
+    }
+    // If we reach here without setting an error, the error was already cleared at the start
   };
 
   const handleExperienceChange = (index, field, value) => {
@@ -123,6 +423,63 @@ function ApplicationFormPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate Personal Particulars - all fields must be filled
+    if (!formData.title || !formData.fullName || !formData.nameWithInitials || 
+        !formData.nicNo || !formData.telephone || !formData.mobile || 
+        !formData.email || !formData.contactAddress) {
+      alert('Please fill in all fields in Personal Particulars section. No fields can be left blank.');
+      return;
+    }
+    
+    // Validate graduation dates
+    const datePattern = /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/\d{4}$/;
+    for (let i = 0; i < formData.qualifications.length; i++) {
+      const gradDate = formData.qualifications[i].graduationDate;
+      if (gradDate && !datePattern.test(gradDate)) {
+        alert('Please enter valid graduation date in mm/dd/yyyy format');
+        return;
+      }
+    }
+    
+    // Validate membership dates
+    for (let i = 0; i < formData.memberships.length; i++) {
+      const joinedDate = formData.memberships[i].dateJoined;
+      if (joinedDate && !datePattern.test(joinedDate)) {
+        alert('Please enter valid date joined in mm/dd/yyyy format for membership');
+        return;
+      }
+    }
+    
+    // Validate NIC number
+    const nicPattern = /^(\d{12}|\d{9}V)$/;
+    if (!nicPattern.test(formData.nicNo)) {
+      setNicError('Enter valid NIC number (12 digits or 9 digits + V)');
+      alert('Please enter a valid NIC number');
+      return;
+    }
+    
+    // Validate email
+    const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailPattern.test(formData.email)) {
+      setEmailError('Enter valid email address (e.g., name@gmail.com)');
+      alert('Please enter a valid email address');
+      return;
+    }
+    
+    // Validate mobile number before submission
+    if (formData.mobile.length !== 10) {
+      setMobileError('Mobile number must be exactly 10 digits');
+      alert('Please enter a valid 10-digit mobile number');
+      return;
+    }
+    
+    // Validate telephone number before submission
+    if (formData.telephone.length !== 10) {
+      setTelephoneError('Telephone number must be exactly 10 digits');
+      alert('Please enter a valid 10-digit telephone number');
+      return;
+    }
     
     try {
       // Prepare the data to send (convert files to base64 if needed, or handle separately)
@@ -198,6 +555,7 @@ function ApplicationFormPage() {
               value={formData.title}
               onChange={handleInputChange}
               style={{ width: '200px' }}
+              required
             >
               <option value="">Select</option>
               <option value="mr">Mr</option>
@@ -216,6 +574,7 @@ function ApplicationFormPage() {
               value={formData.fullName}
               onChange={handleInputChange}
               placeholder="Tharindu Eranda Weerasinghe"
+              required
             />
           </div>
 
@@ -228,6 +587,7 @@ function ApplicationFormPage() {
                 value={formData.nameWithInitials}
                 onChange={handleInputChange}
                 placeholder="T.E. Weerasinghe"
+                required
               />
             </div>
             <div className="form-group">
@@ -236,9 +596,17 @@ function ApplicationFormPage() {
                 type="text"
                 name="nicNo"
                 value={formData.nicNo}
-                onChange={handleInputChange}
-                placeholder="123456789V"
+                onChange={handleNicChange}
+                placeholder="123456789V or 200012345678"
+                required
+                className={nicError ? 'input-error' : ''}
               />
+              {nicError && (
+                <div className="error-box">
+                  <span className="error-icon">⚠</span>
+                  <span className="error-text">{nicError}</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -249,9 +617,17 @@ function ApplicationFormPage() {
                 type="tel"
                 name="telephone"
                 value={formData.telephone}
-                onChange={handleInputChange}
+                onChange={handleTelephoneChange}
                 placeholder="0112345678"
+                required
+                className={telephoneError ? 'input-error' : ''}
               />
+              {telephoneError && (
+                <div className="error-box">
+                  <span className="error-icon">⚠</span>
+                  <span className="error-text">{telephoneError}</span>
+                </div>
+              )}
             </div>
             <div className="form-group">
               <label>Mobile</label>
@@ -259,9 +635,17 @@ function ApplicationFormPage() {
                 type="tel"
                 name="mobile"
                 value={formData.mobile}
-                onChange={handleInputChange}
+                onChange={handleMobileChange}
                 placeholder="0771234567"
+                required
+                className={mobileError ? 'input-error' : ''}
               />
+              {mobileError && (
+                <div className="error-box">
+                  <span className="error-icon">⚠</span>
+                  <span className="error-text">{mobileError}</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -271,9 +655,17 @@ function ApplicationFormPage() {
               type="email"
               name="email"
               value={formData.email}
-              onChange={handleInputChange}
-              placeholder="teweerasinghe@example.com"
+              onChange={handleEmailChange}
+              placeholder="name@gmail.com"
+              required
+              className={emailError ? 'input-error' : ''}
             />
+            {emailError && (
+              <div className="error-box">
+                <span className="error-icon">⚠</span>
+                <span className="error-text">{emailError}</span>
+              </div>
+            )}
           </div>
 
           <div className="form-group">
@@ -283,6 +675,7 @@ function ApplicationFormPage() {
               value={formData.contactAddress}
               onChange={handleInputChange}
               rows="3"
+              required
             />
           </div>
         </div>
@@ -293,6 +686,18 @@ function ApplicationFormPage() {
           
           {formData.qualifications.map((qual, index) => (
             <div key={index} className="qualification-item">
+              {formData.qualifications.length > 1 && (
+                <button 
+                  type="button" 
+                  onClick={() => removeQualification(index)}
+                  className="delete-button"
+                  title="Remove this qualification"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M5.5 2.5V3h5v-.5a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 0-.5.5zm-1 0V3H2v1h1v9a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4h1V3h-2.5v-.5A1.5 1.5 0 0 0 10 1H6a1.5 1.5 0 0 0-1.5 1.5zM4 4h8v9H4V4zm1.5 1.5v6h1v-6h-1zm3 0v6h1v-6h-1z"/>
+                  </svg>
+                </button>
+              )}
               <div className="form-row">
                 <div className="form-group">
                   <label>University / Institute</label>
@@ -345,12 +750,34 @@ function ApplicationFormPage() {
                 </div>
                 <div className="form-group">
                   <label>Graduation Date</label>
-                  <input
-                    type="text"
-                    value={qual.graduationDate}
-                    onChange={(e) => handleQualificationChange(index, 'graduationDate', e.target.value)}
-                    placeholder="mm/dd/yyyy"
-                  />
+                  <div className="date-input-wrapper">
+                    <input
+                      type="text"
+                      value={qual.graduationDate}
+                      onChange={(e) => handleQualificationChange(index, 'graduationDate', e.target.value)}
+                      placeholder="mm/dd/yyyy"
+                      className={graduationDateErrors[index] ? 'input-error' : ''}
+                    />
+                    <label className="calendar-icon-label">
+                      <input
+                        type="date"
+                        className="date-picker-hidden"
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            const [year, month, day] = e.target.value.split('-');
+                            const formattedDate = `${month}/${day}/${year}`;
+                            handleQualificationChange(index, 'graduationDate', formattedDate);
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                  {graduationDateErrors[index] && (
+                    <div className="error-box">
+                      <span className="error-icon">⚠</span>
+                      <span className="error-text">{graduationDateErrors[index]}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -391,6 +818,18 @@ function ApplicationFormPage() {
           
           {formData.memberships.map((membership, index) => (
             <div key={index} className="membership-item">
+              {formData.memberships.length > 1 && (
+                <button 
+                  type="button" 
+                  onClick={() => removeMembership(index)}
+                  className="delete-button"
+                  title="Remove this membership"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M5.5 2.5V3h5v-.5a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 0-.5.5zm-1 0V3H2v1h1v9a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4h1V3h-2.5v-.5A1.5 1.5 0 0 0 10 1H6a1.5 1.5 0 0 0-1.5 1.5zM4 4h8v9H4V4zm1.5 1.5v6h1v-6h-1zm3 0v6h1v-6h-1z"/>
+                  </svg>
+                </button>
+              )}
               <div className="form-row-three">
                 <div className="form-group">
                   <label>Professional Organization</label>
@@ -410,12 +849,34 @@ function ApplicationFormPage() {
                 </div>
                 <div className="form-group">
                   <label>Date Joined</label>
-                  <input
-                    type="text"
-                    value={membership.dateJoined}
-                    onChange={(e) => handleMembershipChange(index, 'dateJoined', e.target.value)}
-                    placeholder="mm/dd/yyyy"
-                  />
+                  <div className="date-input-wrapper">
+                    <input
+                      type="text"
+                      value={membership.dateJoined}
+                      onChange={(e) => handleMembershipChange(index, 'dateJoined', e.target.value)}
+                      placeholder="mm/dd/yyyy"
+                      className={membershipDateErrors[index] ? 'input-error' : ''}
+                    />
+                    <label className="calendar-icon-label">
+                      <input
+                        type="date"
+                        className="date-picker-hidden"
+                        onChange={(e) => {
+                          if (e.target.value) {
+                            const [year, month, day] = e.target.value.split('-');
+                            const formattedDate = `${month}/${day}/${year}`;
+                            handleMembershipChange(index, 'dateJoined', formattedDate);
+                          }
+                        }}
+                      />
+                    </label>
+                  </div>
+                  {membershipDateErrors[index] && (
+                    <div className="error-box">
+                      <span className="error-icon">⚠</span>
+                      <span className="error-text">{membershipDateErrors[index]}</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -432,6 +893,18 @@ function ApplicationFormPage() {
           
           {formData.experiences.map((exp, index) => (
             <div key={index} className="experience-item">
+              {formData.experiences.length > 1 && (
+                <button 
+                  type="button" 
+                  onClick={() => removeExperience(index)}
+                  className="delete-button"
+                  title="Remove this experience"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <path d="M5.5 2.5V3h5v-.5a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 0-.5.5zm-1 0V3H2v1h1v9a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4h1V3h-2.5v-.5A1.5 1.5 0 0 0 10 1H6a1.5 1.5 0 0 0-1.5 1.5zM4 4h8v9H4V4zm1.5 1.5v6h1v-6h-1zm3 0v6h1v-6h-1z"/>
+                  </svg>
+                </button>
+              )}
               <div className="form-row-six">
                 <div className="form-group">
                   <label>From Month</label>
@@ -532,6 +1005,12 @@ function ApplicationFormPage() {
               accept=".pdf"
               onChange={(e) => handleFileChange(e, 'degreeCertificate')}
             />
+            {fileErrors.degreeCertificate && (
+              <div className="error-box">
+                <span className="error-icon">⚠</span>
+                <span className="error-text">{fileErrors.degreeCertificate}</span>
+              </div>
+            )}
           </div>
 
           <div className="form-group">
@@ -541,6 +1020,12 @@ function ApplicationFormPage() {
               accept=".pdf"
               onChange={(e) => handleFileChange(e, 'nic')}
             />
+            {fileErrors.nic && (
+              <div className="error-box">
+                <span className="error-icon">⚠</span>
+                <span className="error-text">{fileErrors.nic}</span>
+              </div>
+            )}
           </div>
 
           <div className="form-group">
@@ -550,6 +1035,12 @@ function ApplicationFormPage() {
               accept=".pdf"
               onChange={(e) => handleFileChange(e, 'employerLetter')}
             />
+            {fileErrors.employerLetter && (
+              <div className="error-box">
+                <span className="error-icon">⚠</span>
+                <span className="error-text">{fileErrors.employerLetter}</span>
+              </div>
+            )}
           </div>
 
           <div className="form-group">
@@ -559,6 +1050,12 @@ function ApplicationFormPage() {
               accept=".pdf"
               onChange={(e) => handleFileChange(e, 'transcript')}
             />
+            {fileErrors.transcript && (
+              <div className="error-box">
+                <span className="error-icon">⚠</span>
+                <span className="error-text">{fileErrors.transcript}</span>
+              </div>
+            )}
           </div>
 
           <div className="form-group">
@@ -568,6 +1065,12 @@ function ApplicationFormPage() {
               accept=".pdf"
               onChange={(e) => handleFileChange(e, 'paymentConfirmation')}
             />
+            {fileErrors.paymentConfirmation && (
+              <div className="error-box">
+                <span className="error-icon">⚠</span>
+                <span className="error-text">{fileErrors.paymentConfirmation}</span>
+              </div>
+            )}
           </div>
 
           <p className="document-info">
