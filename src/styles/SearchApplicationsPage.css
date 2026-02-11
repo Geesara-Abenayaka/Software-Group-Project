@@ -234,6 +234,20 @@
   font-weight: 600;
 }
 
+.app-id-link {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.app-id-link:hover {
+  color: #8b0000;
+  border-bottom-color: #8b0000;
+}
+
 .status-badge {
   display: inline-block;
   padding: 0.35rem 0.75rem;
