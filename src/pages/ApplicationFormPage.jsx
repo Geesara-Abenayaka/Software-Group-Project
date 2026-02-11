@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../styles/ApplicationFormPage.css';
 
 function ApplicationFormPage() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     program: '',
     title: '',
@@ -119,10 +121,43 @@ function ApplicationFormPage() {
     setFormData(prev => ({ ...prev, experiences: updated }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Form submitted:', formData);
-    // TODO: Add API call to submit application
+    
+    try {
+      // Prepare the data to send (convert files to base64 if needed, or handle separately)
+      const dataToSend = {
+        ...formData,
+        documents: {
+          degreeCertificate: formData.documents.degreeCertificate?.name || '',
+          nic: formData.documents.nic?.name || '',
+          employerLetter: formData.documents.employerLetter?.name || '',
+          transcript: formData.documents.transcript?.name || '',
+          paymentConfirmation: formData.documents.paymentConfirmation?.name || ''
+        }
+      };
+
+      const response = await fetch('http://localhost:5000/api/applications', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(dataToSend)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert('Application submitted successfully!');
+        // Reset form or navigate to success page
+        navigate('/');
+      } else {
+        alert('Failed to submit application: ' + result.message);
+      }
+    } catch (error) {
+      console.error('Error submitting application:', error);
+      alert('Error submitting application. Please try again.');
+    }
   };
 
   return (

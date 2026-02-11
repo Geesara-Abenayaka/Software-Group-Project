@@ -65,7 +65,7 @@ function AdminDashboard() {
 
   const handleViewApplications = (shortCode) => {
     // Navigate to applications page for this program
-    navigate(`/admin/programs/${shortCode}/applications`);
+    navigate(`/admin/applications/${shortCode}`);
   };
 
   const handleEditProgram = (program) => {
