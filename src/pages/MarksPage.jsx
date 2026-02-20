@@ -9,6 +9,7 @@ function MarksPage() {
   const [searchText, setSearchText] = useState('');
   const [applications, setApplications] = useState([]);
   const [selectedApplication, setSelectedApplication] = useState(null);
+  const [selectedApplicationId, setSelectedApplicationId] = useState(null);
   
   const [formData, setFormData] = useState({
     nic: '',
@@ -17,7 +18,7 @@ function MarksPage() {
     oaMarks: '',
     writingMarks: '',
     interviewMarks: '',
-    applicationStatus: 'Pending',
+    applicationStatus: '',
     graduationDate: ''
   });
 
@@ -29,12 +30,67 @@ function MarksPage() {
       navigate('/login');
     }
     fetchApplications();
-  }, [navigate]);
+  }, [navigate, selectedCourse]);
 
   const fetchApplications = async () => {
     try {
-      // Mock data - replace with actual API call
-      setApplications([]);
+      const response = await fetch('http://localhost:5000/api/applications');
+      const result = await response.json();
+      
+      if (result.success) {
+        // Transform data to match the expected format
+        const transformedData = result.data
+          .filter(app => !selectedCourse || app.program === selectedCourse)
+          .map(app => {
+            // Map database status to display status
+            let displayStatus = app.status || 'Pending';
+            if (displayStatus === 'pending') displayStatus = 'Pending';
+            else if (displayStatus === 'approved') displayStatus = 'Approved';
+            else if (displayStatus === 'rejected') displayStatus = 'Application Rejected';
+            else if (displayStatus === 'under-review') displayStatus = 'Short Listed';
+            
+            // Format graduation date - check root field first, then qualifications array
+            let gradDate = '-';
+            if (app.graduationDate) {
+              try {
+                const date = new Date(app.graduationDate);
+                if (!isNaN(date.getTime())) {
+                  gradDate = date.toISOString().split('T')[0];
+                } else {
+                  gradDate = app.graduationDate;
+                }
+              } catch (e) {
+                gradDate = app.graduationDate;
+              }
+            } else if (app.qualifications && app.qualifications.length > 0 && app.qualifications[0].graduationDate) {
+              // Get graduation date from first qualification
+              try {
+                const date = new Date(app.qualifications[0].graduationDate);
+                if (!isNaN(date.getTime())) {
+                  gradDate = date.toISOString().split('T')[0];
+                } else {
+                  gradDate = app.qualifications[0].graduationDate;
+                }
+              } catch (e) {
+                gradDate = app.qualifications[0].graduationDate;
+              }
+            }
+            
+            return {
+              _id: app._id,
+              program: app.program,
+              status: displayStatus,
+              nic: app.nicNo || '',
+              surname: app.fullName ? app.fullName.split(' ')[app.fullName.split(' ').length - 1] : '',
+              otherNames: app.nameWithInitials || app.fullName || '',
+              oaMarks: app.oaMarks || '-',
+              writingMarks: app.writingMarks || '-',
+              interviewMarks: app.interviewMarks || '-',
+              graduationDate: gradDate
+            };
+          });
+        setApplications(transformedData);
+      }
     } catch (err) {
       console.error('Error fetching applications:', err);
     }
@@ -47,15 +103,113 @@ function MarksPage() {
 
   const handleSearch = (e) => {
     setSearchText(e.target.value);
-    // Implement search logic
   };
 
-  const handleInputChange = (e) => {
+  // Filter applications based on search text
+  const filteredApplications = applications.filter(app => {
+    if (!searchText) return true;
+    const search = searchText.toLowerCase();
+    return (
+      app.nic.toLowerCase().includes(search) ||
+      app.surname.toLowerCase().includes(search) ||
+      app.otherNames.toLowerCase().includes(search)
+    );
+  });
+
+  const handleInputChange = async (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+
+    // Auto-fill when NIC is entered
+    if (name === 'nic' && value.length >= 9) {
+      await fetchApplicationByNIC(value);
+    }
+  };
+
+  const fetchApplicationByNIC = async (nic) => {
+    try {
+      const response = await fetch('http://localhost:5000/api/applications');
+      const result = await response.json();
+      
+      if (result.success) {
+        // Find application with matching NIC
+        const application = result.data.find(app => app.nicNo === nic);
+        
+        if (application) {
+          // Map database status to display status
+          let displayStatus = application.status || 'Pending';
+          // Convert lowercase statuses to display format
+          if (displayStatus === 'pending') displayStatus = 'Pending';
+          else if (displayStatus === 'approved') displayStatus = 'Approved';
+          else if (displayStatus === 'rejected') displayStatus = 'Application Rejected';
+          else if (displayStatus === 'under-review') displayStatus = 'Short Listed';
+          
+          // Format graduation date for date input (YYYY-MM-DD)
+          // First check if there's a root-level graduationDate, otherwise check qualifications array
+          let gradDate = '';
+          if (application.graduationDate) {
+            try {
+              const date = new Date(application.graduationDate);
+              if (!isNaN(date.getTime())) {
+                gradDate = date.toISOString().split('T')[0];
+              } else {
+                gradDate = application.graduationDate;
+              }
+            } catch (e) {
+              gradDate = application.graduationDate;
+            }
+          } else if (application.qualifications && application.qualifications.length > 0 && application.qualifications[0].graduationDate) {
+            // Get graduation date from first qualification
+            try {
+              const date = new Date(application.qualifications[0].graduationDate);
+              if (!isNaN(date.getTime())) {
+                gradDate = date.toISOString().split('T')[0];
+              } else {
+                gradDate = application.qualifications[0].graduationDate;
+              }
+            } catch (e) {
+              gradDate = application.qualifications[0].graduationDate;
+            }
+          }
+          
+          // Auto-fill the form with application data
+          setFormData({
+            nic: application.nicNo,
+            surname: application.fullName ? application.fullName.split(' ')[application.fullName.split(' ').length - 1] : '',
+            otherNames: application.nameWithInitials || application.fullName || '',
+            oaMarks: application.oaMarks || '',
+            writingMarks: application.writingMarks || '',
+            interviewMarks: application.interviewMarks || '',
+            applicationStatus: displayStatus,
+            graduationDate: gradDate
+          });
+          
+          // Set the selected application ID for updating
+          setSelectedApplicationId(application._id);
+          const index = applications.findIndex(app => app._id === application._id);
+          setSelectedApplication(index);
+        } else {
+          // If no application found, clear other fields except NIC
+          setFormData(prev => ({
+            nic: prev.nic,
+            surname: '',
+            otherNames: '',
+            oaMarks: '',
+            writingMarks: '',
+            interviewMarks: '',
+            applicationStatus: '',
+            graduationDate: ''
+          }));
+          setSelectedApplication(null);
+          setSelectedApplicationId(null);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching application by NIC:', error);
+    }
   };
 
   const handleStatusChange = (status) => {
@@ -65,16 +219,99 @@ function MarksPage() {
     }));
   };
 
-  const handleSave = () => {
-    console.log('Saving marks:', formData);
-    // Implement save logic
-    alert('Marks saved successfully!');
+  const handleDelete = async (appId, event) => {
+    event.stopPropagation(); // Prevent row selection when clicking delete
+    
+    if (!window.confirm('Are you sure you want to delete this application?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/applications/${appId}`, {
+        method: 'DELETE'
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Refresh applications list
+        await fetchApplications();
+        
+        // Clear selection if the deleted item was selected
+        setSelectedApplication(null);
+        setSelectedApplicationId(null);
+        
+        alert('Application deleted successfully!');
+      } else {
+        alert('Error deleting application: ' + result.message);
+      }
+    } catch (error) {
+      console.error('Error deleting application:', error);
+      alert('Error deleting application. Please try again.');
+    }
   };
 
-  const handleUpdate = () => {
-    console.log('Updating marks:', formData);
-    // Implement update logic
-    alert('Marks updated successfully!');
+  const handleSave = async () => {
+    // Check if an application is selected by ID
+    if (!selectedApplicationId) {
+      alert('Please enter a valid NIC number of a submitted application');
+      return;
+    }
+
+    // This now works the same as Update
+    await handleUpdate();
+  };
+
+  const handleUpdate = async () => {
+    if (!selectedApplicationId) {
+      alert('Please select an application from the table to update');
+      return;
+    }
+
+    try {
+      // Update marks via API
+      const response = await fetch(`http://localhost:5000/api/applications/${selectedApplicationId}/marks`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          oaMarks: formData.oaMarks || '',
+          writingMarks: formData.writingMarks || '',
+          interviewMarks: formData.interviewMarks || '',
+          status: formData.applicationStatus,
+          graduationDate: formData.graduationDate || ''
+        })
+      });
+
+      const result = await response.json();
+      
+      if (result.success) {
+        // Refresh applications list
+        await fetchApplications();
+        setSelectedApplication(null);
+        setSelectedApplicationId(null);
+
+        // Clear the form
+        setFormData({
+          nic: '',
+          surname: '',
+          otherNames: '',
+          oaMarks: '',
+          writingMarks: '',
+          interviewMarks: '',
+          applicationStatus: '',
+          graduationDate: ''
+        });
+
+        alert('Marks updated successfully!');
+      } else {
+        alert('Error updating marks: ' + result.message);
+      }
+    } catch (error) {
+      console.error('Error updating marks:', error);
+      alert('Error updating marks. Please try again.');
+    }
   };
 
   return (
@@ -174,34 +411,86 @@ function MarksPage() {
                   <th>Writing Marks</th>
                   <th>Interview Marks</th>
                   <th>Graduation Date</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {applications.length === 0 ? (
+                {filteredApplications.length === 0 ? (
                   <tr>
-                    <td colSpan="8" className="no-data">
+                    <td colSpan="9" className="no-data">
                       No data available in table
                     </td>
                   </tr>
                 ) : (
-                  applications.map((app, index) => (
-                    <tr key={index}>
-                      <td>{app.status}</td>
-                      <td>{app.nic}</td>
-                      <td>{app.surname}</td>
-                      <td>{app.otherNames}</td>
-                      <td>{app.oaMarks}</td>
-                      <td>{app.writingMarks}</td>
-                      <td>{app.interviewMarks}</td>
-                      <td>{app.graduationDate}</td>
-                    </tr>
-                  ))
+                  filteredApplications.map((app, index) => {
+                    // Find the original index in applications array
+                    const originalIndex = applications.findIndex(a => 
+                      a.nic === app.nic && 
+                      a.surname === app.surname && 
+                      a.otherNames === app.otherNames
+                    );
+                    return (
+                      <tr 
+                        key={index}
+                        onClick={() => {
+                          setSelectedApplication(originalIndex);
+                          setSelectedApplicationId(app._id);
+                          
+                          // Format graduation date for date input
+                          let gradDate = '';
+                          if (app.graduationDate && app.graduationDate !== '-') {
+                            try {
+                              const date = new Date(app.graduationDate);
+                              if (!isNaN(date.getTime())) {
+                                gradDate = date.toISOString().split('T')[0];
+                              } else {
+                                gradDate = app.graduationDate;
+                              }
+                            } catch (e) {
+                              gradDate = app.graduationDate;
+                            }
+                          }
+                          
+                          setFormData({
+                            nic: app.nic,
+                            surname: app.surname,
+                            otherNames: app.otherNames,
+                            oaMarks: app.oaMarks === '-' ? '' : app.oaMarks,
+                            writingMarks: app.writingMarks === '-' ? '' : app.writingMarks,
+                            interviewMarks: app.interviewMarks === '-' ? '' : app.interviewMarks,
+                            applicationStatus: app.status,
+                            graduationDate: gradDate
+                          });
+                        }}
+                        className={selectedApplication === originalIndex ? 'selected-row' : ''}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <td>{app.status}</td>
+                        <td>{app.nic}</td>
+                        <td>{app.surname}</td>
+                        <td>{app.otherNames}</td>
+                        <td>{app.oaMarks}</td>
+                        <td>{app.writingMarks}</td>
+                        <td>{app.interviewMarks}</td>
+                        <td>{app.graduationDate}</td>
+                        <td>
+                          <button 
+                            className="delete-icon-btn"
+                            onClick={(e) => handleDelete(app._id, e)}
+                            title="Delete application"
+                          >
+                            🗑️
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
 
             <div className="table-footer-simple">
-              Showing 0 to 0 of 0 entries
+              Showing {filteredApplications.length > 0 ? 1 : 0} to {filteredApplications.length} of {applications.length} entries
               <div className="pagination-simple">
                 <button className="nav-arrow">‹</button>
                 <button className="nav-arrow">›</button>
@@ -218,6 +507,7 @@ function MarksPage() {
                   name="nic"
                   value={formData.nic}
                   onChange={handleInputChange}
+                  placeholder="Enter NIC to auto-fill application details"
                 />
               </div>
 
@@ -239,7 +529,9 @@ function MarksPage() {
                   type="text"
                   name="surname"
                   value={formData.surname}
-                  onChange={handleInputChange}
+                  readOnly
+                  className="readonly-field"
+                  placeholder="Auto-filled from application"
                 />
               </div>
 
@@ -261,7 +553,9 @@ function MarksPage() {
                   type="text"
                   name="otherNames"
                   value={formData.otherNames}
-                  onChange={handleInputChange}
+                  readOnly
+                  className="readonly-field"
+                  placeholder="Auto-filled from application"
                 />
               </div>
 
@@ -321,10 +615,29 @@ function MarksPage() {
 
             <div className="form-actions">
               <button className="save-btn" onClick={handleSave}>
-                Save
+                Save Marks
               </button>
               <button className="update-btn" onClick={handleUpdate}>
                 Update
+              </button>
+              <button 
+                className="clear-btn" 
+                onClick={() => {
+                  setFormData({
+                    nic: '',
+                    surname: '',
+                    otherNames: '',
+                    oaMarks: '',
+                    writingMarks: '',
+                    interviewMarks: '',
+                    applicationStatus: '',
+                    graduationDate: ''
+                  });
+                  setSelectedApplication(null);
+                  setSelectedApplicationId(null);
+                }}
+              >
+                Clear
               </button>
             </div>
           </div>

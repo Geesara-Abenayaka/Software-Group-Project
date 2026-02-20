@@ -97,8 +97,26 @@ const applicationSchema = new mongoose.Schema({
   // Application Status
   status: {
     type: String,
-    enum: ['pending', 'approved', 'rejected', 'under-review'],
+    enum: ['pending', 'approved', 'rejected', 'under-review', 'Pending', 'Approved', 'Application Rejected', 'Short Listed'],
     default: 'pending'
+  },
+  
+  // Marks
+  oaMarks: {
+    type: String,
+    default: ''
+  },
+  writingMarks: {
+    type: String,
+    default: ''
+  },
+  interviewMarks: {
+    type: String,
+    default: ''
+  },
+  graduationDate: {
+    type: String,
+    default: ''
   },
   
   // Submission Date

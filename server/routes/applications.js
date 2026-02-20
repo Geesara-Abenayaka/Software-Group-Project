@@ -129,6 +129,47 @@ router.patch('/:id/status', async (req, res) => {
   }
 });
 
+// Update application marks
+router.patch('/:id/marks', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { oaMarks, writingMarks, interviewMarks, status, graduationDate } = req.body;
+    
+    const updateData = {};
+    if (oaMarks !== undefined) updateData.oaMarks = oaMarks;
+    if (writingMarks !== undefined) updateData.writingMarks = writingMarks;
+    if (interviewMarks !== undefined) updateData.interviewMarks = interviewMarks;
+    if (status !== undefined) updateData.status = status;
+    if (graduationDate !== undefined) updateData.graduationDate = graduationDate;
+    
+    const application = await Application.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true }
+    );
+    
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: 'Application not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Marks updated successfully',
+      data: application
+    });
+  } catch (error) {
+    console.error('Error updating marks:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating marks',
+      error: error.message
+    });
+  }
+});
+
 // Delete application
 router.delete('/:id', async (req, res) => {
   try {
