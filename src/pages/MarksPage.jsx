@@ -5,11 +5,20 @@ import '../styles/MarksPage.css';
 function MarksPage() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [selectedCourse, setSelectedCourse] = useState('MBA-IT');
+  const [selectedCourse, setSelectedCourse] = useState(() => {
+    // Restore selected course from localStorage or default to 'All'
+    return localStorage.getItem('selectedCourse') || 'All';
+  });
   const [searchText, setSearchText] = useState('');
   const [applications, setApplications] = useState([]);
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [selectedApplicationId, setSelectedApplicationId] = useState(null);
+  const [marksErrors, setMarksErrors] = useState({
+    oaMarks: '',
+    writingMarks: '',
+    interviewMarks: ''
+  });
+  const [nicError, setNicError] = useState('');
   
   const [formData, setFormData] = useState({
     nic: '',
@@ -38,16 +47,23 @@ function MarksPage() {
       const result = await response.json();
       
       if (result.success) {
+        console.log('All applications from DB:', result.data);
+        console.log('Selected course:', selectedCourse);
+        
         // Transform data to match the expected format
         const transformedData = result.data
-          .filter(app => !selectedCourse || app.program === selectedCourse)
+          .filter(app => {
+            const match = selectedCourse === 'All' || 
+                         app.program?.toLowerCase() === selectedCourse.toLowerCase();
+            console.log(`App program: "${app.program}", Selected: "${selectedCourse}", Match: ${match}`);
+            return match;
+          })
           .map(app => {
             // Map database status to display status
             let displayStatus = app.status || 'Pending';
             if (displayStatus === 'pending') displayStatus = 'Pending';
             else if (displayStatus === 'approved') displayStatus = 'Approved';
-            else if (displayStatus === 'rejected') displayStatus = 'Application Rejected';
-            else if (displayStatus === 'under-review') displayStatus = 'Short Listed';
+            else if (displayStatus === 'rejected') displayStatus = 'Rejected';
             
             // Format graduation date - check root field first, then qualifications array
             let gradDate = '-';
@@ -89,6 +105,7 @@ function MarksPage() {
               graduationDate: gradDate
             };
           });
+        console.log('Filtered applications:', transformedData);
         setApplications(transformedData);
       }
     } catch (err) {
@@ -110,6 +127,7 @@ function MarksPage() {
     if (!searchText) return true;
     const search = searchText.toLowerCase();
     return (
+      app._id.toLowerCase().includes(search) ||
       app.nic.toLowerCase().includes(search) ||
       app.surname.toLowerCase().includes(search) ||
       app.otherNames.toLowerCase().includes(search)
@@ -118,6 +136,19 @@ function MarksPage() {
 
   const handleInputChange = async (e) => {
     const { name, value } = e.target;
+    
+    // Clear NIC error when user is typing in NIC field or clears it
+    if (name === 'nic') {
+      if (value.length < 9 || value === '') {
+        setNicError('');
+      }
+    }
+    
+    // Validate marks fields
+    if (name === 'oaMarks' || name === 'writingMarks' || name === 'interviewMarks') {
+      validateMarks(name, value);
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -127,6 +158,27 @@ function MarksPage() {
     if (name === 'nic' && value.length >= 9) {
       await fetchApplicationByNIC(value);
     }
+  };
+
+  const validateMarks = (fieldName, value) => {
+    let error = '';
+    
+    if (value !== '') {
+      const numValue = parseFloat(value);
+      
+      if (isNaN(numValue)) {
+        error = 'Please enter a valid number';
+      } else if (numValue < 0) {
+        error = 'Marks cannot be less than 0';
+      } else if (numValue > 100) {
+        error = 'Marks cannot be greater than 100';
+      }
+    }
+    
+    setMarksErrors(prev => ({
+      ...prev,
+      [fieldName]: error
+    }));
   };
 
   const fetchApplicationByNIC = async (nic) => {
@@ -139,13 +191,15 @@ function MarksPage() {
         const application = result.data.find(app => app.nicNo === nic);
         
         if (application) {
+          // Clear NIC error if application found
+          setNicError('');
+          
           // Map database status to display status
           let displayStatus = application.status || 'Pending';
           // Convert lowercase statuses to display format
           if (displayStatus === 'pending') displayStatus = 'Pending';
           else if (displayStatus === 'approved') displayStatus = 'Approved';
-          else if (displayStatus === 'rejected') displayStatus = 'Application Rejected';
-          else if (displayStatus === 'under-review') displayStatus = 'Short Listed';
+          else if (displayStatus === 'rejected') displayStatus = 'Rejected';
           
           // Format graduation date for date input (YYYY-MM-DD)
           // First check if there's a root-level graduationDate, otherwise check qualifications array
@@ -187,12 +241,22 @@ function MarksPage() {
             graduationDate: gradDate
           });
           
+          // Clear any validation errors
+          setMarksErrors({
+            oaMarks: '',
+            writingMarks: '',
+            interviewMarks: ''
+          });
+          
           // Set the selected application ID for updating
           setSelectedApplicationId(application._id);
           const index = applications.findIndex(app => app._id === application._id);
           setSelectedApplication(index);
         } else {
-          // If no application found, clear other fields except NIC
+          // If no application found, show error
+          setNicError('No submitted application found with this NIC number');
+          
+          // Clear other fields except NIC
           setFormData(prev => ({
             nic: prev.nic,
             surname: '',
@@ -203,6 +267,12 @@ function MarksPage() {
             applicationStatus: '',
             graduationDate: ''
           }));
+          // Clear any validation errors
+          setMarksErrors({
+            oaMarks: '',
+            writingMarks: '',
+            interviewMarks: ''
+          });
           setSelectedApplication(null);
           setSelectedApplicationId(null);
         }
@@ -258,6 +328,12 @@ function MarksPage() {
       return;
     }
 
+    // Check for validation errors
+    if (marksErrors.oaMarks || marksErrors.writingMarks || marksErrors.interviewMarks) {
+      alert('Please fix the validation errors before saving');
+      return;
+    }
+
     // This now works the same as Update
     await handleUpdate();
   };
@@ -265,6 +341,12 @@ function MarksPage() {
   const handleUpdate = async () => {
     if (!selectedApplicationId) {
       alert('Please select an application from the table to update');
+      return;
+    }
+
+    // Check for validation errors
+    if (marksErrors.oaMarks || marksErrors.writingMarks || marksErrors.interviewMarks) {
+      alert('Please fix the validation errors before updating');
       return;
     }
 
@@ -314,9 +396,14 @@ function MarksPage() {
     }
   };
 
+  const handleDeselectRow = () => {
+    setSelectedApplication(null);
+    setSelectedApplicationId(null);
+  };
+
   return (
-    <div className="admin-app">
-      <header className="admin-header">
+    <div className="admin-app" onClick={handleDeselectRow}>
+      <header className="admin-header" onClick={(e) => e.stopPropagation()}>
         <div className="admin-header-content">
           <div className="header-left">
             <div className="graduation-cap-icon">🎓</div>
@@ -342,7 +429,7 @@ function MarksPage() {
           </div>
         </div>
       </header>
-      <nav className="admin-navbar">
+      <nav className="admin-navbar" onClick={(e) => e.stopPropagation()}>
         <div className="navbar-content">
           <button className="navbar-btn" onClick={() => navigate('/admin/dashboard')}>
             <span className="nav-icon">📋</span>
@@ -372,7 +459,7 @@ function MarksPage() {
       </nav>
       <div className="admin-content-full">
         <main className="admin-main-full marks-main">
-          <div className="marks-controls">
+          <div className="marks-controls" onClick={(e) => e.stopPropagation()}>
             <div className="search-wrapper">
               <input
                 type="text"
@@ -387,22 +474,28 @@ function MarksPage() {
               <label>Course:</label>
               <select 
                 value={selectedCourse} 
-                onChange={(e) => setSelectedCourse(e.target.value)}
+                onChange={(e) => {
+                  const newCourse = e.target.value;
+                  setSelectedCourse(newCourse);
+                  localStorage.setItem('selectedCourse', newCourse);
+                }}
                 className="course-dropdown"
               >
-                <option value="MBA-IT">MBA-IT</option>
-                <option value="MBA-eGov">MBA-eGov</option>
-                <option value="MBA-DS">MBA-DS</option>
-                <option value="MasterCS">MasterCS</option>
-                <option value="MasterDSAI">MasterDSAI</option>
+                <option value="All">All Courses</option>
+                <option value="mba-it">MBA-IT</option>
+                <option value="mba-egov">MBA-eGov</option>
+                <option value="mba-ds">MBA-DS</option>
+                <option value="msc-cs">MSc-CS</option>
+                <option value="msc-ds-ai">MSc-DS-AI</option>
               </select>
             </div>
           </div>
 
-          <div className="marks-table-container">
+          <div className="marks-table-container" onClick={(e) => e.stopPropagation()}>
             <table className="marks-table">
               <thead>
                 <tr>
+                  <th>Program</th>
                   <th>Application Status</th>
                   <th>NIC</th>
                   <th>Surname</th>
@@ -417,7 +510,7 @@ function MarksPage() {
               <tbody>
                 {filteredApplications.length === 0 ? (
                   <tr>
-                    <td colSpan="9" className="no-data">
+                    <td colSpan="10" className="no-data">
                       No data available in table
                     </td>
                   </tr>
@@ -432,7 +525,8 @@ function MarksPage() {
                     return (
                       <tr 
                         key={index}
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent deselection when clicking row
                           setSelectedApplication(originalIndex);
                           setSelectedApplicationId(app._id);
                           
@@ -465,6 +559,7 @@ function MarksPage() {
                         className={selectedApplication === originalIndex ? 'selected-row' : ''}
                         style={{ cursor: 'pointer' }}
                       >
+                        <td>{app.program || '-'}</td>
                         <td>{app.status}</td>
                         <td>{app.nic}</td>
                         <td>{app.surname}</td>
@@ -498,7 +593,7 @@ function MarksPage() {
             </div>
           </div>
 
-          <div className="marks-form-container">
+          <div className="marks-form-container" onClick={(e) => e.stopPropagation()}>
             <div className="marks-form-row">
               <div className="form-field">
                 <label>NIC</label>
@@ -508,7 +603,9 @@ function MarksPage() {
                   value={formData.nic}
                   onChange={handleInputChange}
                   placeholder="Enter NIC to auto-fill application details"
+                  className={nicError ? 'error' : ''}
                 />
+                {nicError && <span className="error-message">{nicError}</span>}
               </div>
 
               <div className="form-field">
@@ -518,7 +615,9 @@ function MarksPage() {
                   name="oaMarks"
                   value={formData.oaMarks}
                   onChange={handleInputChange}
+                  className={marksErrors.oaMarks ? 'error' : ''}
                 />
+                {marksErrors.oaMarks && <span className="error-message">{marksErrors.oaMarks}</span>}
               </div>
             </div>
 
@@ -542,7 +641,9 @@ function MarksPage() {
                   name="writingMarks"
                   value={formData.writingMarks}
                   onChange={handleInputChange}
+                  className={marksErrors.writingMarks ? 'error' : ''}
                 />
+                {marksErrors.writingMarks && <span className="error-message">{marksErrors.writingMarks}</span>}
               </div>
             </div>
 
@@ -566,7 +667,9 @@ function MarksPage() {
                   name="interviewMarks"
                   value={formData.interviewMarks}
                   onChange={handleInputChange}
+                  className={marksErrors.interviewMarks ? 'error' : ''}
                 />
+                {marksErrors.interviewMarks && <span className="error-message">{marksErrors.interviewMarks}</span>}
               </div>
             </div>
 
@@ -587,16 +690,10 @@ function MarksPage() {
                     ✓ Approved
                   </button>
                   <button
-                    className={`status-btn ${formData.applicationStatus === 'Application Rejected' ? 'active' : ''}`}
-                    onClick={() => handleStatusChange('Application Rejected')}
+                    className={`status-btn ${formData.applicationStatus === 'Rejected' ? 'active' : ''}`}
+                    onClick={() => handleStatusChange('Rejected')}
                   >
-                    ✓ Application Rejected
-                  </button>
-                  <button
-                    className={`status-btn ${formData.applicationStatus === 'Short Listed' ? 'active' : ''}`}
-                    onClick={() => handleStatusChange('Short Listed')}
-                  >
-                    ✓ Short Listed
+                    ✓ Rejected
                   </button>
                 </div>
               </div>
@@ -607,8 +704,9 @@ function MarksPage() {
                   type="date"
                   name="graduationDate"
                   value={formData.graduationDate}
-                  onChange={handleInputChange}
-                  placeholder="Please select a date..."
+                  readOnly
+                  className="readonly-field"
+                  placeholder="Auto-filled from application"
                 />
               </div>
             </div>
@@ -633,6 +731,12 @@ function MarksPage() {
                     applicationStatus: '',
                     graduationDate: ''
                   });
+                  setMarksErrors({
+                    oaMarks: '',
+                    writingMarks: '',
+                    interviewMarks: ''
+                  });
+                  setNicError('');
                   setSelectedApplication(null);
                   setSelectedApplicationId(null);
                 }}
