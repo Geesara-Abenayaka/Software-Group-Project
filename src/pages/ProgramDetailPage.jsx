@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import '../styles/ProgramDetailPage.css';
+import { generateCourseDetailsPDF } from '../utils/pdfGenerator';
 
 function ProgramDetailPage() {
   const { shortCode } = useParams();
@@ -34,6 +35,18 @@ function ProgramDetailPage() {
 
   const handleBackToHome = () => {
     navigate('/');
+  };
+
+  const handleResourceClick = (resource) => {
+    // Handle Online Application or form type resources
+    if (resource.name === 'Online Application' || resource.type === 'form') {
+      navigate('/apply', { state: { program: program.shortCode, programName: program.name } });
+    } 
+    // Handle Course Details PDF generation
+    else if (resource.type === 'pdf' && resource.name.includes('Course Details')) {
+      generateCourseDetailsPDF(program);
+    }
+    // You can add more handlers for other resource types here
   };
 
   if (loading) {
@@ -118,12 +131,8 @@ function ProgramDetailPage() {
                   <div 
                     key={index} 
                     className="resource-card"
-                    onClick={() => {
-                      if (resource.name === 'Online Application' || resource.type === 'form') {
-                        navigate('/apply', { state: { program: program.shortCode, programName: program.name } });
-                      }
-                    }}
-                    style={{ cursor: resource.name === 'Online Application' || resource.type === 'form' ? 'pointer' : 'default' }}
+                    onClick={() => handleResourceClick(resource)}
+                    style={{ cursor: 'pointer' }}
                   >
                     <div className="resource-icon">
                       {resource.type === 'pdf' ? '📄' : 
