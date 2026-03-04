@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import '../styles/ProgramDetailPage.css';
-import { generateCourseDetailsPDF } from '../utils/pdfGenerator';
+import { generateCourseDetailsPDF, generateCallForApplicationPDF } from '../utils/pdfGenerator';
 
 function ProgramDetailPage() {
   const { shortCode } = useParams();
@@ -45,6 +45,10 @@ function ProgramDetailPage() {
     // Handle Course Details PDF generation
     else if (resource.type === 'pdf' && resource.name.includes('Course Details')) {
       generateCourseDetailsPDF(program);
+    }
+    // Handle Call for Application PDF generation
+    else if (resource.type === 'pdf' && resource.name.includes('Call for Application')) {
+      generateCallForApplicationPDF(program);
     }
     // You can add more handlers for other resource types here
   };
