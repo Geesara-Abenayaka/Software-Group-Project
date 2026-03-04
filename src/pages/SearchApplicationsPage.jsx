@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { GraduationCap, Search, Download, BarChart2, Settings, LogOut, User, FileText, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import '../styles/SearchApplicationsPage.css';
 
 function SearchApplicationsPage() {
@@ -193,23 +194,13 @@ function SearchApplicationsPage() {
 
   const statusCounts = getStatusCounts();
 
-  if (loading) {
-    return (
-      <div className="admin-app">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading applications...</p>
-        </div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="admin-app">
       <header className="admin-header">
         <div className="admin-header-content">
           <div className="header-left">
-            <div className="graduation-cap-icon">🎓</div>
             <div className="header-text">
               <h1 className="university-name">University of Moratuwa</h1>
               <p className="portal-subtitle">Postgraduate Management Information System</p>
@@ -218,7 +209,7 @@ function SearchApplicationsPage() {
           <div className="header-right">
             <div className="user-info">
               <div className="user-avatar">
-                <span>👤</span>
+                <User size={20} color="white" />
               </div>
               <div className="user-details">
                 <span className="user-role">Admin User</span>
@@ -226,7 +217,7 @@ function SearchApplicationsPage() {
               </div>
             </div>
             <button className="logout-btn" onClick={handleLogout}>
-              <span className="logout-icon">🚪</span>
+              <LogOut size={16} />
               Logout
             </button>
           </div>
@@ -235,27 +226,23 @@ function SearchApplicationsPage() {
       <nav className="admin-navbar">
         <div className="navbar-content">
           <button className="navbar-btn" onClick={() => navigate('/admin/dashboard')}>
-            <span className="nav-icon">📋</span>
+            <GraduationCap size={18} className="nav-icon" />
             Programs
           </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/applications')}>
-            <span className="nav-icon">📋</span>
-            Applications
-          </button>
           <button className="navbar-btn active">
-            <span className="nav-icon">🔍</span>
+            <Search size={18} className="nav-icon" />
             Search
           </button>
           <button className="navbar-btn" onClick={() => navigate('/admin/download')}>
-            <span className="nav-icon">📥</span>
+            <Download size={18} className="nav-icon" />
             Download
           </button>
           <button className="navbar-btn" onClick={() => navigate('/admin/marks')}>
-            <span className="nav-icon">📠</span>
+            <BarChart2 size={18} className="nav-icon" />
             Marks
           </button>
           <button className="navbar-btn" onClick={() => navigate('/admin/settings')}>
-            <span className="nav-icon">⚙️</span>
+            <Settings size={18} className="nav-icon" />
             Settings
           </button>
         </div>
@@ -367,42 +354,57 @@ function SearchApplicationsPage() {
               </div>
 
               <button className="export-btn">
-                <span>📥</span>
+                <Download size={15} />
                 Export All
               </button>
             </div>
           </div>
 
+          {loading ? (
+            <div className="loading-container">
+              <div className="loading-spinner"></div>
+              <p>Loading applications...</p>
+            </div>
+          ) : (
+          <>
           <div className="stats-cards">
             <div className="stat-card">
-              <span className="stat-icon">📄</span>
               <div className="stat-info">
                 <span className="stat-label">Total Applications</span>
                 <span className="stat-value">{statusCounts.total}</span>
               </div>
+              <div className="stat-icon-circle stat-icon-total">
+                <FileText size={22} />
+              </div>
             </div>
 
             <div className="stat-card">
-              <span className="stat-icon pending-icon">⏳</span>
               <div className="stat-info">
                 <span className="stat-label">Pending</span>
                 <span className="stat-value">{statusCounts.pending}</span>
               </div>
-            </div>
-
-            <div className="stat-card">
-              <span className="stat-icon approved-icon">✓</span>
-              <div className="stat-info">
-                <span className="stat-label">Approved</span>
-                <span className="stat-value">{statusCounts.approved}</span>
+              <div className="stat-icon-circle stat-icon-pending">
+                <Clock size={22} />
               </div>
             </div>
 
             <div className="stat-card">
-              <span className="stat-icon rejected-icon">✕</span>
+              <div className="stat-info">
+                <span className="stat-label">Approved</span>
+                <span className="stat-value">{statusCounts.approved}</span>
+              </div>
+              <div className="stat-icon-circle stat-icon-approved">
+                <CheckCircle2 size={22} />
+              </div>
+            </div>
+
+            <div className="stat-card">
               <div className="stat-info">
                 <span className="stat-label">Rejected</span>
                 <span className="stat-value">{statusCounts.rejected}</span>
+              </div>
+              <div className="stat-icon-circle stat-icon-rejected">
+                <XCircle size={22} />
               </div>
             </div>
           </div>
@@ -512,6 +514,8 @@ function SearchApplicationsPage() {
               </div>
             </div>
           </div>
+          </>
+          )}
         </main>
       </div>
     </div>

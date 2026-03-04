@@ -1,5 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  GraduationCap,
+  ClipboardList,
+  Search,
+  Download,
+  BarChart2,
+  Settings,
+  LogOut,
+  User,
+  PlusCircle,
+  Pencil,
+  Trash2
+} from 'lucide-react';
 import '../styles/AdminDashboard.css';
 
 function AdminDashboard() {
@@ -42,11 +55,23 @@ function AdminDashboard() {
   const fetchPrograms = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/programs');
-      const data = await response.json();
-      
-      if (data.success) {
-        setPrograms(data.data);
+      const [progResponse, appsResponse] = await Promise.all([
+        fetch('http://localhost:5000/api/programs'),
+        fetch('http://localhost:5000/api/applications')
+      ]);
+      const progData = await progResponse.json();
+      const appsData = await appsResponse.json();
+
+      if (progData.success) {
+        const programsWithCounts = progData.data.map(program => {
+          const pendingCount = appsData.success
+            ? appsData.data.filter(
+                app => app.program === program.shortCode && app.status === 'pending'
+              ).length
+            : 0;
+          return { ...program, pendingCount };
+        });
+        setPrograms(programsWithCounts);
       } else {
         setError('Failed to load programs');
       }
@@ -293,30 +318,7 @@ function AdminDashboard() {
     }));
   };
 
-  if (loading) {
-    return (
-      <div className="admin-app">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading programs...</p>
-        </div>
-      </div>
-    );
-  }
 
-  if (error) {
-    return (
-      <div className="admin-app">
-        <div className="error-container">
-          <h2>Error</h2>
-          <p>{error}</p>
-          <button onClick={fetchPrograms} className="retry-btn">
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="admin-app">
@@ -331,7 +333,7 @@ function AdminDashboard() {
           <div className="header-right">
             <div className="user-info">
               <div className="user-avatar">
-                <span>👤</span>
+                <User size={20} color="white" />
               </div>
               <div className="user-details">
                 <span className="user-role">Admin User</span>
@@ -339,7 +341,7 @@ function AdminDashboard() {
               </div>
             </div>
             <button className="logout-btn" onClick={handleLogout}>
-              <span className="logout-icon">🚪</span>
+              <LogOut size={16} />
               Logout
             </button>
           </div>
@@ -349,27 +351,23 @@ function AdminDashboard() {
       <nav className="admin-navbar">
         <div className="navbar-content">
           <button className="navbar-btn active">
-            <span className="nav-icon">🎓</span>
+            <GraduationCap size={18} className="nav-icon" />
             Programs
           </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/applications')}>
-            <span className="nav-icon">📋</span>
-            Applications
-          </button>
           <button className="navbar-btn" onClick={() => navigate('/admin/search')}>
-            <span className="nav-icon">🔍</span>
+            <Search size={18} className="nav-icon" />
             Search
           </button>
           <button className="navbar-btn" onClick={() => navigate('/admin/download')}>
-            <span className="nav-icon">📥</span>
+            <Download size={18} className="nav-icon" />
             Download
           </button>
           <button className="navbar-btn" onClick={() => navigate('/admin/marks')}>
-            <span className="nav-icon">📊</span>
+            <BarChart2 size={18} className="nav-icon" />
             Marks
           </button>
           <button className="navbar-btn" onClick={() => navigate('/admin/settings')}>
-            <span className="nav-icon">⚙️</span>
+            <Settings size={18} className="nav-icon" />
             Settings
           </button>
         </div>
@@ -379,12 +377,20 @@ function AdminDashboard() {
         <main className="admin-main-full">
           <div className="programs-header-admin">
             <h2 className="programs-title-admin">Postgraduate Programs</h2>
-            <button className="add-program-btn" onClick={handleOpenAddModal}>
-              + Add New Program
-            </button>
           </div>
 
-          {programs.length === 0 ? (
+          {loading ? (
+            <div className="loading-container">
+              <div className="loading-spinner"></div>
+              <p>Loading programs...</p>
+            </div>
+          ) : error ? (
+            <div className="error-container">
+              <h2>Error</h2>
+              <p>{error}</p>
+              <button onClick={fetchPrograms} className="retry-btn">Retry</button>
+            </div>
+          ) : programs.length === 0 ? (
             <div className="no-programs">
               <p>No programs available</p>
             </div>
@@ -392,47 +398,56 @@ function AdminDashboard() {
             <div className="programs-grid-admin">
               {programs.map((program) => (
                 <div key={program._id} className="program-card-admin">
-                  <div className="card-header-admin">
-                    <h3 className="card-title-admin">{program.title}</h3>
+                  <div className="card-top-row">
+                    <div className="card-avatar-icon">
+                      <User size={22} color="#9ca3af" />
+                    </div>
+                    <span className={`pending-badge-pill ${program.pendingCount > 0 ? 'pending-red' : 'pending-gray'}`}>
+                      {program.pendingCount} Pending
+                    </span>
                   </div>
-                  
+
+                  <h3 className="card-title-admin">{program.title}</h3>
+
                   <p className="card-description-admin">{program.description}</p>
-                  
-                  {program.specializations && program.specializations.length > 0 && (
-                    <div className="specializations-admin">
-                      <p className="specializations-label-admin">Specializations:</p>
-                      {program.specializations.map((spec, index) => (
-                        <span key={index} className="specialization-tag-admin">{spec.name}</span>
-                      ))}
-                    </div>
-                  )}
-                  
-                  <div className="card-info-admin">
-                    <div className="info-item-admin">
-                      <span className="info-icon-admin">📅</span>
-                      <span className="info-text-admin">Deadline: {program.deadline}</span>
-                    </div>
-                    <div className="info-item-admin">
-                      <span className="info-icon-admin">📚</span>
-                      <span className="info-text-admin">{program.resourcesCount} Resources Available</span>
+
+                  <div className="card-bottom-row">
+                    <button
+                      className="view-applications-link"
+                      onClick={() => handleViewApplications(program.shortCode)}
+                    >
+                      View Applications <span className="link-chevron">›</span>
+                    </button>
+                    <div className="card-action-icons">
+                      <button
+                        className="card-icon-btn edit-icon-btn"
+                        title="Edit program"
+                        onClick={() => handleEditProgram(program)}
+                      >
+                        <Pencil size={15} />
+                      </button>
+                      <button
+                        className="card-icon-btn delete-icon-btn"
+                        title="Delete program"
+                        onClick={() => handleDeleteProgram(program._id)}
+                      >
+                        <Trash2 size={15} />
+                      </button>
                     </div>
                   </div>
-
-                  <button 
-                    className="edit-program-btn-admin"
-                    onClick={() => handleEditProgram(program)}
-                  >
-                    Edit Program
-                  </button>
-
-                  <button 
-                    className="delete-program-btn-admin"
-                    onClick={() => handleDeleteProgram(program._id)}
-                  >
-                    Delete Program
-                  </button>
                 </div>
               ))}
+
+              {/* Add New Program Tile */}
+              <div className="add-program-card" onClick={handleOpenAddModal}>
+                <div className="add-program-card-inner">
+                  <div className="add-program-icon-circle">
+                    <PlusCircle size={48} className="add-program-plus-icon" />
+                  </div>
+                  <h3 className="add-program-card-title">Add New Program</h3>
+                  <p className="add-program-card-subtitle">Click to create a new postgraduate program</p>
+                </div>
+              </div>
             </div>
           )}
         </main>

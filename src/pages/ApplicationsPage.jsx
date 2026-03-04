@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User } from 'lucide-react';
 import '../styles/ApplicationsPage.css';
 
 function ApplicationsPage() {
@@ -16,7 +17,7 @@ function ApplicationsPage() {
       navigate('/login');
     }
     fetchPrograms();
-  }, [navigate]);
+  }, []);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchPrograms = async () => {
     try {
@@ -60,17 +61,6 @@ function ApplicationsPage() {
     navigate(`/admin/applications/${programShortCode}`);
   };
 
-  if (loading) {
-    return (
-      <div className="admin-app">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading programs...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="admin-app">
       <header className="admin-header">
@@ -84,7 +74,7 @@ function ApplicationsPage() {
           <div className="header-right">
             <div className="user-info">
               <div className="user-avatar">
-                <span>👤</span>
+                <User size={20} color="white" />
               </div>
               <div className="user-details">
                 <span className="user-role">Admin User</span>
@@ -92,7 +82,7 @@ function ApplicationsPage() {
               </div>
             </div>
             <button className="logout-btn" onClick={handleLogout}>
-              <span className="logout-icon">🚪</span>
+              <LogOut size={16} />
               Logout
             </button>
           </div>
@@ -102,27 +92,23 @@ function ApplicationsPage() {
       <nav className="admin-navbar">
         <div className="navbar-content">
           <button className="navbar-btn" onClick={() => navigate('/admin/dashboard')}>
-            <span className="nav-icon">🎓</span>
+            <GraduationCap size={18} className="nav-icon" />
             Programs
           </button>
-          <button className="navbar-btn active">
-            <span className="nav-icon">📋</span>
-            Applications
-          </button>
           <button className="navbar-btn" onClick={() => navigate('/admin/search')}>
-            <span className="nav-icon">🔍</span>
+            <Search size={18} className="nav-icon" />
             Search
           </button>
           <button className="navbar-btn" onClick={() => navigate('/admin/download')}>
-            <span className="nav-icon">📥</span>
+            <Download size={18} className="nav-icon" />
             Download
           </button>
           <button className="navbar-btn" onClick={() => navigate('/admin/marks')}>
-            <span className="nav-icon">📊</span>
+            <BarChart2 size={18} className="nav-icon" />
             Marks
           </button>
           <button className="navbar-btn" onClick={() => navigate('/admin/settings')}>
-            <span className="nav-icon">⚙️</span>
+            <Settings size={18} className="nav-icon" />
             Settings
           </button>
         </div>
@@ -130,32 +116,40 @@ function ApplicationsPage() {
 
       <div className="admin-content-full">
         <main className="admin-main-full applications-main">
-          <div className="applications-grid">
-            {programs.map((program) => (
-              <div key={program._id} className="application-program-card">
-                <div className="card-header-apps">
-                  <div className="user-icon-apps">
-                    <span>👤</span>
+          <div className="page-title-row">
+            <h2 className="page-heading">Applications</h2>
+          </div>
+          <div className="programs-grid-admin">
+            {loading ? (
+              <div style={{ padding: '2rem', color: '#9ca3af', gridColumn: '1/-1' }}>
+                <div className="loading-spinner" style={{ margin: '0 auto' }}></div>
+              </div>
+            ) : (
+            programs.map((program) => (
+              <div key={program._id} className="program-card-admin">
+                <div className="card-top-row">
+                  <div className="card-avatar-icon">
+                    <User size={22} color="#9ca3af" />
                   </div>
-                  <div className="pending-badge">
-                    <span className="pending-count">{program.pendingCount}</span>
-                    <span className="pending-text">Pending</span>
-                  </div>
+                  <span className={`pending-badge-pill ${program.pendingCount > 0 ? 'pending-red' : 'pending-gray'}`}>
+                    {program.pendingCount} Pending
+                  </span>
                 </div>
 
-                <h3 className="program-title-apps">{program.title}</h3>
-                
-                <p className="program-description-apps">{program.description}</p>
+                <h3 className="card-title-admin">{program.title}</h3>
+                <p className="card-description-admin">{program.description}</p>
 
-                <button 
-                  className="view-applications-btn"
-                  onClick={() => handleViewApplications(program.shortCode)}
-                >
-                  View Applications
-                  <span className="arrow-icon">→</span>
-                </button>
+                <div className="card-bottom-row">
+                  <button
+                    className="view-applications-link"
+                    onClick={() => handleViewApplications(program.shortCode)}
+                  >
+                    View Applications <span className="link-chevron">›</span>
+                  </button>
+                </div>
               </div>
-            ))}
+            ))
+            )}
           </div>
         </main>
       </div>

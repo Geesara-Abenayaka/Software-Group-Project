@@ -1,6 +1,10 @@
 /* Import AdminDashboard styles for consistency */
 @import './AdminDashboard.css';
 
+.admin-main-full {
+  padding: 2rem;
+}
+
 .download-header {
   margin-bottom: 2rem;
 }
@@ -20,10 +24,11 @@
 
 .download-section {
   background: white;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  margin-bottom: 2rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  border: 1px solid #f0f0f0;
+  margin-bottom: 1.5rem;
 }
 
 .section-title {
@@ -143,23 +148,21 @@
 .download-list-btn {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.875rem 2rem;
-  background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+  gap: 0.65rem;
+  padding: 0.8rem 1.75rem;
+  background: #4b5563;
   color: white;
   border: none;
   border-radius: 8px;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.95rem;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 2px 4px rgba(75, 85, 99, 0.2);
+  transition: background 0.2s, transform 0.2s;
 }
 
 .download-list-btn:hover {
-  background: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+  background: #374151;
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(75, 85, 99, 0.3);
 }
 
 .btn-icon {
@@ -167,7 +170,7 @@
 }
 
 .approved-section {
-  border-left: 4px solid #10b981;
+  border-left: 4px solid #8b0000;
 }
 
 @media (max-width: 1200px) {

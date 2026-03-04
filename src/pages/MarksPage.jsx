@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User } from 'lucide-react';
 import '../styles/MarksPage.css';
 
 function MarksPage() {
@@ -406,7 +407,6 @@ function MarksPage() {
       <header className="admin-header" onClick={(e) => e.stopPropagation()}>
         <div className="admin-header-content">
           <div className="header-left">
-            <div className="graduation-cap-icon">🎓</div>
             <div className="header-text">
               <h1 className="university-name">University of Moratuwa</h1>
               <p className="portal-subtitle">Postgraduate Management Information System</p>
@@ -415,7 +415,7 @@ function MarksPage() {
           <div className="header-right">
             <div className="user-info">
               <div className="user-avatar">
-                <span>👤</span>
+                <User size={20} color="white" />
               </div>
               <div className="user-details">
                 <span className="user-role">Admin User</span>
@@ -423,7 +423,7 @@ function MarksPage() {
               </div>
             </div>
             <button className="logout-btn" onClick={handleLogout}>
-              <span className="logout-icon">🚪</span>
+              <LogOut size={16} />
               Logout
             </button>
           </div>
@@ -432,27 +432,23 @@ function MarksPage() {
       <nav className="admin-navbar" onClick={(e) => e.stopPropagation()}>
         <div className="navbar-content">
           <button className="navbar-btn" onClick={() => navigate('/admin/dashboard')}>
-            <span className="nav-icon">📋</span>
+            <GraduationCap size={18} className="nav-icon" />
             Programs
           </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/applications')}>
-            <span className="nav-icon">📋</span>
-            Applications
-          </button>
           <button className="navbar-btn" onClick={() => navigate('/admin/search')}>
-            <span className="nav-icon">🔍</span>
+            <Search size={18} className="nav-icon" />
             Search
           </button>
           <button className="navbar-btn" onClick={() => navigate('/admin/download')}>
-            <span className="nav-icon">📥</span>
+            <Download size={18} className="nav-icon" />
             Download
           </button>
           <button className="navbar-btn active">
-            <span className="nav-icon">📠</span>
+            <BarChart2 size={18} className="nav-icon" />
             Marks
           </button>
           <button className="navbar-btn" onClick={() => navigate('/admin/settings')}>
-            <span className="nav-icon">⚙️</span>
+            <Settings size={18} className="nav-icon" />
             Settings
           </button>
         </div>

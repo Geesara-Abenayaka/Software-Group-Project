@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { GraduationCap, Search, Download, BarChart2, Settings, LogOut, User } from 'lucide-react';
+import '../styles/AdminDashboard.css';
 import '../styles/ApplicationDetailPage.css';
 
 function ApplicationDetailPage() {
@@ -24,7 +26,7 @@ function ApplicationDetailPage() {
       navigate('/login');
     }
     fetchProgramAndApplications();
-  }, [navigate, programId]);
+  }, [programId]);  // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchProgramAndApplications = async () => {
     try {
@@ -45,11 +47,13 @@ function ApplicationDetailPage() {
         // Transform the data to match the expected format
         const transformedApplications = applicationsData.data.map((app, index) => ({
           id: app._id,
+          displayId: `APP${String(index + 1).padStart(3, '0')}`,
           nic: app.nicNo,
           fullName: app.fullName,
           nameWithInitials: app.nameWithInitials,
-          category: app.program === 'msc-cs' ? 'Category 1' : 
-                   app.program === 'msc-ai' ? 'Category 2' : 'Category 3',
+          category: app.category ||
+                   (app.program === 'msc-cs' ? 'Category 1' :
+                    app.program === 'msc-ai' ? 'Category 2' : 'Category 3'),
           status: app.status.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
           email: app.email,
           mobile: app.mobile,
@@ -184,25 +188,33 @@ function ApplicationDetailPage() {
     navigate('/login');
   };
 
-  if (loading) {
-    return (
-      <div className="admin-app">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading applications...</p>
-        </div>
-      </div>
-    );
-  }
-
   const statusCounts = getStatusCounts();
+
+  const getCatClass = (cat) => {
+    if (cat === 'Category 1') return 'cat-1';
+    if (cat === 'Category 2') return 'cat-2';
+    return 'cat-3';
+  };
+
+  const getStatusClass = (status) => {
+    if (status === 'Approved') return 'status-approved';
+    if (status === 'Rejected') return 'status-rejected';
+    if (status === 'Under Review') return 'status-under-review';
+    return 'status-pending';
+  };
+
+  const getStatusIcon = (status) => {
+    if (status === 'Approved') return '✓';
+    if (status === 'Rejected') return '✕';
+    return '⏱';
+  };
 
   return (
     <div className="admin-app">
+      {/* ── Header ── */}
       <header className="admin-header">
         <div className="admin-header-content">
           <div className="header-left">
-            <div className="graduation-cap-icon">🎓</div>
             <div className="header-text">
               <h1 className="university-name">University of Moratuwa</h1>
               <p className="portal-subtitle">Postgraduate Management Information System</p>
@@ -211,7 +223,7 @@ function ApplicationDetailPage() {
           <div className="header-right">
             <div className="user-info">
               <div className="user-avatar">
-                <span>👤</span>
+                <User size={20} color="white" />
               </div>
               <div className="user-details">
                 <span className="user-role">Admin User</span>
@@ -219,89 +231,88 @@ function ApplicationDetailPage() {
               </div>
             </div>
             <button className="logout-btn" onClick={handleLogout}>
-              <span className="logout-icon">🚪</span>
+              <LogOut size={16} />
               Logout
             </button>
           </div>
         </div>
       </header>
 
+      {/* ── Navbar ── */}
       <nav className="admin-navbar">
         <div className="navbar-content">
           <button className="navbar-btn" onClick={() => navigate('/admin/dashboard')}>
-            <span className="nav-icon">📋</span>
+            <GraduationCap size={18} className="nav-icon" />
             Programs
           </button>
-          <button className="navbar-btn active" onClick={() => navigate('/admin/applications')}>
-            <span className="nav-icon">📋</span>
-            Applications
-          </button>
           <button className="navbar-btn" onClick={() => navigate('/admin/search')}>
-            <span className="nav-icon">🔍</span>
+            <Search size={18} className="nav-icon" />
             Search
           </button>
           <button className="navbar-btn" onClick={() => navigate('/admin/download')}>
-            <span className="nav-icon">📥</span>
+            <Download size={18} className="nav-icon" />
             Download
           </button>
           <button className="navbar-btn" onClick={() => navigate('/admin/marks')}>
-            <span className="nav-icon">📠</span>
+            <BarChart2 size={18} className="nav-icon" />
             Marks
           </button>
           <button className="navbar-btn" onClick={() => navigate('/admin/settings')}>
-            <span className="nav-icon">⚙️</span>
+            <Settings size={18} className="nav-icon" />
             Settings
           </button>
         </div>
       </nav>
 
+      {/* ── Page content ── */}
       <div className="admin-content-full">
-        <main className="admin-main-full detail-main">
-          <div className="detail-header">
-            <button className="back-btn" onClick={() => navigate('/admin/applications')}>
-              ← 
+        <div className="detail-page-wrap">
+
+          {/* Top bar: back + title + avatar */}
+          <div className="detail-topbar">
+            <button className="detail-back-btn" onClick={() => navigate('/admin/applications')}>
+              ←
             </button>
-            <div className="detail-title-section">
-              <h2 className="detail-title">{program?.title || 'Program'}</h2>
-              <p className="detail-subtitle">Application Management</p>
+            <div className="detail-topbar-text">
+              <h2 className="detail-topbar-title">{program?.title || 'Program'}</h2>
+              <p className="detail-topbar-sub">Application Management</p>
             </div>
-            <div className="user-icon-header">
-              <span>👤</span>
-            </div>
-          </div>
-
-          <div className="stats-cards-detail">
-            <div className="stat-card-detail">
-              <span className="stat-label-detail">Total Applications</span>
-              <span className="stat-value-detail">{statusCounts.total}</span>
-            </div>
-
-            <div className="stat-card-detail approved-card">
-              <span className="stat-label-detail">Approved</span>
-              <span className="stat-value-detail">{statusCounts.approved}</span>
-            </div>
-
-            <div className="stat-card-detail pending-card">
-              <span className="stat-label-detail">Pending/Under Review</span>
-              <span className="stat-value-detail">{statusCounts.pending}</span>
-            </div>
-
-            <div className="stat-card-detail rejected-card">
-              <span className="stat-label-detail">Rejected</span>
-              <span className="stat-value-detail">{statusCounts.rejected}</span>
+            <div className="detail-topbar-avatar">
+              <User size={20} color="#8b0000" />
             </div>
           </div>
 
-          <div className="search-filter-bar">
+          {/* Stats cards */}
+          <div className="detail-stats-row">
+            <div className="detail-stat-card">
+              <span className="detail-stat-label">Total Applications</span>
+              <span className="detail-stat-value stat-total">{statusCounts.total}</span>
+            </div>
+            <div className="detail-stat-card">
+              <span className="detail-stat-label">Approved</span>
+              <span className="detail-stat-value stat-approved">{statusCounts.approved}</span>
+            </div>
+            <div className="detail-stat-card">
+              <span className="detail-stat-label">Pending</span>
+              <span className="detail-stat-value stat-pending">{statusCounts.pending}</span>
+            </div>
+            <div className="detail-stat-card">
+              <span className="detail-stat-label">Rejected</span>
+              <span className="detail-stat-value stat-rejected">{statusCounts.rejected}</span>
+            </div>
+          </div>
+
+          {/* Filter bar */}
+          <div className="detail-filter-bar">
             <input
               type="text"
-              className="search-input-detail"
+              className="detail-search-input"
               placeholder="Search by name, NIC, or application ID..."
               value={searchText}
               onChange={(e) => handleSearch(e.target.value)}
             />
             <select
-              className="filter-select"
+              className="detail-filter-select"
               value={filters.category}
               onChange={(e) => handleFilterChange('category', e.target.value)}
             >
@@ -311,7 +322,7 @@ function ApplicationDetailPage() {
               <option>Category 3</option>
             </select>
             <select
-              className="filter-select"
+              className="detail-filter-select"
               value={filters.status}
               onChange={(e) => handleFilterChange('status', e.target.value)}
             >
@@ -321,90 +332,60 @@ function ApplicationDetailPage() {
               <option>Approved</option>
               <option>Rejected</option>
             </select>
-            <button className="export-btn-detail" onClick={handleExport}>
-              <span>📥</span>
+            <button className="detail-export-btn" onClick={handleExport}>
+              <Download size={15} style={{ marginRight: '0.4rem' }} />
               Export
             </button>
           </div>
 
-          <div className="applications-table-detail">
-            <table>
+          {/* Table */}
+          <div className="detail-table-wrap">
+            <table className="detail-table">
               <thead>
                 <tr>
-                  <th>Application<br/>ID</th>
+                  <th>Application<br />ID</th>
                   <th>NIC Number</th>
                   <th>Full Name</th>
                   <th>Name with Initials</th>
                   <th>Category</th>
                   <th>Status</th>
-                  <th></th>
                 </tr>
               </thead>
               <tbody>
-                {filteredApplications.length === 0 ? (
+                {loading ? (
                   <tr>
-                    <td colSpan="7" style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
-                      No applications found
+                    <td colSpan="6" className="no-apps-msg">
+                      <div className="loading-spinner" style={{ margin: '0 auto' }}></div>
                     </td>
+                  </tr>
+                ) : filteredApplications.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="no-apps-msg">No applications found</td>
                   </tr>
                 ) : (
                   filteredApplications.map((app) => (
                     <tr key={app.id}>
-                      <td className="app-id-cell">
-                        <a 
-                          href="#" 
-                          onClick={(e) => {
-                            e.preventDefault();
-                            navigate(`/admin/application/${app.id}`);
-                          }}
-                          className="app-id-link"
-                          title="View full application details"
+                      <td>
+                        <a
+                          href="#"
+                          className="detail-app-id-link"
+                          onClick={(e) => { e.preventDefault(); navigate(`/admin/application/${app.id}`); }}
                         >
-                          {app.id.substring(0, 8)}
+                          {app.displayId}
                         </a>
                       </td>
-                      <td>{app.nic}</td>
+                      <td style={{ color: '#9ca3af' }}>{app.nic}</td>
                       <td>{app.fullName}</td>
                       <td>{app.nameWithInitials}</td>
                       <td>
-                        <span className="category-badge">{app.category}</span>
-                      </td>
-                      <td>
-                        <span className={`status-badge-detail status-${app.status.toLowerCase().replace(' ', '-')}`}>
-                          {app.status === 'Approved' && '✓ '}
-                          {app.status === 'Rejected' && '✕ '}
-                          {app.status === 'Pending' && '○ '}
-                          {app.status === 'Under Review' && '◷ '}
-                          {app.status}
+                        <span className={`detail-cat-badge ${getCatClass(app.category)}`}>
+                          {app.category}
                         </span>
                       </td>
                       <td>
-                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                          <select
-                            className="status-select"
-                            value={
-                              app.status === 'Pending' ? 'pending' :
-                              app.status === 'Under Review' ? 'under-review' :
-                              app.status === 'Approved' ? 'approved' :
-                              app.status === 'Rejected' ? 'rejected' : 'pending'
-                            }
-                            onChange={(e) => handleUpdateStatus(app.id, e.target.value)}
-                          >
-                            <option value="pending">Pending</option>
-                            <option value="under-review">Under Review</option>
-                            <option value="approved">Approved</option>
-                            <option value="rejected">Rejected</option>
-                          </select>
-                          <button 
-                            className="delete-btn-table"
-                            onClick={() => handleDeleteApplication(app.id, app.fullName)}
-                            title="Delete application"
-                          >
-                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                              <path d="M5.5 2.5V3h5v-.5a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 0-.5.5zm-1 0V3H2v1h1v9a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4h1V3h-2.5v-.5A1.5 1.5 0 0 0 10 1H6a1.5 1.5 0 0 0-1.5 1.5zM4 4h8v9H4V4zm1.5 1.5v6h1v-6h-1zm3 0v6h1v-6h-1z"/>
-                            </svg>
-                          </button>
-                        </div>
+                        <span className={`detail-status-pill ${getStatusClass(app.status)}`}>
+                          {getStatusIcon(app.status)} {app.status}
+                        </span>
                       </td>
                     </tr>
                   ))
@@ -413,10 +394,14 @@ function ApplicationDetailPage() {
             </table>
           </div>
 
-          <button className="bulk-email-btn" onClick={handleSendBulkEmail}>
-            Send Bulk Email
-          </button>
-        </main>
+          {/* Bulk email */}
+          <div className="detail-bulk-row">
+            <button className="detail-bulk-btn" onClick={handleSendBulkEmail}>
+              Send Bulk Email
+            </button>
+          </div>
+
+        </div>
       </div>
     </div>
   );
