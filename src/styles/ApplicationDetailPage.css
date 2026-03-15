@@ -347,6 +347,340 @@
   color: #b91c1c;
 }
 
+/* -- Bulk email modal -------------------------------------- */
+.bulk-email-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(17, 24, 39, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.bulk-email-modal {
+  width: min(980px, 100%);
+  max-height: min(92vh, 900px);
+  background: #f3f4f6;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+}
+
+.bulk-email-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.bulk-email-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.bulk-email-back {
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bulk-email-back:hover {
+  background: #f3f4f6;
+}
+
+.bulk-email-title {
+  margin: 0;
+  color: #8b0000;
+  font-size: 1rem;
+}
+
+.bulk-email-subtitle {
+  margin: 0.15rem 0 0;
+  font-size: 0.73rem;
+  color: #6b7280;
+}
+
+.bulk-email-header-icon {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #8b0000;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.bulk-email-body {
+  overflow-y: auto;
+  padding: 0.9rem;
+  display: grid;
+  gap: 0.9rem;
+}
+
+.bulk-email-recipients,
+.bulk-email-editor {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 0.9rem;
+}
+
+.bulk-email-section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bulk-email-heading-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #374151;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.bulk-email-count {
+  background: #fca5a5;
+  color: #ffffff;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  padding: 0.25rem 0.6rem;
+  font-weight: 600;
+}
+
+.bulk-email-recipient-actions {
+  display: flex;
+  gap: 0.65rem;
+  margin-top: 0.45rem;
+}
+
+.bulk-email-link-btn {
+  border: none;
+  background: transparent;
+  color: #8b0000;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.bulk-email-link-btn:hover {
+  color: #b91c1c;
+}
+
+.bulk-email-recipient-list {
+  margin-top: 0.65rem;
+  border: 1px solid #f3f4f6;
+  border-radius: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  background: #fafafa;
+}
+
+.bulk-email-empty {
+  margin: 0;
+  padding: 1.2rem;
+  font-size: 0.84rem;
+  color: #9ca3af;
+  text-align: center;
+}
+
+.bulk-email-recipient-item {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 0.7rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.bulk-email-recipient-item:last-child {
+  border-bottom: none;
+}
+
+.bulk-email-recipient-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid #fecaca;
+  display: grid;
+  place-items: center;
+  background: #ffffff;
+}
+
+.bulk-email-recipient-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.bulk-email-recipient-meta strong {
+  color: #111827;
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bulk-email-recipient-meta span {
+  color: #6b7280;
+  font-size: 0.74rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bulk-email-recipient-id {
+  color: #9ca3af;
+  font-size: 0.73rem;
+  font-weight: 600;
+}
+
+.bulk-email-remove {
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+
+.bulk-email-remove:hover {
+  color: #dc2626;
+  background: #fee2e2;
+}
+
+.bulk-email-editor-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.bulk-email-editor-heading h4 {
+  margin: 0;
+  color: #111827;
+  font-size: 0.9rem;
+}
+
+.bulk-email-editor-heading span {
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+
+.bulk-email-field-label {
+  margin-top: 0.85rem;
+  display: block;
+  color: #374151;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.bulk-email-subject-input,
+.bulk-email-message-input {
+  width: 100%;
+  margin-top: 0.35rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 0.86rem;
+  font-family: inherit;
+  padding: 0.65rem 0.75rem;
+  outline: none;
+}
+
+.bulk-email-subject-input:focus,
+.bulk-email-message-input:focus {
+  border-color: #d1d5db;
+}
+
+.bulk-email-message-input {
+  min-height: 190px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.bulk-email-feedback {
+  margin: 0.75rem 0 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.bulk-email-feedback.error {
+  color: #b91c1c;
+}
+
+.bulk-email-feedback.success {
+  color: #166534;
+}
+
+.bulk-email-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  padding: 0.9rem 1rem;
+  background: #ffffff;
+  border-top: 1px solid #e5e7eb;
+}
+
+.bulk-email-cancel,
+.bulk-email-send {
+  border: none;
+  border-radius: 8px;
+  padding: 0.65rem 1rem;
+  font-size: 0.83rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bulk-email-cancel {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.bulk-email-cancel:hover {
+  background: #b91c1c;
+}
+
+.bulk-email-send {
+  background: #6b7280;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.bulk-email-send:hover {
+  background: #4b5563;
+}
+
+.bulk-email-send:disabled,
+.bulk-email-cancel:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 /* -- Loading ----------------------------------------------- */
 .loading-container {
   display: flex;
@@ -396,5 +730,31 @@
 
   .detail-bulk-row {
     padding: 1rem 1rem 0;
+  }
+
+  .bulk-email-overlay {
+    padding: 0.4rem;
+  }
+
+  .bulk-email-modal {
+    max-height: 96vh;
+  }
+
+  .bulk-email-recipient-item {
+    grid-template-columns: 24px minmax(0, 1fr) auto;
+  }
+
+  .bulk-email-recipient-id {
+    display: none;
+  }
+
+  .bulk-email-footer {
+    flex-wrap: wrap;
+  }
+
+  .bulk-email-cancel,
+  .bulk-email-send {
+    flex: 1;
+    justify-content: center;
   }
 }

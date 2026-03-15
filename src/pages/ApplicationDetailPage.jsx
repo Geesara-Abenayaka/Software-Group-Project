@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { GraduationCap, Search, Download, BarChart2, Settings, LogOut, User } from 'lucide-react';
+import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User, Mail, Send, X } from 'lucide-react';
 import '../styles/AdminDashboard.css';
 import '../styles/ApplicationDetailPage.css';
 
@@ -17,6 +17,13 @@ function ApplicationDetailPage() {
     category: 'All',
     status: 'All'
   });
+  const [isBulkEmailOpen, setIsBulkEmailOpen] = useState(false);
+  const [selectedRecipientIds, setSelectedRecipientIds] = useState([]);
+  const [bulkSubject, setBulkSubject] = useState('');
+  const [bulkMessage, setBulkMessage] = useState('');
+  const [sendingBulkEmail, setSendingBulkEmail] = useState(false);
+  const [bulkEmailError, setBulkEmailError] = useState('');
+  const [bulkEmailSuccess, setBulkEmailSuccess] = useState('');
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -27,6 +34,23 @@ function ApplicationDetailPage() {
     }
     fetchProgramAndApplications();
   }, [programId]);  // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!isBulkEmailOpen) {
+      return undefined;
+    }
+
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') {
+        setIsBulkEmailOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleEscape);
+    return () => {
+      window.removeEventListener('keydown', handleEscape);
+    };
+  }, [isBulkEmailOpen]);
 
   const fetchProgramAndApplications = async () => {
     try {
@@ -124,8 +148,141 @@ function ApplicationDetailPage() {
     alert('Exporting applications data...');
   };
 
+  const getDefaultBulkTemplate = () => {
+    const programTitle = program?.title || 'your selected program';
+
+    return {
+      subject: `${programTitle} - Application Update`,
+      message: [
+        'Dear {{name}},',
+        '',
+        `This is an update regarding your application for ${programTitle}.`,
+        'Current application status: {{status}}.',
+        'Reference ID: {{applicationId}}.',
+        '',
+        'If you need clarification, please contact the admissions office.',
+        '',
+        'Best regards,',
+        'MBA Admissions Committee',
+        'Application Management Team'
+      ].join('\n')
+    };
+  };
+
+  const getSelectableApplications = (sourceApplications) => {
+    return sourceApplications.filter(
+      (application) => typeof application.email === 'string' && application.email.trim()
+    );
+  };
+
+  const getFilteredRecipientIds = () => {
+    return getSelectableApplications(filteredApplications).map((application) => application.id);
+  };
+
+  const getAllRecipientIds = () => {
+    return getSelectableApplications(applications).map((application) => application.id);
+  };
+
+  const getRecipientSeed = () => {
+    return getFilteredRecipientIds();
+  };
+
+  const openBulkEmailComposer = () => {
+    const template = getDefaultBulkTemplate();
+    setBulkSubject(template.subject);
+    setBulkMessage(template.message);
+    setSelectedRecipientIds(getRecipientSeed());
+    setBulkEmailError('');
+    setBulkEmailSuccess('');
+    setIsBulkEmailOpen(true);
+  };
+
+  const closeBulkEmailComposer = () => {
+    if (sendingBulkEmail) {
+      return;
+    }
+    setIsBulkEmailOpen(false);
+  };
+
+  const handleResetRecipients = () => {
+    const filteredRecipientIds = getFilteredRecipientIds();
+    setSelectedRecipientIds(filteredRecipientIds);
+
+    if (filteredRecipientIds.length === 0) {
+      setBulkEmailError('No applications match the current filters. Try Select All.');
+      setBulkEmailSuccess('');
+      return;
+    }
+
+    setBulkEmailError('');
+  };
+
+  const handleSelectAllRecipients = () => {
+    setSelectedRecipientIds(getAllRecipientIds());
+    setBulkEmailError('');
+  };
+
+  const handleRemoveRecipient = (applicationId) => {
+    setSelectedRecipientIds((prevIds) => prevIds.filter((id) => id !== applicationId));
+  };
+
+  const handleBulkEmailSubmit = async () => {
+    if (!bulkSubject.trim() || !bulkMessage.trim()) {
+      setBulkEmailError('Subject and email content are required.');
+      setBulkEmailSuccess('');
+      return;
+    }
+
+    if (selectedRecipientIds.length === 0) {
+      setBulkEmailError('Please keep at least one recipient selected.');
+      setBulkEmailSuccess('');
+      return;
+    }
+
+    try {
+      setSendingBulkEmail(true);
+      setBulkEmailError('');
+      setBulkEmailSuccess('');
+
+      const response = await fetch(`http://localhost:5000/api/applications/program/${programId}/bulk-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          applicationIds: selectedRecipientIds,
+          subject: bulkSubject.trim(),
+          message: bulkMessage.trim()
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        setBulkEmailError(result.error || result.message || 'Failed to send bulk email.');
+        return;
+      }
+
+      const report = result.data || {};
+      const deliveryMessage = report.isSimulated
+        ? `Email workflow completed in simulation mode for ${report.sentCount} recipient(s). Configure SMTP to deliver real emails.`
+        : `Email sent to ${report.sentCount} recipient(s).`;
+
+      setBulkEmailSuccess(deliveryMessage);
+
+      if (report.failedCount > 0) {
+        setBulkEmailError(`${report.failedCount} email(s) could not be delivered.`);
+      }
+    } catch (error) {
+      console.error('Error sending bulk email:', error);
+      setBulkEmailError('An unexpected error occurred while sending bulk email.');
+    } finally {
+      setSendingBulkEmail(false);
+    }
+  };
+
   const handleSendBulkEmail = () => {
-    alert('Opening bulk email composer...');
+    openBulkEmailComposer();
   };
 
   const handleUpdateStatus = async (applicationId, newStatus) => {
@@ -189,6 +346,8 @@ function ApplicationDetailPage() {
   };
 
   const statusCounts = getStatusCounts();
+  const selectedRecipients = getSelectableApplications(applications)
+    .filter((application) => selectedRecipientIds.includes(application.id));
 
   const getCatClass = (cat) => {
     if (cat === 'Category 1') return 'cat-1';
@@ -244,6 +403,10 @@ function ApplicationDetailPage() {
           <button className="navbar-btn" onClick={() => navigate('/admin/dashboard')}>
             <GraduationCap size={18} className="nav-icon" />
             Programs
+          </button>
+          <button className="navbar-btn active" onClick={() => navigate('/admin/applications')}>
+            <ClipboardList size={18} className="nav-icon" />
+            Applications
           </button>
           <button className="navbar-btn" onClick={() => navigate('/admin/search')}>
             <Search size={18} className="nav-icon" />
@@ -400,6 +563,113 @@ function ApplicationDetailPage() {
               Send Bulk Email
             </button>
           </div>
+
+          {isBulkEmailOpen && (
+            <div className="bulk-email-overlay" onClick={closeBulkEmailComposer}>
+              <div className="bulk-email-modal" onClick={(event) => event.stopPropagation()}>
+                <div className="bulk-email-header">
+                  <div className="bulk-email-header-left">
+                    <button className="bulk-email-back" onClick={closeBulkEmailComposer} type="button" aria-label="Close bulk email composer">
+                      ←
+                    </button>
+                    <div>
+                      <h3 className="bulk-email-title">Send Bulk Email</h3>
+                      <p className="bulk-email-subtitle">Application Management</p>
+                    </div>
+                  </div>
+                  <div className="bulk-email-header-icon">
+                    <User size={18} color="#8b0000" />
+                  </div>
+                </div>
+
+                <div className="bulk-email-body">
+                  <section className="bulk-email-recipients">
+                    <div className="bulk-email-section-heading">
+                      <div className="bulk-email-heading-left">
+                        <Mail size={14} />
+                        <span>Selected Recipients</span>
+                      </div>
+                      <span className="bulk-email-count">{selectedRecipients.length} selected</span>
+                    </div>
+
+                    <div className="bulk-email-recipient-actions">
+                      <button type="button" className="bulk-email-link-btn" onClick={handleResetRecipients}>Use Filtered</button>
+                      <button type="button" className="bulk-email-link-btn" onClick={handleSelectAllRecipients}>Select All</button>
+                    </div>
+
+                    <div className="bulk-email-recipient-list">
+                      {selectedRecipients.length === 0 ? (
+                        <p className="bulk-email-empty">No recipients selected.</p>
+                      ) : (
+                        selectedRecipients.map((recipient) => (
+                          <div className="bulk-email-recipient-item" key={recipient.id}>
+                            <div className="bulk-email-recipient-avatar">
+                              <User size={14} color="#ef4444" />
+                            </div>
+                            <div className="bulk-email-recipient-meta">
+                              <strong>{recipient.fullName}</strong>
+                              <span>{recipient.email}</span>
+                            </div>
+                            <span className="bulk-email-recipient-id">{recipient.displayId}</span>
+                            <button
+                              type="button"
+                              className="bulk-email-remove"
+                              onClick={() => handleRemoveRecipient(recipient.id)}
+                              aria-label={`Remove ${recipient.fullName}`}
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </section>
+
+                  <section className="bulk-email-editor">
+                    <div className="bulk-email-editor-heading">
+                      <h4>Email Content</h4>
+                      <span>Use tokens: {'{{name}}'}, {'{{status}}'}, {'{{applicationId}}'}, {'{{program}}'}</span>
+                    </div>
+
+                    <label className="bulk-email-field-label" htmlFor="bulk-email-subject">Subject</label>
+                    <input
+                      id="bulk-email-subject"
+                      type="text"
+                      className="bulk-email-subject-input"
+                      value={bulkSubject}
+                      onChange={(event) => setBulkSubject(event.target.value)}
+                    />
+
+                    <label className="bulk-email-field-label" htmlFor="bulk-email-message">Message</label>
+                    <textarea
+                      id="bulk-email-message"
+                      className="bulk-email-message-input"
+                      value={bulkMessage}
+                      onChange={(event) => setBulkMessage(event.target.value)}
+                    />
+
+                    {bulkEmailError && <p className="bulk-email-feedback error">{bulkEmailError}</p>}
+                    {bulkEmailSuccess && <p className="bulk-email-feedback success">{bulkEmailSuccess}</p>}
+                  </section>
+                </div>
+
+                <div className="bulk-email-footer">
+                  <button type="button" className="bulk-email-cancel" onClick={closeBulkEmailComposer} disabled={sendingBulkEmail}>
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className="bulk-email-send"
+                    onClick={handleBulkEmailSubmit}
+                    disabled={sendingBulkEmail || selectedRecipientIds.length === 0}
+                  >
+                    <Send size={15} />
+                    {sendingBulkEmail ? 'Sending...' : 'Send Email'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
         </div>
       </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, Search, Download, BarChart2, Settings, LogOut, User, FileText, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User, FileText, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import '../styles/SearchApplicationsPage.css';
 
 function SearchApplicationsPage() {
@@ -228,6 +228,10 @@ function SearchApplicationsPage() {
           <button className="navbar-btn" onClick={() => navigate('/admin/dashboard')}>
             <GraduationCap size={18} className="nav-icon" />
             Programs
+          </button>
+          <button className="navbar-btn" onClick={() => navigate('/admin/applications')}>
+            <ClipboardList size={18} className="nav-icon" />
+            Applications
           </button>
           <button className="navbar-btn active">
             <Search size={18} className="nav-icon" />
