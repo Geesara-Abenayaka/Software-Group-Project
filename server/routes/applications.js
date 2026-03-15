@@ -1,5 +1,8 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import Application from '../models/Application.js';
+import Program from '../models/Program.js';
+import { sendBulkEmail } from '../utils/emailService.js';
 
 const router = express.Router();
 
@@ -63,6 +66,142 @@ router.get('/program/:program', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching applications',
+      error: error.message
+    });
+  }
+});
+
+// Send bulk email to selected applications in a program
+router.post('/program/:program/bulk-email', async (req, res) => {
+  try {
+    const { program } = req.params;
+    const { applicationIds, subject, message } = req.body;
+
+    if (!Array.isArray(applicationIds) || applicationIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'applicationIds must be a non-empty array'
+      });
+    }
+
+    if (typeof subject !== 'string' || typeof message !== 'string') {
+      return res.status(400).json({
+        success: false,
+        message: 'subject and message are required'
+      });
+    }
+
+    const trimmedSubject = subject.trim();
+    const trimmedMessage = message.trim();
+
+    if (!trimmedSubject || !trimmedMessage) {
+      return res.status(400).json({
+        success: false,
+        message: 'subject and message cannot be empty'
+      });
+    }
+
+    if (trimmedSubject.length > 200) {
+      return res.status(400).json({
+        success: false,
+        message: 'subject cannot exceed 200 characters'
+      });
+    }
+
+    if (trimmedMessage.length > 10000) {
+      return res.status(400).json({
+        success: false,
+        message: 'message cannot exceed 10000 characters'
+      });
+    }
+
+    const validApplicationIds = [...new Set(
+      applicationIds
+        .map((id) => String(id).trim())
+        .filter((id) => mongoose.Types.ObjectId.isValid(id))
+    )];
+
+    if (validApplicationIds.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No valid application IDs were provided'
+      });
+    }
+
+    const applications = await Application.find({
+      _id: { $in: validApplicationIds },
+      program
+    }).select('_id fullName email status');
+
+    if (applications.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No matching applications found for this program'
+      });
+    }
+
+    const recipients = applications
+      .filter((application) => typeof application.email === 'string' && application.email.trim())
+      .map((application) => ({
+        applicationId: application._id.toString(),
+        fullName: application.fullName,
+        email: application.email.trim(),
+        status: application.status
+      }));
+
+    const deduplicatedRecipients = [];
+    const seenEmails = new Set();
+
+    recipients.forEach((recipient) => {
+      const normalizedEmail = recipient.email.toLowerCase();
+      if (seenEmails.has(normalizedEmail)) {
+        return;
+      }
+      seenEmails.add(normalizedEmail);
+      deduplicatedRecipients.push(recipient);
+    });
+
+    if (deduplicatedRecipients.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No valid recipient emails found in selected applications'
+      });
+    }
+
+    const programData = await Program.findOne({ shortCode: program }).select('title');
+    const programName = programData?.title || program;
+
+    const deliveryReport = await sendBulkEmail({
+      recipients: deduplicatedRecipients,
+      subject: trimmedSubject,
+      content: trimmedMessage,
+      programName
+    });
+
+    const statusCode = deliveryReport.failedCount === 0
+      ? 200
+      : deliveryReport.sentCount > 0
+        ? 207
+        : 500;
+
+    return res.status(statusCode).json({
+      success: deliveryReport.sentCount > 0,
+      message: deliveryReport.failedCount === 0
+        ? 'Bulk email sent successfully'
+        : 'Bulk email sent with partial failures',
+      data: {
+        totalRecipients: deduplicatedRecipients.length,
+        sentCount: deliveryReport.sentCount,
+        failedCount: deliveryReport.failedCount,
+        failedRecipients: deliveryReport.failedRecipients,
+        isSimulated: deliveryReport.isSimulated
+      }
+    });
+  } catch (error) {
+    console.error('Error sending bulk email:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error sending bulk email',
       error: error.message
     });
   }

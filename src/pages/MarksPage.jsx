@@ -435,6 +435,10 @@ function MarksPage() {
             <GraduationCap size={18} className="nav-icon" />
             Programs
           </button>
+          <button className="navbar-btn" onClick={() => navigate('/admin/applications')}>
+            <ClipboardList size={18} className="nav-icon" />
+            Applications
+          </button>
           <button className="navbar-btn" onClick={() => navigate('/admin/search')}>
             <Search size={18} className="nav-icon" />
             Search

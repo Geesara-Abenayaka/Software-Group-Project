@@ -88,11 +88,6 @@ function AdminDashboard() {
     navigate('/login');
   };
 
-  const handleViewApplications = (shortCode) => {
-    // Navigate to applications page for this program
-    navigate(`/admin/applications/${shortCode}`);
-  };
-
   const handleEditProgram = (program) => {
     setEditingProgram({...program});
     setShowEditModal(true);
@@ -354,6 +349,10 @@ function AdminDashboard() {
             <GraduationCap size={18} className="nav-icon" />
             Programs
           </button>
+          <button className="navbar-btn" onClick={() => navigate('/admin/applications')}>
+            <ClipboardList size={18} className="nav-icon" />
+            Applications
+          </button>
           <button className="navbar-btn" onClick={() => navigate('/admin/search')}>
             <Search size={18} className="nav-icon" />
             Search
@@ -374,9 +373,12 @@ function AdminDashboard() {
       </nav>
 
       <div className="admin-content-full">
-        <main className="admin-main-full">
+        <main className="admin-main-full programs-management-main">
           <div className="programs-header-admin">
-            <h2 className="programs-title-admin">Postgraduate Programs</h2>
+            <div>
+              <h2 className="programs-title-admin">Postgraduate Programs</h2>
+              <p className="programs-subtitle-admin">Manage course details, deadlines, and available resources.</p>
+            </div>
           </div>
 
           {loading ? (
@@ -396,47 +398,80 @@ function AdminDashboard() {
             </div>
           ) : (
             <div className="programs-grid-admin">
-              {programs.map((program) => (
-                <div key={program._id} className="program-card-admin">
+              {programs.map((program) => {
+                const specializationNames = Array.isArray(program.specializations)
+                  ? program.specializations
+                    .map((spec) => (typeof spec === 'string' ? spec : spec?.name))
+                    .filter(Boolean)
+                  : [];
+
+                return (
+                <div key={program._id} className="program-card-admin program-card-management">
                   <div className="card-top-row">
                     <div className="card-avatar-icon">
                       <User size={22} color="#9ca3af" />
                     </div>
-                    <span className={`pending-badge-pill ${program.pendingCount > 0 ? 'pending-red' : 'pending-gray'}`}>
-                      {program.pendingCount} Pending
-                    </span>
+                    <div className="program-status-block">
+                      <span className="program-code-badge">{program.shortCode}</span>
+                      <span className={`pending-badge-pill ${program.pendingCount > 0 ? 'pending-red' : 'pending-gray'}`}>
+                        {program.pendingCount} Pending
+                      </span>
+                    </div>
                   </div>
 
                   <h3 className="card-title-admin">{program.title}</h3>
 
                   <p className="card-description-admin">{program.description}</p>
 
-                  <div className="card-bottom-row">
-                    <button
-                      className="view-applications-link"
-                      onClick={() => handleViewApplications(program.shortCode)}
-                    >
-                      View Applications <span className="link-chevron">›</span>
-                    </button>
-                    <div className="card-action-icons">
-                      <button
-                        className="card-icon-btn edit-icon-btn"
-                        title="Edit program"
-                        onClick={() => handleEditProgram(program)}
-                      >
-                        <Pencil size={15} />
-                      </button>
-                      <button
-                        className="card-icon-btn delete-icon-btn"
-                        title="Delete program"
-                        onClick={() => handleDeleteProgram(program._id)}
-                      >
-                        <Trash2 size={15} />
-                      </button>
+                  <div className="program-meta-grid">
+                    <div className="program-meta-item">
+                      <span className="program-meta-label">Deadline</span>
+                      <span className="program-meta-value">{program.deadline || 'Not Set'}</span>
+                    </div>
+                    <div className="program-meta-item">
+                      <span className="program-meta-label">Resources</span>
+                      <span className="program-meta-value">{program.resourcesCount ?? 0}</span>
                     </div>
                   </div>
+
+                  <div className="program-specializations">
+                    <span className="program-specializations-label">Specializations</span>
+                    {specializationNames.length > 0 ? (
+                      <div className="program-specializations-list">
+                        {specializationNames.slice(0, 3).map((name, index) => (
+                          <span key={`${name}-${index}`} className="program-specialization-chip">{name}</span>
+                        ))}
+                        {specializationNames.length > 3 && (
+                          <span className="program-specialization-chip program-specialization-chip-muted">
+                            +{specializationNames.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="program-specializations-empty">No specializations listed</p>
+                    )}
+                  </div>
+
+                  <div className="card-bottom-row program-manage-actions">
+                    <button
+                      className="program-action-btn program-action-edit"
+                      title="Edit program"
+                      onClick={() => handleEditProgram(program)}
+                    >
+                      <Pencil size={15} />
+                      Edit
+                    </button>
+                    <button
+                      className="program-action-btn program-action-delete"
+                      title="Delete program"
+                      onClick={() => handleDeleteProgram(program._id)}
+                    >
+                      <Trash2 size={15} />
+                      Delete
+                    </button>
+                  </div>
                 </div>
-              ))}
+              )})}
 
               {/* Add New Program Tile */}
               <div className="add-program-card" onClick={handleOpenAddModal}>

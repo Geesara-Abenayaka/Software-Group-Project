@@ -34,7 +34,12 @@ function LoginPage() {
     <div className="app">
       <header className="header">
         <div className="header-content">
-          <div className="graduation-cap-icon">🎓</div>
+          <div className="graduation-cap-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="white" stroke="none">
+              <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/>
+              <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/>
+            </svg>
+          </div>
           <div className="header-text">
             <h1 className="university-name">University of Moratuwa</h1>
             <p className="portal-subtitle">Admin Portal</p>

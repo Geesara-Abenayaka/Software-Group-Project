@@ -28,6 +28,26 @@
   flex-shrink: 0;
 }
 
+.admin-header .header-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+}
+
+.admin-header .university-name {
+  margin: 0;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+}
+
+.admin-header .portal-subtitle {
+  margin: 0;
+  line-height: 1.25;
+}
+
 .header-right {
   display: flex;
   align-items: center;
@@ -88,7 +108,6 @@
 .navbar-btn.active {
   background: transparent;
   border-bottom-color: white;
-  font-weight: 600;
   color: white;
 }
 
@@ -183,6 +202,13 @@
   margin: 0;
 }
 
+.programs-subtitle-admin {
+  margin: 0.45rem 0 0;
+  color: #6b7280;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
 .add-program-btn {
   padding: 0.75rem 1.5rem;
   background: linear-gradient(135deg, #8b0000 0%, #a30000 100%);
@@ -253,6 +279,7 @@
 .card-action-icons {
   display: flex;
   gap: 0.3rem;
+  margin-left: auto;
   opacity: 0;
   transition: opacity 0.2s ease;
 }
@@ -769,6 +796,178 @@
   margin: 0;
 }
 
+/* Programs tab specific UI to visually differ from Applications tab */
+.programs-management-main .programs-grid-admin {
+  gap: 1.65rem;
+}
+
+.programs-management-main .program-card-management {
+  border: 1px solid #ebdede;
+  border-top: 4px solid #8b0000;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #ffffff 0%, #fff9f9 100%);
+  padding: 1.35rem;
+  box-shadow: 0 3px 12px rgba(16, 24, 40, 0.06);
+  gap: 1rem;
+}
+
+.programs-management-main .program-card-management:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(16, 24, 40, 0.11);
+}
+
+.programs-management-main .program-status-block {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.programs-management-main .program-code-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #7f1d1d;
+  background: #fef2f2;
+  border: 1px solid #f4d4d6;
+  border-radius: 999px;
+  padding: 0.22rem 0.6rem;
+  letter-spacing: 0.04em;
+}
+
+.programs-management-main .card-description-admin {
+  min-height: 4.1rem;
+}
+
+.programs-management-main .program-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.programs-management-main .program-meta-item {
+  background: #ffffff;
+  border: 1px solid #efe7e7;
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.programs-management-main .program-meta-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.programs-management-main .program-meta-value {
+  font-size: 0.84rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.programs-management-main .program-specializations {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.programs-management-main .program-specializations-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.programs-management-main .program-specializations-list {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.programs-management-main .program-specialization-chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 0.28rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  color: #4b5563;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.programs-management-main .program-specialization-chip-muted {
+  background: #f3f4f6;
+  color: #6b7280;
+  border-color: #e5e7eb;
+}
+
+.programs-management-main .program-specializations-empty {
+  margin: 0;
+  color: #9ca3af;
+  font-size: 0.78rem;
+}
+
+.programs-management-main .program-manage-actions {
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.programs-management-main .program-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.programs-management-main .program-action-edit {
+  background: #fff1f1;
+  border-color: #f2caca;
+  color: #8b0000;
+}
+
+.programs-management-main .program-action-edit:hover {
+  background: #ffe3e3;
+}
+
+.programs-management-main .program-action-delete {
+  background: #fff5f5;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+
+.programs-management-main .program-action-delete:hover {
+  background: #fee2e2;
+}
+
+.programs-management-main .add-program-card {
+  border-width: 2px;
+  border-color: #d9c5c7;
+  border-style: dashed;
+  background: linear-gradient(180deg, #ffffff 0%, #fffafa 100%);
+}
+
+.programs-management-main .add-program-card:hover {
+  border-color: #c7a7ab;
+}
+
 
 /* Responsive Design */
 @media (max-width: 1024px) {
@@ -819,5 +1018,17 @@
 
   .admin-main {
     padding: 1rem;
+  }
+
+  .programs-management-main .program-meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .programs-management-main .program-manage-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .programs-management-main .program-specialization-chip {
+    font-size: 0.73rem;
   }
 }
