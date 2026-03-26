@@ -217,6 +217,135 @@
   background: #a30000;
 }
 
+/* File Download Styles */
+.file-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.file-item,
+.file-item-with-actions {
+  padding: 0;
+  margin: 0;
+}
+
+.file-item a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #f0f9ff;
+  color: #0369a1;
+  text-decoration: none;
+  border-radius: 4px;
+  border: 1px solid #e0f2fe;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  word-break: break-word;
+}
+
+.file-item a:hover {
+  background: #e0f2fe;
+  color: #0c4a6e;
+  box-shadow: 0 2px 4px rgba(3, 105, 161, 0.15);
+  transform: translateX(2px);
+}
+
+.file-item a:active {
+  transform: translateX(0);
+}
+
+/* File Item with Actions (Download + View buttons) */
+.file-item-with-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+.file-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: #1f2937;
+  word-break: break-word;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.file-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.file-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  background: white;
+  color: #6b7280;
+  text-decoration: none;
+  border-radius: 4px;
+  border: 1.5px solid #d1d5db;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  filter: grayscale(100%);
+}
+
+.file-action-btn:hover {
+  background: #6b7280;
+  color: white;
+  box-shadow: 0 2px 8px rgba(107, 114, 128, 0.25);
+  transform: translateY(-1px);
+}
+
+.file-action-btn:active {
+  transform: translateY(0);
+}
+
+.file-action-btn.download-btn {
+  display: none;
+}
+
+.file-action-btn.view-btn {
+  border-color: #d1d5db;
+  color: #6b7280;
+}
+
+.file-action-btn.view-btn:hover {
+  background: #6b7280;
+  color: white;
+  box-shadow: 0 2px 8px rgba(107, 114, 128, 0.25);
+}
+
+@media (max-width: 768px) {
+  .file-item-with-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .file-actions {
+    width: 100%;
+  }
+
+  .file-action-btn {
+    flex: 1;
+    justify-content: center;
+  }
+}
+
 @media (max-width: 768px) {
   .admin-header-fixed {
     padding: 1rem;
