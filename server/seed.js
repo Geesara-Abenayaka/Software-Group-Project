@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import bcrypt from 'bcryptjs';
 import User from './models/User.js';
 
 dotenv.config();
@@ -27,7 +28,7 @@ const seedUsers = async () => {
     
     console.log('Collection cleared');
 
-    // Create dummy admin users
+    // Create dummy admin users 
     const users = [
       {
         email: 'admin@uom.lk',
@@ -55,7 +56,14 @@ const seedUsers = async () => {
       }
     ];
 
-    await User.insertMany(users);
+    const hashedUsers = await Promise.all(
+      users.map(async (user) => ({
+        ...user,
+        password: await bcrypt.hash(user.password, 10)
+      }))
+    );
+
+    await User.insertMany(hashedUsers);
     console.log('✅ Dummy users added successfully!');
     console.log('\n📋 Admin Credentials:');
     console.log('================================');
