@@ -169,8 +169,51 @@
   border-color: #8b0000;
 }
 
+.password-form {
+  width: 100%;
+}
+
+.password-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.password-field-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.password-feedback {
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.password-feedback.success {
+  color: #166534;
+}
+
+.password-feedback.error {
+  color: #991b1b;
+}
+
+.set-deadline-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
 @media (max-width: 768px) {
   .calendars-wrapper {
+    grid-template-columns: 1fr;
+  }
+
+  .password-grid {
     grid-template-columns: 1fr;
   }
 }
