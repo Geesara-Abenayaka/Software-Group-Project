@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import LoginPage from './pages/LoginPage'
 import HomePage from './pages/HomePage'
 import ProgramDetailPage from './pages/ProgramDetailPage'
@@ -11,12 +11,16 @@ import SearchApplicationsPage from './pages/SearchApplicationsPage'
 import DownloadFormsPage from './pages/DownloadFormsPage'
 import MarksPage from './pages/MarksPage'
 import SettingsPage from './pages/SettingsPage'
+import AdmissionChatbot from './components/AdmissionChatbot'
 
 import './App.css'
 
-function App() {
+function AppRoutes() {
+  const location = useLocation()
+  const hideChatbot = location.pathname.startsWith('/admin') || location.pathname === '/login'
+
   return (
-    <Router>
+    <>
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/programs/:shortCode" element={<ProgramDetailPage />} />
@@ -31,6 +35,16 @@ function App() {
         <Route path="/admin/marks" element={<MarksPage />} />
         <Route path="/admin/settings" element={<SettingsPage />} />
       </Routes>
+
+      {!hideChatbot && <AdmissionChatbot />}
+    </>
+  )
+}
+
+function App() {
+  return (
+    <Router>
+      <AppRoutes />
     </Router>
   )
 }
