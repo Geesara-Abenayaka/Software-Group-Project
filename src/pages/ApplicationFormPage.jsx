@@ -1529,32 +1529,73 @@ function ApplicationFormPage() {
     }
     
     try {
-      // Prepare the data to send (convert files to base64 if needed, or handle separately)
+      // Helper function to convert File to base64
+      const fileToBase64 = (file) => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            // Extract base64 content (remove data:image/png;base64, prefix)
+            const base64String = reader.result.split(',')[1];
+            resolve(base64String);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+      };
+
+      // Convert File objects to {name, data} format
+      const convertFilesToBase64 = async (files) => {
+        if (!files) return undefined;
+        
+        if (Array.isArray(files)) {
+          const converted = await Promise.all(
+            files.map(async (file) => ({
+              name: file.name,
+              data: await fileToBase64(file)
+            }))
+          );
+          return converted;
+        } else if (files instanceof File) {
+          return {
+            name: files.name,
+            data: await fileToBase64(files)
+          };
+        }
+        return undefined;
+        // Show processing message
+        alert('Processing application... This may take a moment. Please do not close this page.');
+      
+      };
+
+      // Prepare the data to send (convert files to base64 format)
       const dataToSend = {
         ...formData,
         documents: {
-          degreeCertificate: Array.isArray(formData.documents.degreeCertificate)
-            ? formData.documents.degreeCertificate.map((file) => file.name).join(', ')
-            : formData.documents.degreeCertificate?.name || '',
-          membershipProofs: Array.isArray(formData.documents.membershipProofs)
-            ? formData.documents.membershipProofs.map((file) => file.name).join(', ')
-            : '',
-          nic: formData.documents.nic?.name || '',
-          employerLetter: Array.isArray(formData.documents.employerLetter)
-            ? formData.documents.employerLetter.map((file) => file.name).join(', ')
-            : formData.documents.employerLetter?.name || '',
-          transcript: formData.documents.transcript?.name || '',
-          paymentConfirmation: formData.documents.paymentConfirmation?.name || ''
+          degreeCertificate: await convertFilesToBase64(formData.documents.degreeCertificate),
+          membershipProofs: await convertFilesToBase64(formData.documents.membershipProofs),
+          nic: await convertFilesToBase64(formData.documents.nic),
+          employerLetter: await convertFilesToBase64(formData.documents.employerLetter),
+          transcript: await convertFilesToBase64(formData.documents.transcript),
+          paymentConfirmation: await convertFilesToBase64(formData.documents.paymentConfirmation)
         }
       };
 
+      // Fetch with 2-minute timeout for large file handling
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+      }, 120000); // 2 minutes
+      
       const response = await fetch('http://localhost:5000/api/applications', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(dataToSend)
+        body: JSON.stringify(dataToSend),
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
 
       const result = await response.json();
 
@@ -1567,7 +1608,12 @@ function ApplicationFormPage() {
       }
     } catch (error) {
       console.error('Error submitting application:', error);
-      alert('Error submitting application. Please try again.');
+      if (error.name === 'AbortError') {
+        alert('Request timed out. The server took too long to respond. Please check your internet connection and try again.');
+      } else {
+        alert('Error submitting application: ' + error.message);
+        console.error('Detailed error:', error);
+      }
     }
   };
 

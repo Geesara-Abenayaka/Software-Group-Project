@@ -76,14 +76,14 @@ const applicationSchema = new mongoose.Schema({
     position: String
   }],
   
-  // Documents (stored as file paths or base64)
+  // Documents (stored as GridFS file IDs)
   documents: {
-    degreeCertificate: String,
-    membershipProofs: String,
-    nic: String,
-    employerLetter: String,
-    transcript: String,
-    paymentConfirmation: String
+    degreeCertificate: [mongoose.Schema.Types.ObjectId], // Array for multiple files
+    membershipProofs: [mongoose.Schema.Types.ObjectId],   // Array for multiple files
+    nic: mongoose.Schema.Types.ObjectId,                   // Single file
+    employerLetter: [mongoose.Schema.Types.ObjectId],     // Array for multiple files
+    transcript: mongoose.Schema.Types.ObjectId,            // Single file
+    paymentConfirmation: mongoose.Schema.Types.ObjectId    // Single file
   },
   
   // Declaration
