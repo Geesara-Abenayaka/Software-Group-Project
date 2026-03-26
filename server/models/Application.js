@@ -79,6 +79,7 @@ const applicationSchema = new mongoose.Schema({
   // Documents (stored as file paths or base64)
   documents: {
     degreeCertificate: String,
+    membershipProofs: String,
     nic: String,
     employerLetter: String,
     transcript: String,
