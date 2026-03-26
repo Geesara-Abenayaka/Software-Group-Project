@@ -36,6 +36,9 @@ function ApplicationFormPage() {
   });
   const [captchaValue, setCaptchaValue] = useState('');
   const [captchaError, setCaptchaError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionStatus, setSubmissionStatus] = useState('submitting');
+  const [submissionMessage, setSubmissionMessage] = useState('Your application is submitting...');
   const autoVerificationKeyRef = useRef('');
   const membershipExtractionKeyRef = useRef('');
   const workExperienceVerificationKeyRef = useRef('');
@@ -1342,10 +1345,25 @@ function ApplicationFormPage() {
     const scrollToSection = (sectionRef) => {
       sectionRef?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
-    
+
+    // Show loader immediately so long verification/preparation steps are visible to users.
+    setIsSubmitting(true);
+    setSubmissionStatus('submitting');
+    setSubmissionMessage('Your application is submitting...');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    let keepModalVisibleForRedirect = false;
+
+    const showSubmissionModalError = async (message) => {
+      setSubmissionStatus('error');
+      setSubmissionMessage(message);
+      await new Promise((resolve) => setTimeout(resolve, 2200));
+    };
+
+    try {
+
     // Validate program is selected
     if (!formData.program) {
-      alert('Program information is missing. Please go back and select a program.');
+      await showSubmissionModalError('Program information is missing. Please go back and select a program.');
       return;
     }
 
@@ -1362,7 +1380,7 @@ function ApplicationFormPage() {
 
     for (const field of requiredPersonalFields) {
       if (!String(formData[field.key] || '').trim()) {
-        alert(`Please fill ${field.label}.`);
+        await showSubmissionModalError(`Please fill ${field.label}.`);
         focusField(field.selector);
         return;
       }
@@ -1372,14 +1390,14 @@ function ApplicationFormPage() {
     if (!formData.title || !formData.fullName || !formData.nameWithInitials || 
         !formData.nicNo || !formData.telephone || !formData.mobile || 
         !formData.email || !formData.contactAddress) {
-      alert('Please fill in all fields in Personal Particulars section. No fields can be left blank.');
+      await showSubmissionModalError('Please fill in all fields in Personal Particulars section. No fields can be left blank.');
       return;
     }
 
     for (let i = 0; i < formData.qualifications.length; i += 1) {
       const qualification = formData.qualifications[i];
       if (!qualification.university || !qualification.degree || !qualification.specialization || !qualification.duration || !qualification.graduationDate) {
-        alert(`Please complete all fields in Academic Qualification ${i + 1}.`);
+        await showSubmissionModalError(`Please complete all fields in Academic Qualification ${i + 1}.`);
         scrollToSection(qualificationsSectionRef);
         return;
       }
@@ -1388,7 +1406,7 @@ function ApplicationFormPage() {
     for (let i = 0; i < formData.memberships.length; i += 1) {
       const membership = formData.memberships[i];
       if (!membership.organization || !membership.category || !membership.dateJoined) {
-        alert(`Please complete all fields in Membership ${i + 1}.`);
+        await showSubmissionModalError(`Please complete all fields in Membership ${i + 1}.`);
         scrollToSection(membershipsSectionRef);
         return;
       }
@@ -1397,7 +1415,7 @@ function ApplicationFormPage() {
     for (let i = 0; i < formData.experiences.length; i += 1) {
       const experience = formData.experiences[i];
       if (!experience.fromMonth || !experience.fromYear || !experience.toMonth || !experience.toYear || !experience.company || !experience.position) {
-        alert(`Please complete all fields in Work Experience ${i + 1}.`);
+        await showSubmissionModalError(`Please complete all fields in Work Experience ${i + 1}.`);
         scrollToSection(experiencesSectionRef);
         return;
       }
@@ -1412,7 +1430,7 @@ function ApplicationFormPage() {
       && Boolean(formData.documents.paymentConfirmation);
 
     if (!hasAllRequiredDocuments) {
-      alert('Please upload all required documents before submitting.');
+      await showSubmissionModalError('Please upload all required documents before submitting.');
       scrollToSection(documentsSectionRef);
       return;
     }
@@ -1422,7 +1440,7 @@ function ApplicationFormPage() {
     for (let i = 0; i < formData.qualifications.length; i++) {
       const gradDate = formData.qualifications[i].graduationDate;
       if (gradDate && !datePattern.test(gradDate)) {
-        alert('Please enter valid graduation date in mm/dd/yyyy format');
+        await showSubmissionModalError('Please enter valid graduation date in mm/dd/yyyy format');
         return;
       }
     }
@@ -1431,7 +1449,7 @@ function ApplicationFormPage() {
     for (let i = 0; i < formData.memberships.length; i++) {
       const joinedDate = formData.memberships[i].dateJoined;
       if (joinedDate && !datePattern.test(joinedDate)) {
-        alert('Please enter valid date joined in mm/dd/yyyy format for membership');
+        await showSubmissionModalError('Please enter valid date joined in mm/dd/yyyy format for membership');
         return;
       }
     }
@@ -1440,7 +1458,7 @@ function ApplicationFormPage() {
     const nicPattern = /^(\d{12}|\d{9}V)$/;
     if (!nicPattern.test(formData.nicNo)) {
       setNicError('Enter valid NIC number (12 digits or 9 digits + V)');
-      alert('Please enter a valid NIC number');
+      await showSubmissionModalError('Please enter a valid NIC number');
       return;
     }
     
@@ -1448,26 +1466,26 @@ function ApplicationFormPage() {
     const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!emailPattern.test(formData.email)) {
       setEmailError('Enter valid email address (e.g., name@gmail.com)');
-      alert('Please enter a valid email address');
+      await showSubmissionModalError('Please enter a valid email address');
       return;
     }
     
     // Validate mobile number before submission
     if (formData.mobile.length !== 10) {
       setMobileError('Mobile number must be exactly 10 digits');
-      alert('Please enter a valid 10-digit mobile number');
+      await showSubmissionModalError('Please enter a valid 10-digit mobile number');
       return;
     }
     
     // Validate telephone number before submission
     if (formData.telephone.length !== 10) {
       setTelephoneError('Telephone number must be exactly 10 digits');
-      alert('Please enter a valid 10-digit telephone number');
+      await showSubmissionModalError('Please enter a valid 10-digit telephone number');
       return;
     }
 
     if (String(formData.captcha || '').trim().toLowerCase() !== String(captchaValue || '').toLowerCase()) {
-      alert('Captcha is incorrect. Please try again.');
+      await showSubmissionModalError('Captcha is incorrect. Please try again.');
       setFormData((prev) => ({ ...prev, captcha: '' }));
       generateCaptcha();
       return;
@@ -1481,14 +1499,14 @@ function ApplicationFormPage() {
     if (!alreadyVerified) {
       const verified = await verifyNicAndDegreeDocuments();
       if (!verified) {
-        alert('NIC and Degree/Diploma verification failed. Please check uploaded files and form data.');
+        await showSubmissionModalError('NIC and Degree/Diploma verification failed. Please check uploaded files and form data.');
         scrollToSection(qualificationsSectionRef);
         return;
       }
     }
 
     if (membershipExtraction.status !== 'verified') {
-      alert('Membership verification failed. Please ensure entered membership details match the uploaded proof(s).');
+      await showSubmissionModalError('Membership verification failed. Please ensure entered membership details match the uploaded proof(s).');
       scrollToSection(membershipsSectionRef);
       return;
     }
@@ -1501,7 +1519,7 @@ function ApplicationFormPage() {
     if (hasEmployerLetterFiles && hasExperienceData && workExperienceVerification.status !== 'verified') {
       const experienceVerified = await verifyWorkExperienceWithEmployerLetter();
       if (!experienceVerified) {
-        alert('Work experience details do not match the uploaded employer consent letter.');
+        await showSubmissionModalError('Work experience details do not match the uploaded employer consent letter.');
         scrollToSection(experiencesSectionRef);
         return;
       }
@@ -1510,7 +1528,7 @@ function ApplicationFormPage() {
     if (formData.documents.paymentConfirmation && paymentReceiptVerification.status !== 'verified') {
       const paymentVerified = await verifyPaymentReceiptDocument();
       if (!paymentVerified) {
-        alert('Payment receipt does not match required account number or processing fee.');
+        await showSubmissionModalError('Payment receipt does not match required account number or processing fee.');
         scrollToSection(documentsSectionRef);
         return;
       }
@@ -1518,7 +1536,7 @@ function ApplicationFormPage() {
 
     if (String(formData.captcha || '').trim().toLowerCase() !== String(captchaValue || '').toLowerCase()) {
       setCaptchaError('Captcha is incorrect. Please enter the exact text shown above.');
-      alert('Captcha is incorrect. Please enter the exact text shown above.');
+      await showSubmissionModalError('Captcha is incorrect. Please enter the exact text shown above.');
       setFormData((prev) => ({ ...prev, captcha: '' }));
       generateCaptcha();
       scrollToSection(declarationSectionRef);
@@ -1529,6 +1547,7 @@ function ApplicationFormPage() {
     }
     
     try {
+      
       // Helper function to convert File to base64
       const fileToBase64 = (file) => {
         return new Promise((resolve, reject) => {
@@ -1562,9 +1581,6 @@ function ApplicationFormPage() {
           };
         }
         return undefined;
-        // Show processing message
-        alert('Processing application... This may take a moment. Please do not close this page.');
-      
       };
 
       // Prepare the data to send (convert files to base64 format)
@@ -1600,25 +1616,55 @@ function ApplicationFormPage() {
       const result = await response.json();
 
       if (result.success) {
-        alert('Application submitted successfully!');
-        // Reset form or navigate to success page
+        setSubmissionStatus('success');
+        setSubmissionMessage('Application submitted successfully! Redirecting...');
+        keepModalVisibleForRedirect = true;
+        await new Promise((resolve) => setTimeout(resolve, 1400));
         navigate('/');
+        return;
       } else {
-        alert('Failed to submit application: ' + result.message);
+        setSubmissionStatus('error');
+        setSubmissionMessage(result.message || 'Failed to submit application. Please try again.');
+        await new Promise((resolve) => setTimeout(resolve, 2200));
+        return;
       }
     } catch (error) {
       console.error('Error submitting application:', error);
       if (error.name === 'AbortError') {
-        alert('Request timed out. The server took too long to respond. Please check your internet connection and try again.');
+        setSubmissionStatus('error');
+        setSubmissionMessage('Request timed out. The server took too long to respond. Please try again.');
+        await new Promise((resolve) => setTimeout(resolve, 2200));
       } else {
-        alert('Error submitting application: ' + error.message);
+        setSubmissionStatus('error');
+        setSubmissionMessage('Error submitting application: ' + error.message);
+        await new Promise((resolve) => setTimeout(resolve, 2200));
         console.error('Detailed error:', error);
+      }
+    }
+    } finally {
+      if (!keepModalVisibleForRedirect) {
+        setIsSubmitting(false);
       }
     }
   };
 
   return (
     <div className="application-form-page">
+      {isSubmitting && (
+        <div className="submission-modal-overlay">
+          <div className="submission-modal">
+            {submissionStatus === 'submitting' ? (
+              <div className="submission-spinner"></div>
+            ) : submissionStatus === 'success' ? (
+              <div className="submission-success-icon">✓</div>
+            ) : (
+              <div className="submission-error-icon">!</div>
+            )}
+            <p>{submissionMessage}</p>
+          </div>
+        </div>
+      )}
+
       <div className="form-header">
         <h1>UNIVERSITY OF MORATUWA</h1>
         <h2>FACULTY OF ENGINEERING</h2>

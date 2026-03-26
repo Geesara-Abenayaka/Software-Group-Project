@@ -31,6 +31,23 @@ router.post('/', async (req, res) => {
   try {
     const applicationData = req.body;
     console.log('📥 Received application submission...');
+
+    // Normalize key fields so duplicate checks are reliable.
+    applicationData.program = String(applicationData.program || '').trim();
+    applicationData.nicNo = String(applicationData.nicNo || '').trim().toUpperCase();
+
+    // Prevent multiple submissions for the same NIC in the same program.
+    const duplicateApplication = await Application.findOne({
+      program: applicationData.program,
+      nicNo: applicationData.nicNo
+    }).select('_id status submittedAt');
+
+    if (duplicateApplication) {
+      return res.status(409).json({
+        success: false,
+        message: 'This NIC has already submitted an application for the selected program.'
+      });
+    }
     
     // Process and save files to GridFS
     if (applicationData.documents) {
@@ -164,6 +181,14 @@ router.post('/', async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Error creating application:', error);
+
+    if (error?.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: 'This NIC has already submitted an application for the selected program.'
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: 'Error submitting application',
