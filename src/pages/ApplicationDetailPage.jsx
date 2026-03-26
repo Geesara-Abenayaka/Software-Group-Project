@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User, Mail, Send, X } from 'lucide-react';
+import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User, Mail, Send, X, Trash2 } from 'lucide-react';
 import '../styles/AdminDashboard.css';
 import '../styles/ApplicationDetailPage.css';
 
@@ -14,6 +14,14 @@ const fetchWithTimeout = async (url, timeoutMs = 8000) => {
   } finally {
     clearTimeout(timeoutId);
   }
+};
+
+const getStableDisplayId = (mongoId) => {
+  const safeId = String(mongoId || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+  if (!safeId) {
+    return 'UNKNOWN';
+  }
+  return safeId.substring(0, 8);
 };
 
 function ApplicationDetailPage() {
@@ -80,16 +88,16 @@ function ApplicationDetailPage() {
 
       if (applicationsResult.status === 'fulfilled' && applicationsResult.value?.success) {
         // Transform the data to match the expected format
-        const transformedApplications = applicationsResult.value.data.map((app, index) => ({
+        const transformedApplications = applicationsResult.value.data.map((app) => ({
           id: app._id,
-          displayId: `APP${String(index + 1).padStart(3, '0')}`,
-          nic: app.nicNo,
-          fullName: app.fullName,
-          nameWithInitials: app.nameWithInitials,
+          displayId: getStableDisplayId(app._id),
+          nic: app.nicNo || '-',
+          fullName: app.fullName || '-',
+          nameWithInitials: app.nameWithInitials || '-',
           category: app.category ||
                    (app.program === 'msc-cs' ? 'Category 1' :
                     app.program === 'msc-ai' ? 'Category 2' : 'Category 3'),
-          status: app.status.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+          status: String(app.status || 'pending').split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
           email: app.email,
           mobile: app.mobile,
           submittedAt: new Date(app.submittedAt).toLocaleDateString()
@@ -127,8 +135,8 @@ function ApplicationDetailPage() {
 
     if (search) {
       filtered = filtered.filter(app =>
-        app.fullName.toLowerCase().includes(search.toLowerCase()) ||
-        app.nic.includes(search) ||
+        String(app.fullName || '').toLowerCase().includes(search.toLowerCase()) ||
+        String(app.nic || '').includes(search) ||
         app.id.toLowerCase().includes(search.toLowerCase())
       );
     }
@@ -339,8 +347,14 @@ function ApplicationDetailPage() {
 
       if (result.success) {
         alert('Application deleted successfully!');
-        // Refresh the applications list
-        fetchProgramAndApplications();
+        // Remove only the deleted row from local state to avoid full table reload.
+        setApplications((prevApplications) => (
+          prevApplications.filter((application) => application.id !== applicationId)
+        ));
+        setFilteredApplications((prevFilteredApplications) => (
+          prevFilteredApplications.filter((application) => application.id !== applicationId)
+        ));
+        setSelectedRecipientIds((prevIds) => prevIds.filter((id) => id !== applicationId));
       } else {
         alert('Failed to delete application: ' + result.message);
       }
@@ -522,18 +536,19 @@ function ApplicationDetailPage() {
                   <th>Name with Initials</th>
                   <th>Category</th>
                   <th>Status</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan="6" className="no-apps-msg">
+                    <td colSpan="7" className="no-apps-msg">
                       <div className="loading-spinner" style={{ margin: '0 auto' }}></div>
                     </td>
                   </tr>
                 ) : filteredApplications.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="no-apps-msg">No applications found</td>
+                    <td colSpan="7" className="no-apps-msg">No applications found</td>
                   </tr>
                 ) : (
                   filteredApplications.map((app) => (
@@ -559,6 +574,17 @@ function ApplicationDetailPage() {
                         <span className={`detail-status-pill ${getStatusClass(app.status)}`}>
                           {getStatusIcon(app.status)} {app.status}
                         </span>
+                      </td>
+                      <td>
+                        <button
+                          type="button"
+                          className="detail-delete-btn detail-delete-icon-btn"
+                          onClick={() => handleDeleteApplication(app.id, app.fullName)}
+                          aria-label={`Delete application ${app.displayId}`}
+                          title="Delete application"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </td>
                     </tr>
                   ))
