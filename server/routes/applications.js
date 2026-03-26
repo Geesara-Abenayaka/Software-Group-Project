@@ -268,8 +268,11 @@ router.get('/program/:program/summary', async (req, res) => {
     const applications = await Application.find({ program })
       .select([
         '_id',
+        'program',
         'status',
+        'nicNo',
         'fullName',
+        'nameWithInitials',
         'email',
         'mobile',
         'submittedAt'
