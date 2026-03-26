@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import sgMail from '@sendgrid/mail';
 
 const TRUE_VALUES = new Set(['true', '1', 'yes', 'on']);
 
@@ -15,49 +15,37 @@ const escapeHtml = (value = '') => {
 };
 
 let cachedTransporter = null;
-let isJsonTransport = false;
+let isSimulationMode = false;
 
-const buildTransportConfig = () => {
-  const host = env.SMTP_HOST;
-  const user = env.SMTP_USER;
-  const pass = env.SMTP_PASS;
-  const port = Number(env.SMTP_PORT || 587);
-  const secure = env.SMTP_SECURE ? toBoolean(env.SMTP_SECURE) : port === 465;
-
-  if (host && user && pass) {
-    isJsonTransport = false;
-    return {
-      host,
-      port,
-      secure,
-      auth: {
-        user,
-        pass
-      }
-    };
-  }
-
+const getDeliveryMode = () => {
   if (toBoolean(env.EMAIL_SIMULATION)) {
-    // Explicitly enabled simulation mode for local UI development.
-    isJsonTransport = true;
-    return {
-      jsonTransport: true
-    };
+    isSimulationMode = true;
+    return 'simulation';
   }
 
-  throw new Error('SMTP is not configured. Set SMTP_HOST, SMTP_USER, SMTP_PASS and optionally SMTP_PORT/SMTP_SECURE.');
+  if (env.SENDGRID_API_KEY && env.SENDGRID_FROM_EMAIL) {
+    isSimulationMode = false;
+    return 'sendgrid';
+  }
+
+  throw new Error('SendGrid is not configured. Set SENDGRID_API_KEY and SENDGRID_FROM_EMAIL, or set EMAIL_SIMULATION=true for local testing.');
 };
 
-export const getEmailTransporter = () => {
+const initializeSendGrid = () => {
   if (!cachedTransporter) {
-    cachedTransporter = nodemailer.createTransport(buildTransportConfig());
+    sgMail.setApiKey(env.SENDGRID_API_KEY);
+    cachedTransporter = sgMail;
   }
 
   return cachedTransporter;
 };
 
 export const getBulkEmailFromAddress = () => {
-  return env.SMTP_FROM || env.SMTP_USER || 'no-reply@postgraduate-lms.local';
+  return env.SENDGRID_FROM_EMAIL || 'no-reply@postgraduate-lms.local';
+};
+
+const getBulkEmailFromName = () => {
+  return String(env.SENDGRID_FROM_NAME || '').trim();
 };
 
 const applyTemplateTokens = (content, recipient, programName) => {
@@ -76,26 +64,50 @@ const buildHtmlBody = (content) => {
   `;
 };
 
+const sendWithSendGrid = async ({ recipient, subject, personalizedContent }) => {
+  const client = initializeSendGrid();
+  const fromAddress = getBulkEmailFromAddress();
+  const fromName = getBulkEmailFromName();
+  const from = fromName ? { email: fromAddress, name: fromName } : fromAddress;
+  const replyTo = env.SENDGRID_REPLY_TO || fromAddress;
+
+  const [response] = await client.send({
+    to: recipient.email,
+    from,
+    replyTo,
+    subject,
+    text: personalizedContent,
+    html: buildHtmlBody(personalizedContent)
+  });
+
+  return response?.headers?.['x-message-id'] || null;
+};
+
+const sendInSimulationMode = ({ recipient, subject, personalizedContent }) => {
+  console.info('Bulk email simulation', {
+    to: recipient.email,
+    subject,
+    preview: personalizedContent.slice(0, 120)
+  });
+
+  return `simulated-${recipient.applicationId || Date.now()}`;
+};
+
 export const sendBulkEmail = async ({ recipients, subject, content, programName }) => {
-  const transporter = getEmailTransporter();
-  const from = getBulkEmailFromAddress();
+  const deliveryMode = getDeliveryMode();
 
   const sendResults = await Promise.allSettled(
     recipients.map(async (recipient) => {
       const personalizedContent = applyTemplateTokens(content, recipient, programName);
-      const info = await transporter.sendMail({
-        from,
-        to: recipient.email,
-        subject,
-        text: personalizedContent,
-        html: buildHtmlBody(personalizedContent)
-      });
+      const messageId = deliveryMode === 'sendgrid'
+        ? await sendWithSendGrid({ recipient, subject, personalizedContent })
+        : await sendInSimulationMode({ recipient, subject, personalizedContent });
 
       return {
         applicationId: recipient.applicationId,
         fullName: recipient.fullName,
         email: recipient.email,
-        messageId: info.messageId || null
+        messageId
       };
     })
   );
@@ -123,6 +135,6 @@ export const sendBulkEmail = async ({ recipients, subject, content, programName 
     failedCount: failedRecipients.length,
     sentRecipients,
     failedRecipients,
-    isSimulated: isJsonTransport
+    isSimulated: isSimulationMode
   };
 };

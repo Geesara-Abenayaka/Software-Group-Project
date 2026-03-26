@@ -4,6 +4,18 @@ import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, Lo
 import '../styles/AdminDashboard.css';
 import '../styles/ApplicationDetailPage.css';
 
+const fetchWithTimeout = async (url, timeoutMs = 8000) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    return response;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+};
+
 function ApplicationDetailPage() {
   const navigate = useNavigate();
   const { programId } = useParams();
@@ -55,21 +67,20 @@ function ApplicationDetailPage() {
   const fetchProgramAndApplications = async () => {
     try {
       setLoading(true);
-      // Fetch program details
-      const programResponse = await fetch(`http://localhost:5000/api/programs/${programId}`);
-      const programData = await programResponse.json();
-      
-      if (programData.success) {
-        setProgram(programData.data);
+      const [programResult, applicationsResult] = await Promise.allSettled([
+        fetchWithTimeout(`http://localhost:5000/api/programs/${programId}`, 8000).then((response) => response.json()),
+        fetchWithTimeout(`http://localhost:5000/api/applications/program/${programId}/summary`, 8000).then((response) => response.json())
+      ]);
+
+      if (programResult.status === 'fulfilled' && programResult.value?.success) {
+        setProgram(programResult.value.data);
+      } else {
+        setProgram(null);
       }
 
-      // Fetch applications for this program
-      const applicationsResponse = await fetch(`http://localhost:5000/api/applications/program/${programId}`);
-      const applicationsData = await applicationsResponse.json();
-      
-      if (applicationsData.success) {
+      if (applicationsResult.status === 'fulfilled' && applicationsResult.value?.success) {
         // Transform the data to match the expected format
-        const transformedApplications = applicationsData.data.map((app, index) => ({
+        const transformedApplications = applicationsResult.value.data.map((app, index) => ({
           id: app._id,
           displayId: `APP${String(index + 1).padStart(3, '0')}`,
           nic: app.nicNo,
@@ -91,12 +102,11 @@ function ApplicationDetailPage() {
         setApplications([]);
         setFilteredApplications([]);
       }
-      
-      setLoading(false);
     } catch (err) {
       console.error('Error fetching data:', err);
       setApplications([]);
       setFilteredApplications([]);
+    } finally {
       setLoading(false);
     }
   };
@@ -265,7 +275,7 @@ function ApplicationDetailPage() {
 
       const report = result.data || {};
       const deliveryMessage = report.isSimulated
-        ? `Email workflow completed in simulation mode for ${report.sentCount} recipient(s). Configure SMTP to deliver real emails.`
+        ? `Email workflow completed in simulation mode for ${report.sentCount} recipient(s). Configure SendGrid to deliver real emails.`
         : `Email sent to ${report.sentCount} recipient(s).`;
 
       setBulkEmailSuccess(deliveryMessage);

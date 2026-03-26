@@ -2,6 +2,18 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import '../styles/ApplicationViewPage.css';
 
+const fetchWithTimeout = async (url, timeoutMs = 8000) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    return response;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+};
+
 function ApplicationViewPage() {
   const navigate = useNavigate();
   const { applicationId } = useParams();
@@ -23,7 +35,7 @@ function ApplicationViewPage() {
   const fetchApplicationDetails = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:5000/api/applications/${applicationId}`);
+      const response = await fetchWithTimeout(`http://localhost:5000/api/applications/${applicationId}/view`, 8000);
       const data = await response.json();
       
       if (data.success) {
@@ -31,16 +43,20 @@ function ApplicationViewPage() {
         
         // Fetch program details
         if (data.data.program) {
-          const programResponse = await fetch(`http://localhost:5000/api/programs/${data.data.program}`);
+          const programResponse = await fetchWithTimeout(`http://localhost:5000/api/programs/${data.data.program}`, 8000);
           const programData = await programResponse.json();
           if (programData.success) {
             setProgram(programData.data);
           }
         }
+      } else {
+        setApplication(null);
       }
-      setLoading(false);
     } catch (err) {
       console.error('Error fetching application:', err);
+      setApplication(null);
+      setProgram(null);
+    } finally {
       setLoading(false);
     }
   };
@@ -252,27 +268,6 @@ function ApplicationViewPage() {
             <p className="no-data">No qualifications provided</p>
           )}
 
-          <div className="checkbox-group view-only">
-            <label>
-              <input
-                type="checkbox"
-                checked={application.partTime}
-                disabled
-              />
-              Part Time
-            </label>
-          </div>
-
-          <div className="checkbox-group view-only">
-            <label>
-              <input
-                type="checkbox"
-                checked={application.alreadyRegistered}
-                disabled
-              />
-              Already registered for another degree program
-            </label>
-          </div>
         </div>
 
         {/* Membership of Professional Organizations */}
@@ -413,17 +408,6 @@ function ApplicationViewPage() {
               fill in the Online Referee Form according to the instructions given in the handbook to complete the application process. Please note that 
               without these recommendations, the application would be considered as incomplete.
             </p>
-          </div>
-
-          <div className="checkbox-group view-only">
-            <label>
-              <input
-                type="checkbox"
-                checked={application.declaration}
-                disabled
-              />
-              I accept the declaration
-            </label>
           </div>
 
           {application.captcha && (

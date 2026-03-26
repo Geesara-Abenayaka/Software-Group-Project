@@ -6,6 +6,20 @@ import { sendBulkEmail } from '../utils/emailService.js';
 
 const router = express.Router();
 
+const APPLICATION_SUMMARY_FIELDS = [
+  '_id',
+  'program',
+  'status',
+  'fullName',
+  'nameWithInitials',
+  'nicNo',
+  'telephone',
+  'mobile',
+  'email',
+  'createdAt',
+  'submittedAt'
+].join(' ');
+
 // Create a new application
 router.post('/', async (req, res) => {
   try {
@@ -50,6 +64,29 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get lightweight application summaries (for fast admin lists/search)
+router.get('/summary', async (req, res) => {
+  try {
+    const applications = await Application.find()
+      .select(APPLICATION_SUMMARY_FIELDS)
+      .sort({ submittedAt: -1 })
+      .lean();
+
+    res.json({
+      success: true,
+      data: applications,
+      count: applications.length
+    });
+  } catch (error) {
+    console.error('Error fetching application summaries:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching application summaries',
+      error: error.message
+    });
+  }
+});
+
 // Get applications by program
 router.get('/program/:program', async (req, res) => {
   try {
@@ -66,6 +103,30 @@ router.get('/program/:program', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching applications',
+      error: error.message
+    });
+  }
+});
+
+// Get lightweight application summaries by program (for fast admin details view)
+router.get('/program/:program/summary', async (req, res) => {
+  try {
+    const { program } = req.params;
+    const applications = await Application.find({ program })
+      .select(APPLICATION_SUMMARY_FIELDS)
+      .sort({ submittedAt: -1 })
+      .lean();
+
+    res.json({
+      success: true,
+      data: applications,
+      count: applications.length
+    });
+  } catch (error) {
+    console.error('Error fetching application summaries:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching application summaries',
       error: error.message
     });
   }
@@ -208,6 +269,67 @@ router.post('/program/:program/bulk-email', async (req, res) => {
 });
 
 // Get single application by ID
+router.get('/:id/view', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const application = await Application.findById(id)
+      .select([
+        'program',
+        'title',
+        'fullName',
+        'nameWithInitials',
+        'nicNo',
+        'telephone',
+        'mobile',
+        'email',
+        'contactAddress',
+        'qualifications',
+        'memberships',
+        'experiences',
+        'status',
+        'submittedAt',
+        'createdAt',
+        'documents.degreeCertificate',
+        'documents.nic',
+        'documents.employerLetter',
+        'documents.transcript',
+        'documents.paymentConfirmation'
+      ].join(' '))
+      .lean();
+
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: 'Application not found'
+      });
+    }
+
+    const documents = application.documents || {};
+    const lightweightApplication = {
+      ...application,
+      documents: {
+        degreeCertificate: Boolean(documents.degreeCertificate),
+        nic: Boolean(documents.nic),
+        employerLetter: Boolean(documents.employerLetter),
+        transcript: Boolean(documents.transcript),
+        paymentConfirmation: Boolean(documents.paymentConfirmation)
+      }
+    };
+
+    return res.json({
+      success: true,
+      data: lightweightApplication
+    });
+  } catch (error) {
+    console.error('Error fetching application view data:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error fetching application view data',
+      error: error.message
+    });
+  }
+});
+
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;

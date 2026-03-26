@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/ApplicationFormPage.css';
 
@@ -12,6 +12,46 @@ function ApplicationFormPage() {
   const [graduationDateErrors, setGraduationDateErrors] = useState({});
   const [membershipDateErrors, setMembershipDateErrors] = useState({});
   const [fileErrors, setFileErrors] = useState({});
+  const [documentVerification, setDocumentVerification] = useState({
+    name: { status: 'idle', message: '' },
+    nic: { status: 'idle', message: '' },
+    degreeCertificate: { status: 'idle', message: '' },
+    isVerifying: false,
+    error: ''
+  });
+  const [membershipExtraction, setMembershipExtraction] = useState({
+    status: 'idle',
+    message: '',
+    extractedMemberships: []
+  });
+  const [workExperienceVerification, setWorkExperienceVerification] = useState({
+    status: 'idle',
+    message: '',
+    extracted: { companies: [], positions: [], dateRanges: [] }
+  });
+  const [paymentReceiptVerification, setPaymentReceiptVerification] = useState({
+    status: 'idle',
+    message: '',
+    extracted: { accountNumbers: [], amounts: [], requiredAccountNumber: '0043618', requiredFee: 2000 }
+  });
+  const [captchaValue, setCaptchaValue] = useState('');
+  const [captchaError, setCaptchaError] = useState('');
+  const autoVerificationKeyRef = useRef('');
+  const membershipExtractionKeyRef = useRef('');
+  const workExperienceVerificationKeyRef = useRef('');
+  const paymentReceiptVerificationKeyRef = useRef('');
+  const degreeInputRef = useRef(null);
+  const nicInputRef = useRef(null);
+  const membershipProofInputRef = useRef(null);
+  const employerLetterInputRef = useRef(null);
+  const transcriptInputRef = useRef(null);
+  const paymentConfirmationInputRef = useRef(null);
+  const qualificationsSectionRef = useRef(null);
+  const membershipsSectionRef = useRef(null);
+  const experiencesSectionRef = useRef(null);
+  const documentsSectionRef = useRef(null);
+  const declarationSectionRef = useRef(null);
+  const captchaInputRef = useRef(null);
   
   const [formData, setFormData] = useState({
     program: location.state?.program || '',
@@ -46,9 +86,10 @@ function ApplicationFormPage() {
       position: ''
     }],
     documents: {
-      degreeCertificate: null,
+      degreeCertificate: [],
+      membershipProofs: [],
       nic: null,
-      employerLetter: null,
+      employerLetter: [],
       transcript: null,
       paymentConfirmation: null
     },
@@ -64,12 +105,63 @@ function ApplicationFormPage() {
     }
   }, [location.state, navigate]);
 
+  const resetDocumentVerification = (documentType) => {
+    setDocumentVerification((prev) => ({
+      ...prev,
+      [documentType]: { status: 'idle', message: '' },
+      error: ''
+    }));
+  };
+
+  const resetNameAndDegreeVerification = () => {
+    setDocumentVerification((prev) => ({
+      ...prev,
+      name: { status: 'idle', message: '' },
+      degreeCertificate: { status: 'idle', message: '' },
+      error: ''
+    }));
+  };
+
+  const readFileAsBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(new Error('Failed to read uploaded file'));
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const triggerFilePicker = (inputRef) => {
+    inputRef?.current?.click();
+  };
+
+  const generateCaptcha = () => {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+    let next = '';
+    for (let i = 0; i < 7; i += 1) {
+      next += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    setCaptchaValue(next);
+  };
+
+  useEffect(() => {
+    generateCaptcha();
+  }, []);
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+
+    if (name === 'captcha') {
+      setCaptchaError('');
+    }
+
+    if (name === 'fullName' || name === 'nameWithInitials') {
+      resetNameAndDegreeVerification();
+    }
   };
 
   const handleMobileChange = (e) => {
@@ -147,6 +239,8 @@ function ApplicationFormPage() {
       ...prev,
       nicNo: value
     }));
+
+    resetDocumentVerification('nic');
     
     // Validate NIC format
     if (value.length === 0) {
@@ -182,18 +276,35 @@ function ApplicationFormPage() {
   };
 
   const handleFileChange = (e, documentType) => {
-    const file = e.target.files[0];
-    
-    if (file) {
-      // Check if file is PDF
-      if (file.type !== 'application/pdf') {
-        setFileErrors(prev => ({
-          ...prev,
-          [documentType]: 'Please upload a PDF file only'
-        }));
-        // Clear the file input
-        e.target.value = '';
-        return;
+    const selectedFiles = Array.from(e.target.files || []);
+
+    if (selectedFiles.length > 0) {
+      const supportsImages = documentType === 'nic' || documentType === 'degreeCertificate' || documentType === 'membershipProofs' || documentType === 'employerLetter' || documentType === 'paymentConfirmation';
+      const supportsMultiple = documentType === 'degreeCertificate' || documentType === 'membershipProofs' || documentType === 'employerLetter';
+      const allowedMimeTypes = supportsImages
+        ? ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg', 'image/webp']
+        : ['application/pdf'];
+
+      for (const file of selectedFiles) {
+        if (!allowedMimeTypes.includes(file.type)) {
+          setFileErrors(prev => ({
+            ...prev,
+            [documentType]: supportsImages
+              ? 'Please upload a PDF or image file (PNG/JPG/WEBP)'
+              : 'Please upload a PDF file only'
+          }));
+          e.target.value = '';
+          return;
+        }
+
+        if (file.size > 4 * 1024 * 1024) {
+          setFileErrors(prev => ({
+            ...prev,
+            [documentType]: 'Each file must be 4 MB or less'
+          }));
+          e.target.value = '';
+          return;
+        }
       }
       
       // Clear error if file is valid
@@ -203,13 +314,230 @@ function ApplicationFormPage() {
         return updated;
       });
       
-      setFormData(prev => ({
+      setFormData(prev => {
+        const existingValue = prev.documents[documentType];
+        const existingFiles = Array.isArray(existingValue)
+          ? existingValue
+          : existingValue
+            ? [existingValue]
+            : [];
+
+        const nextValue = supportsMultiple
+          ? [...existingFiles, ...selectedFiles].filter((file, index, all) => {
+            const duplicateIndex = all.findIndex((candidate) => (
+              candidate.name === file.name
+              && candidate.size === file.size
+              && candidate.lastModified === file.lastModified
+            ));
+            return duplicateIndex === index;
+          })
+          : selectedFiles[0];
+
+        return {
+          ...prev,
+          documents: {
+            ...prev.documents,
+            [documentType]: nextValue
+          }
+        };
+      });
+
+      // For multi-file inputs, clear picker so users can append more files.
+      // Keep single-file input value so the native control shows the selected file name.
+      if (supportsMultiple) {
+        e.target.value = '';
+      }
+
+      if (documentType === 'degreeCertificate') {
+        resetNameAndDegreeVerification();
+      }
+
+      if (documentType === 'nic') {
+        resetDocumentVerification('nic');
+      }
+
+      if (documentType === 'membershipProofs') {
+        setMembershipExtraction({ status: 'idle', message: '', extractedMemberships: [] });
+      }
+
+      if (documentType === 'employerLetter') {
+        setWorkExperienceVerification({ status: 'idle', message: '', extracted: { companies: [], positions: [], dateRanges: [] } });
+      }
+
+      if (documentType === 'paymentConfirmation') {
+        setPaymentReceiptVerification({
+          status: 'idle',
+          message: '',
+          extracted: { accountNumbers: [], amounts: [], requiredAccountNumber: '0043618', requiredFee: 2000 }
+        });
+      }
+    }
+  };
+
+  const removeDegreeFile = (indexToRemove) => {
+    setFormData((prev) => {
+      const existingFiles = Array.isArray(prev.documents.degreeCertificate)
+        ? prev.documents.degreeCertificate
+        : [];
+
+      return {
         ...prev,
         documents: {
           ...prev.documents,
-          [documentType]: file
+          degreeCertificate: existingFiles.filter((_, index) => index !== indexToRemove)
         }
-      }));
+      };
+    });
+
+    resetNameAndDegreeVerification();
+  };
+
+  const removeNicFile = () => {
+    setFormData((prev) => ({
+      ...prev,
+      documents: {
+        ...prev.documents,
+        nic: null
+      }
+    }));
+
+    resetDocumentVerification('nic');
+  };
+
+  const removeEmployerLetterFile = (indexToRemove) => {
+    setFormData((prev) => {
+      const existingFiles = Array.isArray(prev.documents.employerLetter)
+        ? prev.documents.employerLetter
+        : prev.documents.employerLetter
+          ? [prev.documents.employerLetter]
+          : [];
+
+      return {
+        ...prev,
+        documents: {
+          ...prev.documents,
+          employerLetter: existingFiles.filter((_, index) => index !== indexToRemove)
+        }
+      };
+    });
+
+    setWorkExperienceVerification({ status: 'idle', message: '', extracted: { companies: [], positions: [], dateRanges: [] } });
+  };
+
+
+  const removeMembershipProofFile = (indexToRemove) => {
+    setFormData((prev) => {
+      const existingFiles = Array.isArray(prev.documents.membershipProofs)
+        ? prev.documents.membershipProofs
+        : [];
+
+      return {
+        ...prev,
+        documents: {
+          ...prev.documents,
+          membershipProofs: existingFiles.filter((_, index) => index !== indexToRemove)
+        }
+      };
+    });
+
+    setMembershipExtraction({ status: 'idle', message: '', extractedMemberships: [] });
+  };
+
+  const removeTranscriptFile = () => {
+    setFormData((prev) => ({
+      ...prev,
+      documents: {
+        ...prev.documents,
+        transcript: null
+      }
+    }));
+  };
+
+  const removePaymentConfirmationFile = () => {
+    setFormData((prev) => ({
+      ...prev,
+      documents: {
+        ...prev.documents,
+        paymentConfirmation: null
+      }
+    }));
+
+    setPaymentReceiptVerification({
+      status: 'idle',
+      message: '',
+      extracted: { accountNumbers: [], amounts: [], requiredAccountNumber: '0043618', requiredFee: 2000 }
+    });
+  };
+
+  const verifyPaymentReceiptDocument = async () => {
+    const paymentFile = formData.documents.paymentConfirmation;
+
+    if (!paymentFile) {
+      setPaymentReceiptVerification({
+        status: 'idle',
+        message: '',
+        extracted: { accountNumbers: [], amounts: [], requiredAccountNumber: '0043618', requiredFee: 2000 }
+      });
+      return true;
+    }
+
+    try {
+      setPaymentReceiptVerification({
+        status: 'loading',
+        message: 'Verifying payment receipt details... ',
+        extracted: { accountNumbers: [], amounts: [], requiredAccountNumber: '0043618', requiredFee: 2000 }
+      });
+
+      const paymentDocument = {
+        name: paymentFile.name,
+        mimeType: paymentFile.type,
+        contentBase64: await readFileAsBase64(paymentFile)
+      };
+
+      const response = await fetch('http://localhost:5000/api/applications/verify-payment-receipt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ paymentDocument })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        const message = result.error || result.message || 'Failed to verify payment receipt.';
+        setPaymentReceiptVerification({
+          status: 'failed',
+          message,
+          extracted: { accountNumbers: [], amounts: [], requiredAccountNumber: '0043618', requiredFee: 2000 }
+        });
+        return false;
+      }
+
+      const verified = Boolean(result.data?.verified);
+      const extracted = {
+        accountNumbers: Array.isArray(result.data?.extracted?.accountNumbers) ? result.data.extracted.accountNumbers : [],
+        amounts: Array.isArray(result.data?.extracted?.amounts) ? result.data.extracted.amounts : [],
+        requiredAccountNumber: result.data?.extracted?.requiredAccountNumber || '0043618',
+        requiredFee: result.data?.extracted?.requiredFee || 2000
+      };
+
+      setPaymentReceiptVerification({
+        status: verified ? 'verified' : 'failed',
+        message: result.data?.reason || (verified
+          ? 'Payment receipt matched required account number and fee.'
+          : 'Payment receipt did not match required account number and fee.'),
+        extracted
+      });
+
+      return verified;
+    } catch (error) {
+      setPaymentReceiptVerification({
+        status: 'failed',
+        message: 'Unexpected error while verifying payment receipt.',
+        extracted: { accountNumbers: [], amounts: [], requiredAccountNumber: '0043618', requiredFee: 2000 }
+      });
+      return false;
     }
   };
 
@@ -224,6 +552,8 @@ function ApplicationFormPage() {
         graduationDate: ''
       }]
     }));
+
+    resetNameAndDegreeVerification();
   };
 
   const removeQualification = (index) => {
@@ -237,6 +567,8 @@ function ApplicationFormPage() {
       ...prev,
       qualifications: prev.qualifications.filter((_, i) => i !== index)
     }));
+
+    resetNameAndDegreeVerification();
     
     // Also remove the error for this index if it exists
     setGraduationDateErrors(prev => {
@@ -328,6 +660,10 @@ function ApplicationFormPage() {
     const updated = [...formData.qualifications];
     updated[index][field] = value;
     setFormData(prev => ({ ...prev, qualifications: updated }));
+
+    if (['university', 'degree', 'specialization', 'graduationDate'].includes(field)) {
+      resetNameAndDegreeVerification();
+    }
     
     // Validate graduation date if that field is being changed
     if (field === 'graduationDate') {
@@ -428,15 +764,608 @@ function ApplicationFormPage() {
     const updated = [...formData.experiences];
     updated[index][field] = value;
     setFormData(prev => ({ ...prev, experiences: updated }));
+
+    setWorkExperienceVerification({ status: 'idle', message: '', extracted: { companies: [], positions: [], dateRanges: [] } });
   };
+
+  const verifyNicAndDegreeDocuments = async () => {
+    const { nic, degreeCertificate } = formData.documents;
+    const primaryQualification = formData.qualifications?.[0] || {};
+    const degreeFiles = Array.isArray(degreeCertificate)
+      ? degreeCertificate.filter(Boolean)
+      : degreeCertificate
+        ? [degreeCertificate]
+        : [];
+
+    if (!nic || degreeFiles.length === 0) {
+      setDocumentVerification((prev) => ({
+        ...prev,
+        error: 'Please upload both NIC and Degree/Diploma files before verification.'
+      }));
+      return false;
+    }
+
+    if (!formData.nicNo || !formData.fullName) {
+      setDocumentVerification((prev) => ({
+        ...prev,
+        error: 'Please fill NIC No and Full Name before verification.'
+      }));
+      return false;
+    }
+
+    if (!primaryQualification.university || !primaryQualification.degree) {
+      setDocumentVerification((prev) => ({
+        ...prev,
+        error: 'Please complete Academic Qualifications (University and Degree) before degree verification.'
+      }));
+      return false;
+    }
+
+    try {
+      setDocumentVerification((prev) => ({
+        ...prev,
+        isVerifying: true,
+        error: ''
+      }));
+
+      const nicContentBase64 = await readFileAsBase64(nic);
+      const degreeDocuments = await Promise.all(
+        degreeFiles.map(async (file) => ({
+          name: file.name,
+          mimeType: file.type,
+          contentBase64: await readFileAsBase64(file)
+        }))
+      );
+
+      const response = await fetch('http://localhost:5000/api/applications/verify-documents', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          fullName: formData.fullName,
+          nameWithInitials: formData.nameWithInitials,
+          nicNo: formData.nicNo,
+          qualifications: formData.qualifications,
+          nicDocument: {
+            name: nic.name,
+            mimeType: nic.type,
+            contentBase64: nicContentBase64
+          },
+          degreeDocuments
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        const message = result.error || result.message || 'Document verification failed.';
+        setDocumentVerification((prev) => ({
+          ...prev,
+          isVerifying: false,
+          error: message,
+          name: { status: 'failed', message: message },
+          nic: { status: 'failed', message: message },
+          degreeCertificate: { status: 'failed', message: message }
+        }));
+        return false;
+      }
+
+      const nicResult = result.data?.nic || { verified: false, reason: 'NIC verification failed.' };
+      const degreeResult = result.data?.degreeCertificate || { verified: false, reason: 'Degree verification failed.' };
+      const nameResult = result.data?.name || { verified: false, reason: 'Name verification failed.' };
+
+      setDocumentVerification((prev) => ({
+        ...prev,
+        isVerifying: false,
+        error: '',
+        name: {
+          status: nameResult.verified ? 'verified' : 'failed',
+          message: nameResult.reason
+        },
+        nic: {
+          status: nicResult.verified ? 'verified' : 'failed',
+          message: nicResult.reason
+        },
+        degreeCertificate: {
+          status: degreeResult.verified ? 'verified' : 'failed',
+          message: degreeResult.reason
+        }
+      }));
+
+      return nicResult.verified && degreeResult.verified;
+    } catch (error) {
+      setDocumentVerification((prev) => ({
+        ...prev,
+        isVerifying: false,
+        error: 'Unexpected error while verifying documents. Please try again.',
+        name: { status: 'failed', message: 'Verification request failed.' },
+        nic: { status: 'failed', message: 'Verification request failed.' },
+        degreeCertificate: { status: 'failed', message: 'Verification request failed.' }
+      }));
+      return false;
+    }
+  };
+
+  const normalizeMembershipText = (value = '') => String(value).trim().toLowerCase().replace(/\s+/g, ' ');
+
+  const normalizeMembershipDate = (value = '') => {
+    const raw = String(value).trim();
+    if (!raw) {
+      return '';
+    }
+
+    const mmDdYyyy = raw.match(/^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/(19|20)\d{2}$/);
+    if (mmDdYyyy) {
+      return raw;
+    }
+
+    const yyyyMmDd = raw.match(/^(19|20)\d{2}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$/);
+    if (yyyyMmDd) {
+      const [year, month, day] = raw.split('-');
+      return `${month}/${day}/${year}`;
+    }
+
+    const monthNameDate = raw.match(/^(January|February|March|April|May|June|July|August|September|October|November|December)\s+([0-9]{1,2}),\s*((?:19|20)\d{2})$/i);
+    if (monthNameDate) {
+      const monthMap = {
+        january: '01',
+        february: '02',
+        march: '03',
+        april: '04',
+        may: '05',
+        june: '06',
+        july: '07',
+        august: '08',
+        september: '09',
+        october: '10',
+        november: '11',
+        december: '12'
+      };
+
+      const month = monthMap[String(monthNameDate[1]).toLowerCase()] || '';
+      const day = String(monthNameDate[2]).padStart(2, '0');
+      const year = monthNameDate[3];
+
+      if (month) {
+        return `${month}/${day}/${year}`;
+      }
+    }
+
+    return normalizeMembershipText(raw);
+  };
+
+  const evaluateMembershipMatches = (filledMemberships = [], extractedMemberships = []) => {
+    const filledRows = filledMemberships
+      .map((membership) => ({
+        organization: String(membership?.organization || '').trim(),
+        category: String(membership?.category || '').trim(),
+        dateJoined: String(membership?.dateJoined || '').trim()
+      }))
+      .filter((membership) => membership.organization || membership.category || membership.dateJoined);
+
+    if (extractedMemberships.length === 0) {
+      return {
+        status: 'failed',
+        message: 'No membership details could be extracted from uploaded file(s).'
+      };
+    }
+
+    if (filledRows.length === 0) {
+      return {
+        status: 'failed',
+        message: 'Membership details extracted, but no filled membership details found to validate.'
+      };
+    }
+
+    const unmatchedRows = filledRows.filter((filledMembership) => {
+      return !extractedMemberships.some((extractedMembership) => {
+        const filledOrganization = normalizeMembershipText(filledMembership.organization);
+        const extractedOrganization = normalizeMembershipText(extractedMembership.organization);
+        const filledCategory = normalizeMembershipText(filledMembership.category);
+        const extractedCategory = normalizeMembershipText(extractedMembership.category);
+
+        const organizationMatch = filledMembership.organization
+          ? (
+            filledOrganization === extractedOrganization
+            || filledOrganization.includes(extractedOrganization)
+            || extractedOrganization.includes(filledOrganization)
+          )
+          : true;
+        const categoryMatch = filledMembership.category
+          ? (
+            filledCategory === extractedCategory
+            || filledCategory.includes(extractedCategory)
+            || extractedCategory.includes(filledCategory)
+          )
+          : true;
+        const dateMatch = filledMembership.dateJoined
+          ? normalizeMembershipDate(filledMembership.dateJoined) === normalizeMembershipDate(extractedMembership.dateJoined)
+          : true;
+
+        return organizationMatch && categoryMatch && dateMatch;
+      });
+    });
+
+    if (unmatchedRows.length > 0) {
+      return {
+        status: 'failed',
+        message: `${unmatchedRows.length} membership record(s) do not match extracted details.`
+      };
+    }
+
+    return {
+      status: 'verified',
+      message: `Membership details matched with ${extractedMemberships.length} extracted record(s).`
+    };
+  };
+
+  const extractMembershipFromDocuments = async (membershipFiles) => {
+    if (!Array.isArray(membershipFiles) || membershipFiles.length === 0) {
+      setMembershipExtraction({ status: 'idle', message: '', extractedMemberships: [] });
+      return;
+    }
+
+    try {
+      setMembershipExtraction({ status: 'loading', message: 'Extracting membership details...' });
+
+      const membershipDocuments = await Promise.all(
+        membershipFiles.map(async (file) => ({
+          name: file.name,
+          mimeType: file.type,
+          contentBase64: await readFileAsBase64(file)
+        }))
+      );
+
+      const response = await fetch('http://localhost:5000/api/applications/extract-memberships', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ membershipDocuments })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        const message = result.error || result.message || 'Failed to extract membership details.';
+        setMembershipExtraction({ status: 'failed', message, extractedMemberships: [] });
+        return;
+      }
+
+      const extractedMemberships = Array.isArray(result.data?.memberships)
+        ? result.data.memberships
+        : [];
+
+      const matchResult = evaluateMembershipMatches(formData.memberships, extractedMemberships);
+
+      setMembershipExtraction({
+        status: matchResult.status,
+        message: matchResult.message,
+        extractedMemberships
+      });
+    } catch (error) {
+      setMembershipExtraction({
+        status: 'failed',
+        message: 'Unexpected error while extracting membership details.',
+        extractedMemberships: []
+      });
+    }
+  };
+
+  const getFilledExperienceRows = (experiences = []) => {
+    return experiences.filter((experience) => (
+      experience.fromMonth
+      || experience.fromYear
+      || experience.toMonth
+      || experience.toYear
+      || String(experience.company || '').trim()
+      || String(experience.position || '').trim()
+    ));
+  };
+
+  const verifyWorkExperienceWithEmployerLetter = async () => {
+    const employerFiles = Array.isArray(formData.documents.employerLetter)
+      ? formData.documents.employerLetter.filter(Boolean)
+      : formData.documents.employerLetter
+        ? [formData.documents.employerLetter]
+        : [];
+    const filledExperienceRows = getFilledExperienceRows(formData.experiences);
+
+    if (employerFiles.length === 0 || filledExperienceRows.length === 0) {
+      setWorkExperienceVerification({ status: 'idle', message: '', extracted: { companies: [], positions: [], dateRanges: [] } });
+      return true;
+    }
+
+    try {
+      setWorkExperienceVerification({
+        status: 'loading',
+        message: 'Verifying work experience with employer letter...',
+        extracted: { companies: [], positions: [], dateRanges: [] }
+      });
+
+      const employerDocuments = await Promise.all(
+        employerFiles.map(async (file) => ({
+          name: file.name,
+          mimeType: file.type,
+          contentBase64: await readFileAsBase64(file)
+        }))
+      );
+
+      const response = await fetch('http://localhost:5000/api/applications/extract-work-experience', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          employerDocuments,
+          experiences: filledExperienceRows
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        const message = result.error || result.message || 'Failed to validate work experience.';
+        setWorkExperienceVerification({ status: 'failed', message, extracted: { companies: [], positions: [], dateRanges: [] } });
+        return false;
+      }
+
+      const verified = Boolean(result.data?.verified);
+      const rowMismatches = Array.isArray(result.data?.rows)
+        ? result.data.rows.filter((row) => !row.verified)
+        : [];
+
+      const mismatchMessage = rowMismatches.length > 0
+        ? rowMismatches.map((row) => `Row ${Number(row.index) + 1}: ${row.reason}`).join(' | ')
+        : '';
+
+      const extractedCompanies = Array.isArray(result.data?.extracted?.companies)
+        ? result.data.extracted.companies.length
+        : 0;
+      const extractedPositions = Array.isArray(result.data?.extracted?.positions)
+        ? result.data.extracted.positions.length
+        : 0;
+      const extractedRanges = Array.isArray(result.data?.extracted?.dateRanges)
+        ? result.data.extracted.dateRanges.length
+        : 0;
+
+      const extractionSummary = `Extracted: ${extractedCompanies} company(s), ${extractedPositions} position(s), ${extractedRanges} date range(s).`;
+
+      const matchedSummary = `Work experience details (company, position, and date range) matched with extracted employer letter details (${filledExperienceRows.length} record(s)).`;
+
+      const message = verified
+        ? `${matchedSummary} ${extractionSummary}`
+        : `${result.data?.reason || 'Work experience does not match employer letter.'}${mismatchMessage ? ` ${mismatchMessage}` : ''} ${extractionSummary}`;
+
+      setWorkExperienceVerification({
+        status: verified ? 'verified' : 'failed',
+        message,
+        extracted: {
+          companies: Array.isArray(result.data?.extracted?.companies) ? result.data.extracted.companies : [],
+          positions: Array.isArray(result.data?.extracted?.positions) ? result.data.extracted.positions : [],
+          dateRanges: Array.isArray(result.data?.extracted?.dateRanges) ? result.data.extracted.dateRanges : []
+        }
+      });
+
+      return verified;
+    } catch (error) {
+      setWorkExperienceVerification({
+        status: 'failed',
+        message: 'Unexpected error while verifying work experience.',
+        extracted: { companies: [], positions: [], dateRanges: [] }
+      });
+      return false;
+    }
+  };
+
+  useEffect(() => {
+    const membershipFiles = Array.isArray(formData.documents.membershipProofs)
+      ? formData.documents.membershipProofs.filter(Boolean)
+      : [];
+
+    if (membershipFiles.length === 0) {
+      membershipExtractionKeyRef.current = '';
+      return;
+    }
+
+    const membershipFilesKey = membershipFiles
+      .map((file) => `${file.name}:${file.size}:${file.lastModified}`)
+      .join('|');
+
+    if (membershipExtraction.status === 'loading' || membershipExtractionKeyRef.current === membershipFilesKey) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      membershipExtractionKeyRef.current = membershipFilesKey;
+      extractMembershipFromDocuments(membershipFiles);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [formData.documents.membershipProofs, membershipExtraction.status]);
+
+  useEffect(() => {
+    const employerFiles = Array.isArray(formData.documents.employerLetter)
+      ? formData.documents.employerLetter.filter(Boolean)
+      : formData.documents.employerLetter
+        ? [formData.documents.employerLetter]
+        : [];
+    const filledExperienceRows = getFilledExperienceRows(formData.experiences);
+
+    if (employerFiles.length === 0 || filledExperienceRows.length === 0) {
+      workExperienceVerificationKeyRef.current = '';
+      return;
+    }
+
+    const key = [
+      employerFiles.map((file) => `${file.name}:${file.size}:${file.lastModified}`).join('|'),
+      filledExperienceRows
+        .map((experience) => [
+          experience.fromMonth,
+          experience.fromYear,
+          experience.toMonth,
+          experience.toYear,
+          String(experience.company || '').trim(),
+          String(experience.position || '').trim()
+        ].join('|'))
+        .join('||')
+    ].join('::');
+
+    if (workExperienceVerification.status === 'loading' || workExperienceVerificationKeyRef.current === key) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      workExperienceVerificationKeyRef.current = key;
+      verifyWorkExperienceWithEmployerLetter();
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [formData.documents.employerLetter, formData.experiences, workExperienceVerification.status]);
+
+  useEffect(() => {
+    const paymentFile = formData.documents.paymentConfirmation;
+
+    if (!paymentFile) {
+      paymentReceiptVerificationKeyRef.current = '';
+      return;
+    }
+
+    const key = `${paymentFile.name}:${paymentFile.size}:${paymentFile.lastModified}`;
+
+    if (paymentReceiptVerification.status === 'loading' || paymentReceiptVerificationKeyRef.current === key) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      paymentReceiptVerificationKeyRef.current = key;
+      verifyPaymentReceiptDocument();
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [formData.documents.paymentConfirmation, paymentReceiptVerification.status]);
+
+  useEffect(() => {
+    if (!Array.isArray(membershipExtraction.extractedMemberships) || membershipExtraction.extractedMemberships.length === 0) {
+      return;
+    }
+
+    const matchResult = evaluateMembershipMatches(formData.memberships, membershipExtraction.extractedMemberships);
+
+    setMembershipExtraction((prev) => {
+      if (prev.status === matchResult.status && prev.message === matchResult.message) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        status: matchResult.status,
+        message: matchResult.message
+      };
+    });
+  }, [formData.memberships, membershipExtraction.extractedMemberships]);
+
+  useEffect(() => {
+    const degreeFiles = Array.isArray(formData.documents.degreeCertificate)
+      ? formData.documents.degreeCertificate.filter(Boolean)
+      : formData.documents.degreeCertificate
+        ? [formData.documents.degreeCertificate]
+        : [];
+
+    const isReadyForVerification =
+      Boolean(formData.documents.nic)
+      && degreeFiles.length > 0
+      && Boolean(formData.nicNo?.trim())
+      && Boolean(formData.fullName?.trim())
+      && formData.qualifications.some((qualification) => qualification.university && qualification.degree);
+
+    if (!isReadyForVerification) {
+      autoVerificationKeyRef.current = '';
+      return;
+    }
+
+    const qualificationKey = formData.qualifications
+      .map((qualification) => [
+        qualification.university,
+        qualification.degree,
+        qualification.specialization,
+        qualification.graduationDate
+      ].join('|'))
+      .join('||');
+
+    const degreeFileKey = degreeFiles
+      .map((file) => `${file.name}:${file.size}:${file.lastModified}`)
+      .join('|');
+
+    const nicFile = formData.documents.nic;
+    const verificationKey = [
+      formData.nicNo,
+      formData.fullName,
+      formData.nameWithInitials,
+      qualificationKey,
+      nicFile ? `${nicFile.name}:${nicFile.size}:${nicFile.lastModified}` : '',
+      degreeFileKey
+    ].join('::');
+
+    if (autoVerificationKeyRef.current === verificationKey || documentVerification.isVerifying) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      autoVerificationKeyRef.current = verificationKey;
+      verifyNicAndDegreeDocuments();
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [
+    formData.documents.nic,
+    formData.documents.degreeCertificate,
+    formData.nicNo,
+    formData.fullName,
+    formData.nameWithInitials,
+    formData.qualifications,
+    documentVerification.isVerifying
+  ]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    const focusField = (selector) => {
+      const element = document.querySelector(selector);
+      if (element && typeof element.focus === 'function') {
+        element.focus();
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    };
+
+    const scrollToSection = (sectionRef) => {
+      sectionRef?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
     
     // Validate program is selected
     if (!formData.program) {
       alert('Program information is missing. Please go back and select a program.');
       return;
+    }
+
+    const requiredPersonalFields = [
+      { key: 'title', selector: 'select[name="title"]', label: 'Title' },
+      { key: 'fullName', selector: 'input[name="fullName"]', label: 'Full Name' },
+      { key: 'nameWithInitials', selector: 'input[name="nameWithInitials"]', label: 'Name with initials' },
+      { key: 'nicNo', selector: 'input[name="nicNo"]', label: 'NIC number' },
+      { key: 'telephone', selector: 'input[name="telephone"]', label: 'Telephone number' },
+      { key: 'mobile', selector: 'input[name="mobile"]', label: 'Mobile number' },
+      { key: 'email', selector: 'input[name="email"]', label: 'Email address' },
+      { key: 'contactAddress', selector: 'input[name="contactAddress"]', label: 'Contact address' }
+    ];
+
+    for (const field of requiredPersonalFields) {
+      if (!String(formData[field.key] || '').trim()) {
+        alert(`Please fill ${field.label}.`);
+        focusField(field.selector);
+        return;
+      }
     }
     
     // Validate Personal Particulars - all fields must be filled
@@ -444,6 +1373,47 @@ function ApplicationFormPage() {
         !formData.nicNo || !formData.telephone || !formData.mobile || 
         !formData.email || !formData.contactAddress) {
       alert('Please fill in all fields in Personal Particulars section. No fields can be left blank.');
+      return;
+    }
+
+    for (let i = 0; i < formData.qualifications.length; i += 1) {
+      const qualification = formData.qualifications[i];
+      if (!qualification.university || !qualification.degree || !qualification.specialization || !qualification.duration || !qualification.graduationDate) {
+        alert(`Please complete all fields in Academic Qualification ${i + 1}.`);
+        scrollToSection(qualificationsSectionRef);
+        return;
+      }
+    }
+
+    for (let i = 0; i < formData.memberships.length; i += 1) {
+      const membership = formData.memberships[i];
+      if (!membership.organization || !membership.category || !membership.dateJoined) {
+        alert(`Please complete all fields in Membership ${i + 1}.`);
+        scrollToSection(membershipsSectionRef);
+        return;
+      }
+    }
+
+    for (let i = 0; i < formData.experiences.length; i += 1) {
+      const experience = formData.experiences[i];
+      if (!experience.fromMonth || !experience.fromYear || !experience.toMonth || !experience.toYear || !experience.company || !experience.position) {
+        alert(`Please complete all fields in Work Experience ${i + 1}.`);
+        scrollToSection(experiencesSectionRef);
+        return;
+      }
+    }
+
+    const hasAllRequiredDocuments =
+      (Array.isArray(formData.documents.degreeCertificate) && formData.documents.degreeCertificate.length > 0)
+      && Boolean(formData.documents.nic)
+      && (Array.isArray(formData.documents.membershipProofs) && formData.documents.membershipProofs.length > 0)
+      && (Array.isArray(formData.documents.employerLetter) && formData.documents.employerLetter.length > 0)
+      && Boolean(formData.documents.transcript)
+      && Boolean(formData.documents.paymentConfirmation);
+
+    if (!hasAllRequiredDocuments) {
+      alert('Please upload all required documents before submitting.');
+      scrollToSection(documentsSectionRef);
       return;
     }
     
@@ -495,15 +1465,84 @@ function ApplicationFormPage() {
       alert('Please enter a valid 10-digit telephone number');
       return;
     }
+
+    if (String(formData.captcha || '').trim().toLowerCase() !== String(captchaValue || '').toLowerCase()) {
+      alert('Captcha is incorrect. Please try again.');
+      setFormData((prev) => ({ ...prev, captcha: '' }));
+      generateCaptcha();
+      return;
+    }
+
+    const alreadyVerified =
+      documentVerification.name.status === 'verified' &&
+      documentVerification.nic.status === 'verified' &&
+      documentVerification.degreeCertificate.status === 'verified';
+
+    if (!alreadyVerified) {
+      const verified = await verifyNicAndDegreeDocuments();
+      if (!verified) {
+        alert('NIC and Degree/Diploma verification failed. Please check uploaded files and form data.');
+        scrollToSection(qualificationsSectionRef);
+        return;
+      }
+    }
+
+    if (membershipExtraction.status !== 'verified') {
+      alert('Membership verification failed. Please ensure entered membership details match the uploaded proof(s).');
+      scrollToSection(membershipsSectionRef);
+      return;
+    }
+
+    const hasExperienceData = getFilledExperienceRows(formData.experiences).length > 0;
+    const hasEmployerLetterFiles = Array.isArray(formData.documents.employerLetter)
+      ? formData.documents.employerLetter.length > 0
+      : Boolean(formData.documents.employerLetter);
+
+    if (hasEmployerLetterFiles && hasExperienceData && workExperienceVerification.status !== 'verified') {
+      const experienceVerified = await verifyWorkExperienceWithEmployerLetter();
+      if (!experienceVerified) {
+        alert('Work experience details do not match the uploaded employer consent letter.');
+        scrollToSection(experiencesSectionRef);
+        return;
+      }
+    }
+
+    if (formData.documents.paymentConfirmation && paymentReceiptVerification.status !== 'verified') {
+      const paymentVerified = await verifyPaymentReceiptDocument();
+      if (!paymentVerified) {
+        alert('Payment receipt does not match required account number or processing fee.');
+        scrollToSection(documentsSectionRef);
+        return;
+      }
+    }
+
+    if (String(formData.captcha || '').trim().toLowerCase() !== String(captchaValue || '').toLowerCase()) {
+      setCaptchaError('Captcha is incorrect. Please enter the exact text shown above.');
+      alert('Captcha is incorrect. Please enter the exact text shown above.');
+      setFormData((prev) => ({ ...prev, captcha: '' }));
+      generateCaptcha();
+      scrollToSection(declarationSectionRef);
+      setTimeout(() => {
+        captchaInputRef.current?.focus();
+      }, 200);
+      return;
+    }
     
     try {
       // Prepare the data to send (convert files to base64 if needed, or handle separately)
       const dataToSend = {
         ...formData,
         documents: {
-          degreeCertificate: formData.documents.degreeCertificate?.name || '',
+          degreeCertificate: Array.isArray(formData.documents.degreeCertificate)
+            ? formData.documents.degreeCertificate.map((file) => file.name).join(', ')
+            : formData.documents.degreeCertificate?.name || '',
+          membershipProofs: Array.isArray(formData.documents.membershipProofs)
+            ? formData.documents.membershipProofs.map((file) => file.name).join(', ')
+            : '',
           nic: formData.documents.nic?.name || '',
-          employerLetter: formData.documents.employerLetter?.name || '',
+          employerLetter: Array.isArray(formData.documents.employerLetter)
+            ? formData.documents.employerLetter.map((file) => file.name).join(', ')
+            : formData.documents.employerLetter?.name || '',
           transcript: formData.documents.transcript?.name || '',
           paymentConfirmation: formData.documents.paymentConfirmation?.name || ''
         }
@@ -548,7 +1587,7 @@ function ApplicationFormPage() {
 
       <form onSubmit={handleSubmit} className="application-form">
         {/* Personal Particulars */}
-        <div className="form-section">
+        <div className="form-section" ref={qualificationsSectionRef}>
           <h3 className="section-title required">Personal Particulars</h3>
           
           <div className="form-group">
@@ -570,7 +1609,7 @@ function ApplicationFormPage() {
           </div>
 
           <div className="form-group">
-            <label>Full Name (exactly as in the transcript)</label>
+            <label>Full Name (as in NIC)</label>
             <input
               type="text"
               name="fullName"
@@ -579,6 +1618,18 @@ function ApplicationFormPage() {
               placeholder="Tharindu Eranda Weerasinghe"
               required
             />
+            <div className={`verification-status ${documentVerification.name.status}`} style={{ marginTop: '8px' }}>
+              <span className="verification-icon">
+                {documentVerification.name.status === 'verified' ? '✔' : documentVerification.name.status === 'failed' ? '✖' : '•'}
+              </span>
+              <span>
+                {documentVerification.name.status === 'verified'
+                  ? 'Full Name matched with NIC document'
+                  : documentVerification.name.status === 'failed'
+                    ? documentVerification.name.message
+                    : 'Full Name will be automatically matched with uploaded NIC document'}
+              </span>
+            </div>
           </div>
 
           <div className="form-row">
@@ -610,6 +1661,18 @@ function ApplicationFormPage() {
                   <span className="error-text">{nicError}</span>
                 </div>
               )}
+              <div className={`verification-status ${documentVerification.nic.status}`} style={{ marginTop: '8px' }}>
+                <span className="verification-icon">
+                  {documentVerification.nic.status === 'verified' ? '✔' : documentVerification.nic.status === 'failed' ? '✖' : '•'}
+                </span>
+                <span>
+                  {documentVerification.nic.status === 'verified'
+                    ? 'NIC number verified'
+                    : documentVerification.nic.status === 'failed'
+                      ? documentVerification.nic.message
+                      : 'NIC will be auto-verified after NIC file upload'}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -684,7 +1747,7 @@ function ApplicationFormPage() {
         </div>
 
         {/* Academic Qualifications */}
-        <div className="form-section">
+        <div className="form-section" ref={membershipsSectionRef}>
           <h3 className="section-title">Academic Qualifications</h3>
           
           {formData.qualifications.map((qual, index) => (
@@ -790,33 +1853,23 @@ function ApplicationFormPage() {
             + Add Another Qualification
           </button>
 
-          <div className="checkbox-group">
-            <label>
-              <input
-                type="checkbox"
-                name="partTime"
-                checked={formData.partTime}
-                onChange={handleInputChange}
-              />
-              Part Time
-            </label>
+          <div className={`verification-status ${documentVerification.degreeCertificate.status}`} style={{ marginTop: '12px' }}>
+            <span className="verification-icon">
+              {documentVerification.degreeCertificate.status === 'verified' ? '✔' : documentVerification.degreeCertificate.status === 'failed' ? '✖' : '•'}
+            </span>
+            <span>
+              {documentVerification.degreeCertificate.status === 'verified'
+                ? (documentVerification.degreeCertificate.message || 'Degree/Diploma details verified')
+                : documentVerification.degreeCertificate.status === 'failed'
+                  ? documentVerification.degreeCertificate.message
+                  : 'Degree/Diploma will be auto-verified after certificate upload'}
+            </span>
           </div>
 
-          <div className="checkbox-group">
-            <label>
-              <input
-                type="checkbox"
-                name="alreadyRegistered"
-                checked={formData.alreadyRegistered}
-                onChange={handleInputChange}
-              />
-              Already registered for another degree program
-            </label>
-          </div>
         </div>
 
         {/* Membership of Professional Organizations */}
-        <div className="form-section">
+        <div className="form-section" ref={experiencesSectionRef}>
           <h3 className="section-title">Membership of Professional Organizations</h3>
           
           {formData.memberships.map((membership, index) => (
@@ -888,10 +1941,26 @@ function ApplicationFormPage() {
           <button type="button" onClick={addMembership} className="add-button">
             + Add Another Membership
           </button>
+
+          <div className={`verification-status ${membershipExtraction.status === 'verified' ? 'verified' : membershipExtraction.status === 'failed' ? 'failed' : ''}`} style={{ marginTop: '12px' }}>
+            <span className="verification-icon">
+              {membershipExtraction.status === 'verified' ? '✔' : membershipExtraction.status === 'failed' ? '✖' : membershipExtraction.status === 'loading' ? '…' : '•'}
+            </span>
+            <span>
+              {membershipExtraction.status === 'verified'
+                ? membershipExtraction.message
+                : membershipExtraction.status === 'failed'
+                  ? membershipExtraction.message
+                  : membershipExtraction.status === 'loading'
+                    ? 'Extracting membership details from uploaded document(s)...'
+                    : 'Upload membership proof files to auto-extract organization, category, and date.'}
+            </span>
+          </div>
+
         </div>
 
         {/* Work Experience */}
-        <div className="form-section">
+        <div className="form-section" ref={documentsSectionRef}>
           <h3 className="section-title">Work Experience (most recent first)</h3>
           
           {formData.experiences.map((exp, index) => (
@@ -992,10 +2061,50 @@ function ApplicationFormPage() {
           <button type="button" onClick={addExperience} className="add-button">
             + Add Another Experience
           </button>
+
+          <div className={`verification-status ${workExperienceVerification.status === 'verified' ? 'verified' : workExperienceVerification.status === 'failed' ? 'failed' : ''}`} style={{ marginTop: '12px' }}>
+            <span className="verification-icon">
+              {workExperienceVerification.status === 'verified' ? '✔' : workExperienceVerification.status === 'failed' ? '✖' : workExperienceVerification.status === 'loading' ? '…' : '•'}
+            </span>
+            <span>
+              {workExperienceVerification.status === 'verified'
+                ? workExperienceVerification.message
+                : workExperienceVerification.status === 'failed'
+                  ? workExperienceVerification.message
+                  : workExperienceVerification.status === 'loading'
+                    ? 'Verifying work experience with employer letter...'
+                    : 'Work experience will be auto-verified after uploading Employer Consent Letter'}
+            </span>
+          </div>
+
+          {(Array.isArray(workExperienceVerification.extracted?.companies) && workExperienceVerification.extracted.companies.length > 0
+            || Array.isArray(workExperienceVerification.extracted?.positions) && workExperienceVerification.extracted.positions.length > 0
+            || Array.isArray(workExperienceVerification.extracted?.dateRanges) && workExperienceVerification.extracted.dateRanges.length > 0) && (
+            <div style={{ marginTop: '10px', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', background: '#f8fafc' }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a', marginBottom: '6px' }}>
+                Extracted from Employer Letter
+              </div>
+              {Array.isArray(workExperienceVerification.extracted?.companies) && workExperienceVerification.extracted.companies.length > 0 && (
+                <div style={{ fontSize: '13px', color: '#334155', marginBottom: '4px' }}>
+                  Companies: {workExperienceVerification.extracted.companies.join(' | ')}
+                </div>
+              )}
+              {Array.isArray(workExperienceVerification.extracted?.positions) && workExperienceVerification.extracted.positions.length > 0 && (
+                <div style={{ fontSize: '13px', color: '#334155', marginBottom: '4px' }}>
+                  Positions: {workExperienceVerification.extracted.positions.join(' | ')}
+                </div>
+              )}
+              {Array.isArray(workExperienceVerification.extracted?.dateRanges) && workExperienceVerification.extracted.dateRanges.length > 0 && (
+                <div style={{ fontSize: '13px', color: '#334155' }}>
+                  Date Ranges: {workExperienceVerification.extracted.dateRanges.map((range) => `${range.from} -> ${range.to}`).join(' | ')}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Documents */}
-        <div className="form-section">
+        <div className="form-section" ref={declarationSectionRef}>
           <h3 className="section-title required">Documents</h3>
           <p className="document-note">
             * Please make sure each file is 4 MB or less (Please upload the files in PDF format). All documents are required.
@@ -1003,11 +2112,69 @@ function ApplicationFormPage() {
 
           <div className="form-group">
             <label>Degree / Diploma Certificate(s)</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+              <button
+                type="button"
+                onClick={() => triggerFilePicker(degreeInputRef)}
+                style={{
+                  border: '1px solid #bfc5cc',
+                  borderRadius: '4px',
+                  background: '#fff',
+                  color: '#111827',
+                  cursor: 'pointer',
+                  padding: '8px 14px',
+                  fontSize: '16px',
+                  lineHeight: 1
+                }}
+              >
+                Choose files
+              </button>
+              <span style={{ fontSize: '16px', color: '#374151' }}>
+                {Array.isArray(formData.documents.degreeCertificate) && formData.documents.degreeCertificate.length > 0
+                  ? `${formData.documents.degreeCertificate.length} file(s) selected`
+                  : 'No file chosen'}
+              </span>
+            </div>
             <input
+              ref={degreeInputRef}
               type="file"
-              accept=".pdf"
+              accept=".pdf,.png,.jpg,.jpeg,.webp"
+              multiple
               onChange={(e) => handleFileChange(e, 'degreeCertificate')}
+              style={{ display: 'none' }}
             />
+            {Array.isArray(formData.documents.degreeCertificate) && formData.documents.degreeCertificate.length > 0 && (
+              <p className="document-note" style={{ marginTop: '8px', marginBottom: '8px' }}>
+                {formData.documents.degreeCertificate.length} degree files selected.
+              </p>
+            )}
+            {Array.isArray(formData.documents.degreeCertificate) && formData.documents.degreeCertificate.length > 0 && (
+              <div style={{ marginBottom: '10px' }}>
+                {formData.documents.degreeCertificate.map((file, index) => (
+                  <div
+                    key={`${file.name}-${file.lastModified}-${index}`}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '6px' }}
+                  >
+                    <span style={{ fontSize: '13px', color: '#374151' }}>{file.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeDegreeFile(index)}
+                      style={{
+                        border: '1px solid #d1d5db',
+                        borderRadius: '4px',
+                        background: '#fff',
+                        color: '#374151',
+                        cursor: 'pointer',
+                        padding: '2px 8px',
+                        fontSize: '12px'
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
             {fileErrors.degreeCertificate && (
               <div className="error-box">
                 <span className="error-icon">⚠</span>
@@ -1018,11 +2185,61 @@ function ApplicationFormPage() {
 
           <div className="form-group">
             <label>NIC</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+              <button
+                type="button"
+                onClick={() => triggerFilePicker(nicInputRef)}
+                style={{
+                  border: '1px solid #bfc5cc',
+                  borderRadius: '4px',
+                  background: '#fff',
+                  color: '#111827',
+                  cursor: 'pointer',
+                  padding: '8px 14px',
+                  fontSize: '16px',
+                  lineHeight: 1
+                }}
+              >
+                Choose file
+              </button>
+              <span style={{ fontSize: '16px', color: '#374151' }}>
+                {formData.documents.nic ? formData.documents.nic.name : 'No file chosen'}
+              </span>
+            </div>
             <input
+              ref={nicInputRef}
               type="file"
-              accept=".pdf"
+              accept=".pdf,.png,.jpg,.jpeg,.webp"
               onChange={(e) => handleFileChange(e, 'nic')}
+              style={{ display: 'none' }}
             />
+            {formData.documents.nic && (
+              <p className="document-note" style={{ marginTop: '8px', marginBottom: '8px' }}>
+                NIC file selected.
+              </p>
+            )}
+            {formData.documents.nic && (
+              <div style={{ marginBottom: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '13px', color: '#374151' }}>{formData.documents.nic.name}</span>
+                  <button
+                    type="button"
+                    onClick={removeNicFile}
+                    style={{
+                      border: '1px solid #d1d5db',
+                      borderRadius: '4px',
+                      background: '#fff',
+                      color: '#374151',
+                      cursor: 'pointer',
+                      padding: '2px 8px',
+                      fontSize: '12px'
+                    }}
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            )}
             {fileErrors.nic && (
               <div className="error-box">
                 <span className="error-icon">⚠</span>
@@ -1031,13 +2248,158 @@ function ApplicationFormPage() {
             )}
           </div>
 
+          {documentVerification.isVerifying && (
+            <p className="document-note" style={{ marginBottom: '10px', color: '#0f766e' }}>
+              Verifying Name, Degree, and NIC automatically...
+            </p>
+          )}
+
+          <div className="form-group">
+            <label>Membership of Professional Organizations (Proof)</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+              <button
+                type="button"
+                onClick={() => triggerFilePicker(membershipProofInputRef)}
+                style={{
+                  border: '1px solid #bfc5cc',
+                  borderRadius: '4px',
+                  background: '#fff',
+                  color: '#111827',
+                  cursor: 'pointer',
+                  padding: '8px 14px',
+                  fontSize: '16px',
+                  lineHeight: 1
+                }}
+              >
+                Choose files
+              </button>
+              <span style={{ fontSize: '16px', color: '#374151' }}>
+                {Array.isArray(formData.documents.membershipProofs) && formData.documents.membershipProofs.length > 0
+                  ? `${formData.documents.membershipProofs.length} file(s) selected`
+                  : 'No file chosen'}
+              </span>
+            </div>
+            <input
+              ref={membershipProofInputRef}
+              type="file"
+              accept=".pdf,.png,.jpg,.jpeg,.webp"
+              multiple
+              onChange={(e) => handleFileChange(e, 'membershipProofs')}
+              style={{ display: 'none' }}
+            />
+            {Array.isArray(formData.documents.membershipProofs) && formData.documents.membershipProofs.length > 0 && (
+              <p className="document-note" style={{ marginTop: '8px', marginBottom: '8px' }}>
+                {formData.documents.membershipProofs.length} membership file(s) selected.
+              </p>
+            )}
+            {Array.isArray(formData.documents.membershipProofs) && formData.documents.membershipProofs.length > 0 && (
+              <div style={{ marginBottom: '10px' }}>
+                {formData.documents.membershipProofs.map((file, index) => (
+                  <div
+                    key={`${file.name}-${file.lastModified}-${index}`}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '6px' }}
+                  >
+                    <span style={{ fontSize: '13px', color: '#374151' }}>{file.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeMembershipProofFile(index)}
+                      style={{
+                        border: '1px solid #d1d5db',
+                        borderRadius: '4px',
+                        background: '#fff',
+                        color: '#374151',
+                        cursor: 'pointer',
+                        padding: '2px 8px',
+                        fontSize: '12px'
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {fileErrors.membershipProofs && (
+              <div className="error-box">
+                <span className="error-icon">⚠</span>
+                <span className="error-text">{fileErrors.membershipProofs}</span>
+              </div>
+            )}
+          </div>
+
+          {documentVerification.error && (
+            <div className="error-box">
+              <span className="error-icon">⚠</span>
+              <span className="error-text">{documentVerification.error}</span>
+            </div>
+          )}
+
           <div className="form-group">
             <label>Employer Consent Letter</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+              <button
+                type="button"
+                onClick={() => triggerFilePicker(employerLetterInputRef)}
+                style={{
+                  border: '1px solid #bfc5cc',
+                  borderRadius: '4px',
+                  background: '#fff',
+                  color: '#111827',
+                  cursor: 'pointer',
+                  padding: '8px 14px',
+                  fontSize: '16px',
+                  lineHeight: 1
+                }}
+              >
+                Choose files
+              </button>
+              <span style={{ fontSize: '16px', color: '#374151' }}>
+                {Array.isArray(formData.documents.employerLetter) && formData.documents.employerLetter.length > 0
+                  ? `${formData.documents.employerLetter.length} file(s) selected`
+                  : 'No file chosen'}
+              </span>
+            </div>
             <input
+              ref={employerLetterInputRef}
               type="file"
-              accept=".pdf"
+              accept=".pdf,.png,.jpg,.jpeg,.webp"
+              multiple
               onChange={(e) => handleFileChange(e, 'employerLetter')}
+              style={{ display: 'none' }}
             />
+            {Array.isArray(formData.documents.employerLetter) && formData.documents.employerLetter.length > 0 && (
+              <p className="document-note" style={{ marginTop: '8px', marginBottom: '8px' }}>
+                {formData.documents.employerLetter.length} employer letter file(s) selected.
+              </p>
+            )}
+            {Array.isArray(formData.documents.employerLetter) && formData.documents.employerLetter.length > 0 && (
+              <div style={{ marginBottom: '10px' }}>
+                {formData.documents.employerLetter.map((file, index) => (
+                  <div
+                    key={`${file.name}-${file.lastModified}-${index}`}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '6px' }}
+                  >
+                    <span style={{ fontSize: '13px', color: '#374151' }}>{file.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeEmployerLetterFile(index)}
+                      style={{
+                        border: '1px solid #d1d5db',
+                        borderRadius: '4px',
+                        background: '#fff',
+                        color: '#374151',
+                        cursor: 'pointer',
+                        padding: '2px 8px',
+                        fontSize: '12px'
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
             {fileErrors.employerLetter && (
               <div className="error-box">
                 <span className="error-icon">⚠</span>
@@ -1048,11 +2410,61 @@ function ApplicationFormPage() {
 
           <div className="form-group">
             <label>Transcript(s)</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+              <button
+                type="button"
+                onClick={() => triggerFilePicker(transcriptInputRef)}
+                style={{
+                  border: '1px solid #bfc5cc',
+                  borderRadius: '4px',
+                  background: '#fff',
+                  color: '#111827',
+                  cursor: 'pointer',
+                  padding: '8px 14px',
+                  fontSize: '16px',
+                  lineHeight: 1
+                }}
+              >
+                Choose file
+              </button>
+              <span style={{ fontSize: '16px', color: '#374151' }}>
+                {formData.documents.transcript ? formData.documents.transcript.name : 'No file chosen'}
+              </span>
+            </div>
             <input
+              ref={transcriptInputRef}
               type="file"
               accept=".pdf"
               onChange={(e) => handleFileChange(e, 'transcript')}
+              style={{ display: 'none' }}
             />
+            {formData.documents.transcript && (
+              <p className="document-note" style={{ marginTop: '8px', marginBottom: '8px' }}>
+                Transcript file selected.
+              </p>
+            )}
+            {formData.documents.transcript && (
+              <div style={{ marginBottom: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '13px', color: '#374151' }}>{formData.documents.transcript.name}</span>
+                  <button
+                    type="button"
+                    onClick={removeTranscriptFile}
+                    style={{
+                      border: '1px solid #d1d5db',
+                      borderRadius: '4px',
+                      background: '#fff',
+                      color: '#374151',
+                      cursor: 'pointer',
+                      padding: '2px 8px',
+                      fontSize: '12px'
+                    }}
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            )}
             {fileErrors.transcript && (
               <div className="error-box">
                 <span className="error-icon">⚠</span>
@@ -1063,15 +2475,99 @@ function ApplicationFormPage() {
 
           <div className="form-group">
             <label>Payment Confirmation / Bank Receipt</label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+              <button
+                type="button"
+                onClick={() => triggerFilePicker(paymentConfirmationInputRef)}
+                style={{
+                  border: '1px solid #bfc5cc',
+                  borderRadius: '4px',
+                  background: '#fff',
+                  color: '#111827',
+                  cursor: 'pointer',
+                  padding: '8px 14px',
+                  fontSize: '16px',
+                  lineHeight: 1
+                }}
+              >
+                Choose file
+              </button>
+              <span style={{ fontSize: '16px', color: '#374151' }}>
+                {formData.documents.paymentConfirmation ? formData.documents.paymentConfirmation.name : 'No file chosen'}
+              </span>
+            </div>
             <input
+              ref={paymentConfirmationInputRef}
               type="file"
-              accept=".pdf"
+              accept=".pdf,.png,.jpg,.jpeg,.webp"
               onChange={(e) => handleFileChange(e, 'paymentConfirmation')}
+              style={{ display: 'none' }}
             />
+            {formData.documents.paymentConfirmation && (
+              <p className="document-note" style={{ marginTop: '8px', marginBottom: '8px' }}>
+                Payment confirmation file selected.
+              </p>
+            )}
+            {formData.documents.paymentConfirmation && (
+              <div style={{ marginBottom: '10px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '13px', color: '#374151' }}>{formData.documents.paymentConfirmation.name}</span>
+                  <button
+                    type="button"
+                    onClick={removePaymentConfirmationFile}
+                    style={{
+                      border: '1px solid #d1d5db',
+                      borderRadius: '4px',
+                      background: '#fff',
+                      color: '#374151',
+                      cursor: 'pointer',
+                      padding: '2px 8px',
+                      fontSize: '12px'
+                    }}
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            )}
             {fileErrors.paymentConfirmation && (
               <div className="error-box">
                 <span className="error-icon">⚠</span>
                 <span className="error-text">{fileErrors.paymentConfirmation}</span>
+              </div>
+            )}
+
+            <div className={`verification-status ${paymentReceiptVerification.status === 'verified' ? 'verified' : paymentReceiptVerification.status === 'failed' ? 'failed' : ''}`}>
+              <span className="verification-icon">
+                {paymentReceiptVerification.status === 'verified' ? '✔' : paymentReceiptVerification.status === 'failed' ? '✖' : paymentReceiptVerification.status === 'loading' ? '…' : '•'}
+              </span>
+              <span>
+                {paymentReceiptVerification.status === 'verified'
+                  ? paymentReceiptVerification.message
+                  : paymentReceiptVerification.status === 'failed'
+                    ? paymentReceiptVerification.message
+                    : paymentReceiptVerification.status === 'loading'
+                      ? 'Extracting and verifying account number and processing fee from receipt...'
+                      : 'Upload payment receipt to auto-verify account no (0043618) and fee (Rs. 2,000).'}
+              </span>
+            </div>
+
+            {(Array.isArray(paymentReceiptVerification.extracted?.accountNumbers) && paymentReceiptVerification.extracted.accountNumbers.length > 0
+              || Array.isArray(paymentReceiptVerification.extracted?.amounts) && paymentReceiptVerification.extracted.amounts.length > 0) && (
+              <div style={{ marginTop: '10px', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', background: '#f8fafc' }}>
+                <div style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a', marginBottom: '6px' }}>
+                  Extracted from Payment Receipt
+                </div>
+                {Array.isArray(paymentReceiptVerification.extracted?.accountNumbers) && paymentReceiptVerification.extracted.accountNumbers.length > 0 && (
+                  <div style={{ fontSize: '13px', color: '#334155', marginBottom: '4px' }}>
+                    Account Numbers: {paymentReceiptVerification.extracted.accountNumbers.join(' | ')}
+                  </div>
+                )}
+                {Array.isArray(paymentReceiptVerification.extracted?.amounts) && paymentReceiptVerification.extracted.amounts.length > 0 && (
+                  <div style={{ fontSize: '13px', color: '#334155' }}>
+                    Amounts: {paymentReceiptVerification.extracted.amounts.map((amount) => `Rs. ${amount}`).join(' | ')}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1100,8 +2596,17 @@ function ApplicationFormPage() {
 
           <div className="captcha-group">
             <label>Enter captcha</label>
-            <div className="captcha-display">qzf7ro7</div>
+            <div
+              className="captcha-display"
+              onCopy={(e) => e.preventDefault()}
+              onCut={(e) => e.preventDefault()}
+              onContextMenu={(e) => e.preventDefault()}
+              style={{ userSelect: 'none' }}
+            >
+              {captchaValue}
+            </div>
             <input
+              ref={captchaInputRef}
               type="text"
               name="captcha"
               value={formData.captcha}
@@ -1109,6 +2614,15 @@ function ApplicationFormPage() {
               placeholder="Enter captcha"
               required
             />
+            {captchaError && (
+              <div className="error-box" style={{ marginTop: '8px' }}>
+                <span className="error-icon">⚠</span>
+                <span className="error-text">{captchaError}</span>
+              </div>
+            )}
+            <button type="button" className="add-button" onClick={generateCaptcha} style={{ marginTop: '10px' }}>
+              Refresh Captcha
+            </button>
           </div>
 
           <p className="captcha-note">

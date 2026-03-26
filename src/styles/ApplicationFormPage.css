@@ -411,6 +411,57 @@ label.required::before {
   font-weight: 500;
 }
 
+.verify-documents-button {
+  background: #0f766e;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-bottom: 12px;
+}
+
+.verify-documents-button:hover {
+  background: #115e59;
+}
+
+.verify-documents-button:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
+.verification-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 13px;
+}
+
+.verification-status .verification-icon {
+  font-weight: 700;
+}
+
+.verification-status.verified {
+  border-color: #16a34a;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.verification-status.failed {
+  border-color: #dc2626;
+  background: #fef2f2;
+  color: #991b1b;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .application-form {
