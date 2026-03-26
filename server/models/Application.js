@@ -132,6 +132,8 @@ const applicationSchema = new mongoose.Schema({
   timestamps: true
 });
 
+applicationSchema.index({ program: 1, nicNo: 1 }, { unique: true });
+
 const Application = mongoose.model('Application', applicationSchema);
 
 export default Application;
