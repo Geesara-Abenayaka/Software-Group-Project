@@ -55,20 +55,20 @@ function AdminDashboard() {
   const fetchPrograms = async () => {
     try {
       setLoading(true);
-      const [progResponse, appsResponse] = await Promise.all([
+      const [progResponse, summaryResponse] = await Promise.all([
         fetch('http://localhost:5000/api/programs'),
-        fetch('http://localhost:5000/api/applications')
+        fetch('http://localhost:5000/api/applications/summary/by-program')
       ]);
       const progData = await progResponse.json();
-      const appsData = await appsResponse.json();
+      const summaryData = await summaryResponse.json();
 
       if (progData.success) {
+        const summaryMap = new Map(
+          (summaryData.success ? summaryData.data : []).map((item) => [item.program, item])
+        );
+
         const programsWithCounts = progData.data.map(program => {
-          const pendingCount = appsData.success
-            ? appsData.data.filter(
-                app => app.program === program.shortCode && app.status === 'pending'
-              ).length
-            : 0;
+          const pendingCount = summaryMap.get(program.shortCode)?.pending || 0;
           return { ...program, pendingCount };
         });
         setPrograms(programsWithCounts);

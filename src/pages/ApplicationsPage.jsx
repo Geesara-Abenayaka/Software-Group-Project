@@ -22,20 +22,21 @@ function ApplicationsPage() {
   const fetchPrograms = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/programs');
-      const data = await response.json();
+      const [programsResponse, summaryResponse] = await Promise.all([
+        fetch('http://localhost:5000/api/programs'),
+        fetch('http://localhost:5000/api/applications/summary/by-program')
+      ]);
+
+      const data = await programsResponse.json();
+      const summaryData = await summaryResponse.json();
       
       if (data.success) {
-        // Fetch all applications to count pending ones per program
-        const appsResponse = await fetch('http://localhost:5000/api/applications');
-        const appsData = await appsResponse.json();
+        const summaryMap = new Map(
+          (summaryData.success ? summaryData.data : []).map((item) => [item.program, item])
+        );
         
         const programsWithCounts = data.data.map(program => {
-          // Count pending applications for this program
-          const pendingCount = appsData.success ? 
-            appsData.data.filter(app => 
-              app.program === program.shortCode && app.status === 'pending'
-            ).length : 0;
+          const pendingCount = summaryMap.get(program.shortCode)?.pending || 0;
           
           return {
             ...program,
