@@ -1,10 +1,13 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 import connectDB from './config/db.js';
 import authRoutes from './routes/auth.js';
 import programRoutes from './routes/programs.js';
 import applicationRoutes from './routes/applications.js';
+import documentVerificationRoutes from './routes/documentVerification.js';
+import { initializeGridFS } from './utils/gridfsService.js';
 
 dotenv.config();
 
@@ -12,16 +15,22 @@ const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '20mb' }));
+app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 
 // Connect to MongoDB
 connectDB();
+
+// Initialize GridFS after connection
+mongoose.connection.once('open', () => {
+  initializeGridFS(mongoose.connection.db);
+});
 
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/programs', programRoutes);
 app.use('/api/applications', applicationRoutes);
+app.use('/api/applications', documentVerificationRoutes);
 
 // Test route
 app.get('/api/health', (req, res) => {

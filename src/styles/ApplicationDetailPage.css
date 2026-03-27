@@ -302,19 +302,21 @@
 
 .detail-delete-btn {
   padding: 0.45rem 0.55rem;
-  background: #dc2626;
-  color: #ffffff;
-  border: none;
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
   border-radius: 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
 .detail-delete-btn:hover {
-  background: #b91c1c;
+  background: #e5e7eb;
+  color: #4b5563;
+  border-color: #9ca3af;
 }
 
 /* -- No apps ----------------------------------------------- */

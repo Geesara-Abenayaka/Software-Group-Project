@@ -28,7 +28,7 @@ const seedUsers = async () => {
     
     console.log('Collection cleared');
 
-    // Create dummy admin users
+    // Create dummy admin users 
     const users = [
       {
         email: 'admin@uom.lk',
@@ -57,6 +57,7 @@ const seedUsers = async () => {
     ];
 
     const usersWithHashedPasswords = await Promise.all(
+    const hashedUsers = await Promise.all(
       users.map(async (user) => ({
         ...user,
         password: await bcrypt.hash(user.password, 10)
@@ -64,6 +65,7 @@ const seedUsers = async () => {
     );
 
     await User.insertMany(usersWithHashedPasswords);
+    await User.insertMany(hashedUsers);
     console.log('✅ Dummy users added successfully!');
     console.log('\n📋 Admin Credentials:');
     console.log('================================');

@@ -72,6 +72,41 @@ function AdminDashboard() {
           return { ...program, pendingCount };
         });
         setPrograms(programsWithCounts);
+      const progResponse = await fetch('http://localhost:5000/api/programs');
+      const progData = await progResponse.json();
+
+      if (progData.success) {
+        const basePrograms = progData.data.map((program) => ({ ...program, pendingCount: 0 }));
+        setPrograms(basePrograms);
+
+        // Fetch application counts in background so slow endpoint does not block page rendering.
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+        fetch('http://localhost:5000/api/applications/summary', { signal: controller.signal })
+          .then((response) => response.json())
+          .then((appsData) => {
+            if (!appsData?.success || !Array.isArray(appsData.data)) {
+              return;
+            }
+
+            setPrograms((currentPrograms) => {
+              return currentPrograms.map((program) => {
+                const pendingCount = appsData.data.filter(
+                  (app) => app.program === program.shortCode && app.status === 'pending'
+                ).length;
+                return { ...program, pendingCount };
+              });
+            });
+          })
+          .catch((countError) => {
+            if (countError?.name !== 'AbortError') {
+              console.warn('Pending count fetch failed:', countError);
+            }
+          })
+          .finally(() => {
+            clearTimeout(timeoutId);
+          });
       } else {
         setError('Failed to load programs');
       }

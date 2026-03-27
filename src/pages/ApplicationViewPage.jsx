@@ -2,6 +2,18 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import '../styles/ApplicationViewPage.css';
 
+const fetchWithTimeout = async (url, timeoutMs = 8000) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    return response;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+};
+
 function ApplicationViewPage() {
   const navigate = useNavigate();
   const { applicationId } = useParams();
@@ -23,7 +35,7 @@ function ApplicationViewPage() {
   const fetchApplicationDetails = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:5000/api/applications/${applicationId}`);
+      const response = await fetchWithTimeout(`http://localhost:5000/api/applications/${applicationId}/view`, 8000);
       const data = await response.json();
       
       if (data.success) {
@@ -31,16 +43,20 @@ function ApplicationViewPage() {
         
         // Fetch program details
         if (data.data.program) {
-          const programResponse = await fetch(`http://localhost:5000/api/programs/${data.data.program}`);
+          const programResponse = await fetchWithTimeout(`http://localhost:5000/api/programs/${data.data.program}`, 8000);
           const programData = await programResponse.json();
           if (programData.success) {
             setProgram(programData.data);
           }
         }
+      } else {
+        setApplication(null);
       }
-      setLoading(false);
     } catch (err) {
       console.error('Error fetching application:', err);
+      setApplication(null);
+      setProgram(null);
+    } finally {
       setLoading(false);
     }
   };
@@ -252,27 +268,6 @@ function ApplicationViewPage() {
             <p className="no-data">No qualifications provided</p>
           )}
 
-          <div className="checkbox-group view-only">
-            <label>
-              <input
-                type="checkbox"
-                checked={application.partTime}
-                disabled
-              />
-              Part Time
-            </label>
-          </div>
-
-          <div className="checkbox-group view-only">
-            <label>
-              <input
-                type="checkbox"
-                checked={application.alreadyRegistered}
-                disabled
-              />
-              Already registered for another degree program
-            </label>
-          </div>
         </div>
 
         {/* Membership of Professional Organizations */}
@@ -360,37 +355,120 @@ function ApplicationViewPage() {
 
           <div className="form-group view-only">
             <label>Degree / Diploma Certificate(s)</label>
-            <div className={`document-status ${application.documents?.degreeCertificate ? 'uploaded' : 'not-uploaded'}`}>
-              {application.documents?.degreeCertificate ? '✓ Uploaded' : '✗ Not Uploaded'}
-            </div>
+            {application.documents?.degreeCertificate && Array.isArray(application.documents.degreeCertificate) && application.documents.degreeCertificate.length > 0 ? (
+              <div className="file-list">
+                {application.documents.degreeCertificate.map((file, idx) => (
+                  <div key={idx} className="file-item-with-actions">
+                    <span className="file-name">📄 {file.fileName}</span>
+                    <div className="file-actions">
+                      <a 
+                        href={`http://localhost:5000/api/applications/${applicationId}/file/${file.fileId}`} 
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="file-action-btn view-btn"
+                        title="Open in new tab"
+                      >
+                        👁️ View
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="document-status not-uploaded">✗ Not Uploaded</div>
+            )}
           </div>
 
           <div className="form-group view-only">
             <label>NIC</label>
-            <div className={`document-status ${application.documents?.nic ? 'uploaded' : 'not-uploaded'}`}>
-              {application.documents?.nic ? '✓ Uploaded' : '✗ Not Uploaded'}
-            </div>
+            {application.documents?.nic ? (
+              <div className="file-item-with-actions">
+                <span className="file-name">📄 {application.documents.nic.fileName}</span>
+                <div className="file-actions">
+                  <a 
+                    href={`http://localhost:5000/api/applications/${applicationId}/file/${application.documents.nic.fileId}`} 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="file-action-btn view-btn"
+                    title="Open in new tab"
+                  >
+                    👁️ View
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <div className="document-status not-uploaded">✗ Not Uploaded</div>
+            )}
           </div>
 
           <div className="form-group view-only">
             <label>Employer Consent Letter</label>
-            <div className={`document-status ${application.documents?.employerLetter ? 'uploaded' : 'not-uploaded'}`}>
-              {application.documents?.employerLetter ? '✓ Uploaded' : '✗ Not Uploaded'}
-            </div>
+            {application.documents?.employerLetter && Array.isArray(application.documents.employerLetter) && application.documents.employerLetter.length > 0 ? (
+              <div className="file-list">
+                {application.documents.employerLetter.map((file, idx) => (
+                  <div key={idx} className="file-item-with-actions">
+                    <span className="file-name">📄 {file.fileName}</span>
+                    <div className="file-actions">
+                      <a 
+                        href={`http://localhost:5000/api/applications/${applicationId}/file/${file.fileId}`} 
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="file-action-btn view-btn"
+                        title="Open in new tab"
+                      >
+                        👁️ View
+                      </a>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="document-status not-uploaded">✗ Not Uploaded</div>
+            )}
           </div>
 
           <div className="form-group view-only">
             <label>Transcript(s)</label>
-            <div className={`document-status ${application.documents?.transcript ? 'uploaded' : 'not-uploaded'}`}>
-              {application.documents?.transcript ? '✓ Uploaded' : '✗ Not Uploaded'}
-            </div>
+            {application.documents?.transcript ? (
+              <div className="file-item-with-actions">
+                <span className="file-name">📄 {application.documents.transcript.fileName}</span>
+                <div className="file-actions">
+                  <a 
+                    href={`http://localhost:5000/api/applications/${applicationId}/file/${application.documents.transcript.fileId}`} 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="file-action-btn view-btn"
+                    title="Open in new tab"
+                  >
+                    👁️ View
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <div className="document-status not-uploaded">✗ Not Uploaded</div>
+            )}
           </div>
 
           <div className="form-group view-only">
             <label>Payment Confirmation / Bank Receipt</label>
-            <div className={`document-status ${application.documents?.paymentConfirmation ? 'uploaded' : 'not-uploaded'}`}>
-              {application.documents?.paymentConfirmation ? '✓ Uploaded' : '✗ Not Uploaded'}
-            </div>
+            {application.documents?.paymentConfirmation ? (
+              <div className="file-item-with-actions">
+                <span className="file-name">📄 {application.documents.paymentConfirmation.fileName}</span>
+                <div className="file-actions">
+                  <a 
+                    href={`http://localhost:5000/api/applications/${applicationId}/file/${application.documents.paymentConfirmation.fileId}`} 
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="file-action-btn view-btn"
+                    title="Open in new tab"
+                  >
+                    👁️ View
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <div className="document-status not-uploaded">✗ Not Uploaded</div>
+            )}
           </div>
 
           <p className="document-info">
@@ -413,17 +491,6 @@ function ApplicationViewPage() {
               fill in the Online Referee Form according to the instructions given in the handbook to complete the application process. Please note that 
               without these recommendations, the application would be considered as incomplete.
             </p>
-          </div>
-
-          <div className="checkbox-group view-only">
-            <label>
-              <input
-                type="checkbox"
-                checked={application.declaration}
-                disabled
-              />
-              I accept the declaration
-            </label>
           </div>
 
           {application.captcha && (
