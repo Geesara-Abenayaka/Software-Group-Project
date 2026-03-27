@@ -178,6 +178,12 @@ function ApplicationDetailPage() {
         'Current application status: {{status}}.',
         'Reference ID: {{applicationId}}.',
         '',
+        'Interview Details:',
+        'Date: {{interviewDate}}',
+        'Time: {{interviewTime}}',
+        '',
+        'Please ensure you are available for the interview at the scheduled date and time. If you have any conflicts, please contact the admissions office immediately.',
+        '',
         'If you need clarification, please contact the admissions office.',
         '',
         'Best regards,',
@@ -189,7 +195,7 @@ function ApplicationDetailPage() {
 
   const getSelectableApplications = (sourceApplications) => {
     return sourceApplications.filter(
-      (application) => typeof application.email === 'string' && application.email.trim()
+      (application) => typeof application.email === 'string' && application.email.trim() && application.status === 'Approved'
     );
   };
 
@@ -664,7 +670,7 @@ function ApplicationDetailPage() {
                   <section className="bulk-email-editor">
                     <div className="bulk-email-editor-heading">
                       <h4>Email Content</h4>
-                      <span>Use tokens: {'{{name}}'}, {'{{status}}'}, {'{{applicationId}}'}, {'{{program}}'}</span>
+                      <span>Use tokens: {'{{name}}'}, {'{{status}}'}, {'{{applicationId}}'}, {'{{program}}'}, {'{{interviewDate}}'}, {'{{interviewTime}}'}</span>
                     </div>
 
                     <label className="bulk-email-field-label" htmlFor="bulk-email-subject">Subject</label>
