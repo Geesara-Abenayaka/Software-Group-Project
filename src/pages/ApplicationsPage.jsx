@@ -34,6 +34,28 @@ function ApplicationsPage() {
   const fetchPrograms = async () => {
     try {
       setLoading(true);
+      const [programsResponse, summaryResponse] = await Promise.all([
+        fetch('http://localhost:5000/api/programs'),
+        fetch('http://localhost:5000/api/applications/summary/by-program')
+      ]);
+
+      const data = await programsResponse.json();
+      const summaryData = await summaryResponse.json();
+      
+      if (data.success) {
+        const summaryMap = new Map(
+          (summaryData.success ? summaryData.data : []).map((item) => [item.program, item])
+        );
+        
+        const programsWithCounts = data.data.map(program => {
+          const pendingCount = summaryMap.get(program.shortCode)?.pending || 0;
+          
+          return {
+            ...program,
+            pendingCount
+          };
+        });
+        setPrograms(programsWithCounts);
       const response = await fetchWithTimeout('http://localhost:5000/api/programs', 8000);
       const data = await response.json();
       

@@ -34,14 +34,28 @@ const validateNewPassword = (password) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+    const normalizedEmail = (email || '').trim().toLowerCase();
+    const passwordInput = String(password || '');
+
+    if (!normalizedEmail || !passwordInput) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
 
     // Find user by email
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email: normalizedEmail });
 
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
+    // Support both bcrypt-hashed and legacy plain-text stored passwords.
+    const storedPassword = user.password || '';
+    const isBcryptHash = /^\$2[aby]\$\d{2}\$/.test(storedPassword);
+    const isPasswordValid = isBcryptHash
+      ? await bcrypt.compare(passwordInput, storedPassword)
+      : storedPassword === passwordInput;
+
+    if (!isPasswordValid) {
     // Check password using secure verification (with legacy plain-text compatibility).
     const isValidPassword = await verifyPassword(password, user.password);
     if (!isValidPassword) {

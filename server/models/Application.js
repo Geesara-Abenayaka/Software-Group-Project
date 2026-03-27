@@ -132,6 +132,11 @@ const applicationSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Optimizes admin list/filter/sort and NIC search queries.
+applicationSchema.index({ program: 1, submittedAt: -1 });
+applicationSchema.index({ status: 1, submittedAt: -1 });
+applicationSchema.index({ nicNo: 1 });
+applicationSchema.index({ submittedAt: -1 });
 applicationSchema.index({ program: 1, nicNo: 1 }, { unique: true });
 
 const Application = mongoose.model('Application', applicationSchema);

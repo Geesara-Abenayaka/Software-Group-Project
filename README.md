@@ -1,16 +1,71 @@
-# React + Vite
+# Postgraduate LMS (Frontend + Backend)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project has:
+- Frontend: React + Vite (`Software-Group-Project`)
+- Backend: Node.js + Express + MongoDB (`Software-Group-Project/server`)
 
-Currently, two official plugins are available:
+## Prerequisites
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Node.js 18+ (Node 22 is also fine)
+- npm
 
-## React Compiler
+## First-time setup after clone
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+From project root (`Software-Group-Project`):
 
-## Expanding the ESLint configuration
+```bash
+npm install
+cd server
+npm install
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Run the app
+
+Open 2 terminals.
+
+Terminal 1 (backend):
+
+```bash
+cd server
+npm run dev
+```
+
+Backend runs on: `http://localhost:5000`
+
+Terminal 2 (frontend):
+
+```bash
+npm run dev
+```
+
+Frontend runs on: `http://localhost:5173`
+
+## Notes
+
+- Frontend API calls are currently hardcoded to `http://localhost:5000`, so backend must run on port `5000`.
+- MongoDB connection is configured in `server/config/db.js`.
+- Email sending requires SMTP environment variables (`SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`).
+- For local development without real email delivery, set `EMAIL_SIMULATION=true` in backend environment.
+
+## Optional backend `.env`
+
+Create `server/.env` only if needed:
+
+```env
+PORT=5000
+EMAIL_SIMULATION=true
+
+# If you want real email sending instead of simulation:
+# SMTP_HOST=smtp.example.com
+# SMTP_PORT=587
+# SMTP_SECURE=false
+# SMTP_USER=your_username
+# SMTP_PASS=your_password
+# SMTP_FROM=no-reply@example.com
+```
+
+## Troubleshooting
+
+- If backend shows `EADDRINUSE: address already in use :::5000`, another process is already using port 5000.
+	- Stop the existing process, or
+	- Run backend on another port (`PORT=5001`) and update frontend API URLs accordingly.
