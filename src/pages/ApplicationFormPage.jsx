@@ -1865,8 +1865,19 @@ function ApplicationFormPage() {
                   >
                     <option value="">Select University</option>
                     <option value="uom">University of Moratuwa</option>
-                    <option value="uoc">University of Colombo</option>
                     <option value="uop">University of Peradeniya</option>
+                    <option value="uor">University of Ruhuna</option>
+                    <option value="usjp">University of Sri Jayewardenepura</option>
+                    <option value="uoc">University of Colombo</option>
+                    <option value="uok">University of Kelaniya</option>
+                    <option value="rjt">Rajarata University</option>
+                    <option value="wusl">Wayamba University</option>
+                    <option value="susl">Sabaragamuwa University</option>
+                    <option value="uwu">Uva Wellassa University</option>
+                    <option value="uoj">University of Jaffna</option>
+                    <option value="seu">South Eastern University</option>
+                    <option value="ksdu">General Sir John Kotelawala Defence University</option>
+                    <option value="ousl">Open University of Sri Lanka</option>
                   </select>
                 </div>
                 <div className="form-group">
