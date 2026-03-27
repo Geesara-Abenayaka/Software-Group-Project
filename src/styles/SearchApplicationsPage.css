@@ -344,10 +344,22 @@
   border-color: #d1d5db;
 }
 
+.page-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: #ffffff;
+  border-color: #e5e7eb;
+}
+
 .page-btn.active {
   background: #8b0000;
   color: white;
   border-color: #8b0000;
+}
+
+.pagination-ellipsis {
+  color: #6b7280;
+  padding: 0 0.15rem;
 }
 
 @media (max-width: 1400px) {

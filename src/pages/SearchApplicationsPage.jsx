@@ -22,6 +22,8 @@ function SearchApplicationsPage() {
   const [filteredApplications, setFilteredApplications] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [resultsPerPage, setResultsPerPage] = useState(25);
   const [searchText, setSearchText] = useState('');
   const [activeSearchText, setActiveSearchText] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -99,12 +101,52 @@ function SearchApplicationsPage() {
     setFilteredApplications(filtered);
   }, [applications, activeSearchText, filters]);
 
+  const totalResults = filteredApplications.length;
+  const totalPages = Math.max(1, Math.ceil(totalResults / resultsPerPage));
+  const currentPageSafe = Math.min(currentPage, totalPages);
+  const startIndex = totalResults === 0 ? 0 : (currentPageSafe - 1) * resultsPerPage;
+  const endIndex = Math.min(startIndex + resultsPerPage, totalResults);
+  const paginatedApplications = filteredApplications.slice(startIndex, endIndex);
+
+  const getPaginationItems = () => {
+    if (totalPages <= 7) {
+      return Array.from({ length: totalPages }, (_, index) => index + 1);
+    }
+
+    if (currentPageSafe <= 4) {
+      return [1, 2, 3, 4, 5, '...', totalPages];
+    }
+
+    if (currentPageSafe >= totalPages - 3) {
+      return [1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    }
+
+    return [1, '...', currentPageSafe - 1, currentPageSafe, currentPageSafe + 1, '...', totalPages];
+  };
+
+  const paginationItems = getPaginationItems();
+
+  const handlePageChange = (page) => {
+    if (typeof page !== 'number') {
+      return;
+    }
+    const nextPage = Math.min(Math.max(page, 1), totalPages);
+    setCurrentPage(nextPage);
+  };
+
   useEffect(() => {
     handleSearch();
   }, [filters, applications, activeSearchText, handleSearch]);
 
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
   const handleSearchButtonClick = () => {
     setActiveSearchText(searchText);
+    setCurrentPage(1);
   };
 
   const handleSearchInputChange = (e) => {
@@ -115,6 +157,7 @@ function SearchApplicationsPage() {
     // If search bar is cleared, reset to show all applications
     if (value.trim() === '') {
       setActiveSearchText('');
+      setCurrentPage(1);
     }
   };
 
@@ -282,6 +325,7 @@ function SearchApplicationsPage() {
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') {
                     setActiveSearchText(searchText);
+                    setCurrentPage(1);
                   }
                 }}
                 onFocus={() => setShowSuggestions(true)}
@@ -459,7 +503,7 @@ function SearchApplicationsPage() {
                     </td>
                   </tr>
                 ) : (
-                  filteredApplications.map((app) => {
+                  paginatedApplications.map((app) => {
                     const program = programs.find(p => p.shortCode === app.program);
                     const programDisplay = program?.title 
                       ? program.title 
@@ -511,22 +555,54 @@ function SearchApplicationsPage() {
 
             <div className="table-footer">
               <div className="table-info">
-                Showing {filteredApplications.length > 0 ? `1-${filteredApplications.length}` : '0'} of {filteredApplications.length} applications
+                Showing {totalResults > 0 ? `${startIndex + 1}-${endIndex}` : '0'} of {totalResults} applications
               </div>
               <div className="pagination">
                 <span className="page-info">Results per page:</span>
-                <select className="page-select">
-                  <option>25</option>
-                  <option>50</option>
-                  <option>100</option>
+                <select
+                  className="page-select"
+                  value={resultsPerPage}
+                  onChange={(e) => {
+                    setResultsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                >
+                  <option value={10}>10</option>
+                  <option value={25}>25</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
                 </select>
-                <button className="page-btn">Previous</button>
-                <button className="page-btn active">1</button>
-                <button className="page-btn">2</button>
-                <button className="page-btn">3</button>
-                <span>...</span>
-                <button className="page-btn">15</button>
-                <button className="page-btn">Next</button>
+                <button
+                  className="page-btn"
+                  onClick={() => handlePageChange(currentPageSafe - 1)}
+                  disabled={currentPageSafe === 1}
+                >
+                  Previous
+                </button>
+
+                {paginationItems.map((item, index) => {
+                  if (item === '...') {
+                    return <span key={`ellipsis-${index}`} className="pagination-ellipsis">...</span>;
+                  }
+
+                  return (
+                    <button
+                      key={`page-${item}`}
+                      className={`page-btn ${currentPageSafe === item ? 'active' : ''}`}
+                      onClick={() => handlePageChange(item)}
+                    >
+                      {item}
+                    </button>
+                  );
+                })}
+
+                <button
+                  className="page-btn"
+                  onClick={() => handlePageChange(currentPageSafe + 1)}
+                  disabled={currentPageSafe === totalPages}
+                >
+                  Next
+                </button>
               </div>
             </div>
           </div>
