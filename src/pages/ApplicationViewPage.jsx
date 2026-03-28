@@ -246,6 +246,11 @@ function ApplicationViewPage() {
                     <div className="view-value">{qual.graduationDate}</div>
                   </div>
                 </div>
+
+                <div className="form-group view-only">
+                  <label>GPA</label>
+                  <div className="view-value">{qual.gpa !== undefined && qual.gpa !== null && qual.gpa !== '' ? qual.gpa : 'N/A'}</div>
+                </div>
               </div>
             ))
           ) : (

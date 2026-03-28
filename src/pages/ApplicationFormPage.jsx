@@ -10,6 +10,7 @@ function ApplicationFormPage() {
   const [nicError, setNicError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [graduationDateErrors, setGraduationDateErrors] = useState({});
+  const [gpaErrors, setGpaErrors] = useState({});
   const [membershipDateErrors, setMembershipDateErrors] = useState({});
   const [fileErrors, setFileErrors] = useState({});
   
@@ -28,7 +29,8 @@ function ApplicationFormPage() {
       degree: '',
       specialization: '',
       duration: '',
-      graduationDate: ''
+      graduationDate: '',
+      gpa: ''
     }],
     partTime: false,
     alreadyRegistered: false,
@@ -221,7 +223,8 @@ function ApplicationFormPage() {
         degree: '',
         specialization: '',
         duration: '',
-        graduationDate: ''
+        graduationDate: '',
+        gpa: ''
       }]
     }));
   };
@@ -246,6 +249,22 @@ function ApplicationFormPage() {
       const adjusted = {};
       Object.keys(updated).forEach(key => {
         const keyIndex = parseInt(key);
+        if (keyIndex > index) {
+          adjusted[keyIndex - 1] = updated[key];
+        } else {
+          adjusted[keyIndex] = updated[key];
+        }
+      });
+      return adjusted;
+    });
+
+    // Also remove GPA validation errors for this qualification if present
+    setGpaErrors(prev => {
+      const updated = { ...prev };
+      delete updated[index];
+      const adjusted = {};
+      Object.keys(updated).forEach(key => {
+        const keyIndex = parseInt(key, 10);
         if (keyIndex > index) {
           adjusted[keyIndex - 1] = updated[key];
         } else {
@@ -333,6 +352,66 @@ function ApplicationFormPage() {
     if (field === 'graduationDate') {
       validateGraduationDate(value, index);
     }
+  };
+
+  const handleGpaChange = (index, value) => {
+    const trimmedValue = value.trim();
+
+    if (!trimmedValue) {
+      const updated = [...formData.qualifications];
+      updated[index].gpa = '';
+      setFormData(prev => ({ ...prev, qualifications: updated }));
+      setGpaErrors(prev => {
+        const next = { ...prev };
+        delete next[index];
+        return next;
+      });
+      return;
+    }
+
+    // GPA must be numeric; reject any non-numeric input.
+    if (!/^\d*\.?\d*$/.test(trimmedValue)) {
+      setGpaErrors(prev => ({
+        ...prev,
+        [index]: 'GPA must be a number'
+      }));
+      return;
+    }
+
+    const parsedGpa = Number(trimmedValue);
+    if (!Number.isFinite(parsedGpa)) {
+      setGpaErrors(prev => ({
+        ...prev,
+        [index]: 'GPA must be a number'
+      }));
+      return;
+    }
+
+    const updated = [...formData.qualifications];
+    updated[index].gpa = trimmedValue;
+    setFormData(prev => ({ ...prev, qualifications: updated }));
+
+    if (parsedGpa > 4.0) {
+      setGpaErrors(prev => ({
+        ...prev,
+        [index]: 'GPA must be less than or equal to 4.0'
+      }));
+      return;
+    }
+
+    if (parsedGpa < 0) {
+      setGpaErrors(prev => ({
+        ...prev,
+        [index]: 'GPA must be greater than or equal to 0'
+      }));
+      return;
+    }
+
+    setGpaErrors(prev => {
+      const next = { ...prev };
+      delete next[index];
+      return next;
+    });
   };
 
   const validateGraduationDate = (value, index) => {
@@ -455,6 +534,24 @@ function ApplicationFormPage() {
         alert('Please enter valid graduation date in mm/dd/yyyy format');
         return;
       }
+
+      const gpa = formData.qualifications[i].gpa;
+      if (gpa !== '' && gpa !== null && gpa !== undefined) {
+        const parsedGpa = Number(gpa);
+        if (!Number.isFinite(parsedGpa)) {
+          alert('Please enter a numeric GPA value');
+          return;
+        }
+        if (parsedGpa > 4.0 || parsedGpa < 0) {
+          alert('GPA must be between 0 and 4.0');
+          return;
+        }
+      }
+    }
+
+    if (Object.keys(gpaErrors).length > 0) {
+      alert('Please fix GPA validation errors before submitting');
+      return;
     }
     
     // Validate membership dates
@@ -500,6 +597,10 @@ function ApplicationFormPage() {
       // Prepare the data to send (convert files to base64 if needed, or handle separately)
       const dataToSend = {
         ...formData,
+        qualifications: formData.qualifications.map((qualification) => ({
+          ...qualification,
+          gpa: qualification.gpa === '' ? null : Number(qualification.gpa)
+        })),
         documents: {
           degreeCertificate: formData.documents.degreeCertificate?.name || '',
           nic: formData.documents.nic?.name || '',
@@ -710,8 +811,12 @@ function ApplicationFormPage() {
                   >
                     <option value="">Select University</option>
                     <option value="uom">University of Moratuwa</option>
-                    <option value="uoc">University of Colombo</option>
                     <option value="uop">University of Peradeniya</option>
+                    <option value="uor">University of Ruhuna</option>
+                    <option value="uoj1">University of Jayawardenapura</option>
+                    <option value="uoj2">University of Jaffna</option>
+                    <option value="uoc">University of Colombo</option>
+                    <option value="uok">University of Kelaniya</option>
                   </select>
                 </div>
                 <div className="form-group">
@@ -721,7 +826,7 @@ function ApplicationFormPage() {
                     onChange={(e) => handleQualificationChange(index, 'degree', e.target.value)}
                   >
                     <option value="">Select Qualifications</option>
-                    <option value="bsc">BSc (Hons)</option>
+                    <option value="bsc">BSc</option>
                     <option value="msc">MSc</option>
                     <option value="phd">PhD</option>
                   </select>
@@ -779,6 +884,24 @@ function ApplicationFormPage() {
                     <div className="error-box">
                       <span className="error-icon">⚠</span>
                       <span className="error-text">{graduationDateErrors[index]}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="form-group">
+                  <label>GPA (Max 4.0)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    max="4"
+                    value={qual.gpa ?? ''}
+                    onChange={(e) => handleGpaChange(index, e.target.value)}
+                    placeholder="e.g. 3.75"
+                    className={gpaErrors[index] ? 'input-error' : ''}
+                  />
+                  {gpaErrors[index] && (
+                    <div className="error-box">
+                      <span className="error-icon">⚠</span>
+                      <span className="error-text">{gpaErrors[index]}</span>
                     </div>
                   )}
                 </div>
