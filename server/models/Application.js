@@ -1,5 +1,18 @@
 import mongoose from 'mongoose';
 
+const qualificationSchema = new mongoose.Schema({
+  university: String,
+  degree: String,
+  specialization: String,
+  duration: String,
+  graduationDate: String,
+  gpa: {
+    type: Number,
+    min: [0, 'GPA must be greater than or equal to 0'],
+    max: [4, 'GPA must be less than or equal to 4.0']
+  }
+}, { _id: false });
+
 const applicationSchema = new mongoose.Schema({
   // Program Information
   program: {
@@ -41,13 +54,7 @@ const applicationSchema = new mongoose.Schema({
   },
   
   // Qualifications
-  qualifications: [{
-    university: String,
-    degree: String,
-    specialization: String,
-    duration: String,
-    graduationDate: String
-  }],
+  qualifications: [qualificationSchema],
   
   // Registration Status
   partTime: {

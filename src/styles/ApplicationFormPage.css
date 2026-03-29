@@ -219,6 +219,14 @@ label.required::before {
   margin-bottom: 0;
 }
 
+.qualification-item .form-row {
+  margin-bottom: 16px;
+}
+
+.qualification-item .form-row-three {
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+
 .add-button {
   background: transparent;
   color: #8b0000;
