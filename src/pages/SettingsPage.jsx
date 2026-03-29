@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User } from 'lucide-react';
+import axios from 'axios';
 import '../styles/SettingsPage.css';
 
 function SettingsPage() {
@@ -15,6 +16,11 @@ function SettingsPage() {
   const [newDeadline, setNewDeadline] = useState('2024-11-11');
   const [currentMonth1, setCurrentMonth1] = useState(new Date(2025, 8, 1)); // September 2025
   const [currentMonth2, setCurrentMonth2] = useState(new Date(2025, 10, 1)); // November 2025
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordFeedback, setPasswordFeedback] = useState({ type: '', message: '' });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -56,6 +62,58 @@ function SettingsPage() {
   const handleSetDeadline = () => {
     setCurrentDeadline(newDeadline);
     alert('Application deadline updated successfully!');
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+
+    if (!user?.id) {
+      setPasswordFeedback({ type: 'error', message: 'User session missing. Please login again.' });
+      return;
+    }
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordFeedback({ type: 'error', message: 'Please fill all password fields.' });
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setPasswordFeedback({ type: 'error', message: 'New password must be at least 8 characters.' });
+      return;
+    }
+
+    if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/\d/.test(newPassword)) {
+      setPasswordFeedback({ type: 'error', message: 'Use at least one uppercase letter, one lowercase letter and one number.' });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordFeedback({ type: 'error', message: 'New password and confirm password do not match.' });
+      return;
+    }
+
+    setIsChangingPassword(true);
+    setPasswordFeedback({ type: '', message: '' });
+
+    try {
+      const response = await axios.post('http://localhost:5000/api/auth/change-password', {
+        userId: user.id,
+        currentPassword,
+        newPassword
+      });
+
+      setPasswordFeedback({ type: 'success', message: response.data?.message || 'Password changed successfully.' });
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error) {
+      setPasswordFeedback({
+        type: 'error',
+        message: error.response?.data?.message || 'Unable to change password. Please try again.'
+      });
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   const renderCalendar = (date, monthIndex) => {
@@ -207,6 +265,70 @@ function SettingsPage() {
             <button className="set-deadline-btn" onClick={handleSetDeadline}>
               Set Application Deadline
             </button>
+          </div>
+
+          <div className="settings-section">
+            <h2 className="settings-title">Change Admin Password</h2>
+            <p className="current-deadline">
+              Update your admin password securely.
+            </p>
+
+            <form className="password-form" onSubmit={handleChangePassword}>
+              <div className="password-grid">
+                <div className="password-field-group">
+                  <label htmlFor="currentPassword">Current Password</label>
+                  <input
+                    id="currentPassword"
+                    type="password"
+                    className="deadline-input"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Enter current password"
+                    autoComplete="current-password"
+                  />
+                </div>
+
+                <div className="password-field-group">
+                  <label htmlFor="newPassword">New Password</label>
+                  <input
+                    id="newPassword"
+                    type="password"
+                    className="deadline-input"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Minimum 8 chars, upper/lower/number"
+                    autoComplete="new-password"
+                  />
+                </div>
+
+                <div className="password-field-group">
+                  <label htmlFor="confirmPassword">Confirm New Password</label>
+                  <input
+                    id="confirmPassword"
+                    type="password"
+                    className="deadline-input"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Re-enter new password"
+                    autoComplete="new-password"
+                  />
+                </div>
+              </div>
+
+              {passwordFeedback.message && (
+                <p className={`password-feedback ${passwordFeedback.type}`}>
+                  {passwordFeedback.message}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                className="set-deadline-btn"
+                disabled={isChangingPassword}
+              >
+                {isChangingPassword ? 'Updating Password...' : 'Change Password'}
+              </button>
+            </form>
           </div>
         </main>
       </div>

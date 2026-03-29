@@ -3,6 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User } from 'lucide-react';
 import '../styles/ApplicationsPage.css';
 
+const fetchWithTimeout = async (url, timeoutMs = 8000) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    return response;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+};
+
 function ApplicationsPage() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -44,6 +56,42 @@ function ApplicationsPage() {
           };
         });
         setPrograms(programsWithCounts);
+      const response = await fetchWithTimeout('http://localhost:5000/api/programs', 8000);
+      const data = await response.json();
+      
+      if (data.success) {
+        const basePrograms = data.data.map((program) => ({
+          ...program,
+          pendingCount: 0
+        }));
+        setPrograms(basePrograms);
+
+        // Fetch pending counts in background so a slow endpoint doesn't block the page render.
+        fetchWithTimeout('http://localhost:5000/api/applications/summary', 6000)
+          .then((appsResponse) => appsResponse.json())
+          .then((appsData) => {
+            if (!appsData?.success || !Array.isArray(appsData.data)) {
+              return;
+            }
+
+            setPrograms((currentPrograms) => {
+              return currentPrograms.map((program) => {
+                const pendingCount = appsData.data.filter((app) => (
+                  app.program === program.shortCode && app.status === 'pending'
+                )).length;
+
+                return {
+                  ...program,
+                  pendingCount
+                };
+              });
+            });
+          })
+          .catch((countError) => {
+            if (countError?.name !== 'AbortError') {
+              console.warn('Failed to fetch pending counts:', countError);
+            }
+          });
       }
     } catch (err) {
       console.error('Error fetching programs:', err);
