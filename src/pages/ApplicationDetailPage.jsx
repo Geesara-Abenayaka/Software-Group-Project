@@ -5,6 +5,65 @@ import '../styles/AdminDashboard.css';
 import '../styles/ApplicationDetailPage.css';
 
 function ApplicationDetailPage() {
+  const CATEGORY_PRIORITY = {
+    'Category 1': 1,
+    'Category 2': 2,
+    'Category 3': 3
+  };
+
+  const getBestGpa = (qualifications) => {
+    if (!Array.isArray(qualifications)) {
+      return null;
+    }
+
+    const numericGpas = qualifications
+      .map((qualification) => Number(qualification?.gpa))
+      .filter((gpa) => Number.isFinite(gpa));
+
+    if (numericGpas.length === 0) {
+      return null;
+    }
+
+    return Math.max(...numericGpas);
+  };
+
+  const getCategoryFromGpa = (gpa) => {
+    if (!Number.isFinite(gpa)) {
+      return 'Category 3';
+    }
+
+    if (gpa >= 3.7) {
+      return 'Category 1'; // First Class
+    }
+
+    if (gpa >= 3.3) {
+      return 'Category 2'; // Second Upper
+    }
+
+    if (gpa >= 3.0) {
+      return 'Category 3'; // Second Lower
+    }
+
+    return 'Category 3';
+  };
+
+  const sortByCategoryPriority = (list) => {
+    return [...list].sort((a, b) => {
+      const categoryDiff = (CATEGORY_PRIORITY[a.category] || 99) - (CATEGORY_PRIORITY[b.category] || 99);
+      if (categoryDiff !== 0) {
+        return categoryDiff;
+      }
+
+      const gpaA = Number.isFinite(a.gpaValue) ? a.gpaValue : -1;
+      const gpaB = Number.isFinite(b.gpaValue) ? b.gpaValue : -1;
+      if (gpaA !== gpaB) {
+        return gpaB - gpaA;
+      }
+
+      return a.displayId.localeCompare(b.displayId);
+    });
+  };
+
   const navigate = useNavigate();
   const { programId } = useParams();
   const [user, setUser] = useState(null);
@@ -17,6 +76,7 @@ function ApplicationDetailPage() {
     category: 'All',
     status: 'All'
   });
+  const [sortByCategory, setSortByCategory] = useState(false);
   const [isBulkEmailOpen, setIsBulkEmailOpen] = useState(false);
   const [selectedRecipientIds, setSelectedRecipientIds] = useState([]);
   const [bulkSubject, setBulkSubject] = useState('');
@@ -69,23 +129,28 @@ function ApplicationDetailPage() {
       
       if (applicationsData.success) {
         // Transform the data to match the expected format
-        const transformedApplications = applicationsData.data.map((app, index) => ({
-          id: app._id,
-          displayId: `APP${String(index + 1).padStart(3, '0')}`,
-          nic: app.nicNo,
-          fullName: app.fullName,
-          nameWithInitials: app.nameWithInitials,
-          category: app.category ||
-                   (app.program === 'msc-cs' ? 'Category 1' :
-                    app.program === 'msc-ai' ? 'Category 2' : 'Category 3'),
-          status: app.status.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-          email: app.email,
-          mobile: app.mobile,
-          submittedAt: new Date(app.submittedAt).toLocaleDateString()
-        }));
+        const transformedApplications = applicationsData.data.map((app, index) => {
+          const gpaValue = getBestGpa(app.qualifications);
+          const category = getCategoryFromGpa(gpaValue);
+          const normalizedStatus = String(app.status || 'pending');
+
+          return {
+            id: app._id,
+            displayId: `APP${String(index + 1).padStart(3, '0')}`,
+            nic: app.nicNo,
+            fullName: app.fullName,
+            nameWithInitials: app.nameWithInitials,
+            gpaValue,
+            category,
+            status: normalizedStatus.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+            email: app.email,
+            mobile: app.mobile,
+            submittedAt: new Date(app.submittedAt).toLocaleDateString()
+          };
+        });
         
         setApplications(transformedApplications);
-        setFilteredApplications(transformedApplications);
+        applyFilters(searchText, filters, transformedApplications, sortByCategory);
       } else {
         // If no applications found, set empty array
         setApplications([]);
@@ -112,8 +177,19 @@ function ApplicationDetailPage() {
     applyFilters(searchText, newFilters);
   };
 
-  const applyFilters = (search, currentFilters) => {
-    let filtered = [...applications];
+  const handleSortByCategory = () => {
+    const nextSortByCategory = !sortByCategory;
+    setSortByCategory(nextSortByCategory);
+    applyFilters(searchText, filters, applications, nextSortByCategory);
+  };
+
+  const applyFilters = (
+    search,
+    currentFilters,
+    sourceApplications = applications,
+    shouldSortByCategory = sortByCategory
+  ) => {
+    let filtered = [...sourceApplications];
 
     if (search) {
       filtered = filtered.filter(app =>
@@ -129,6 +205,10 @@ function ApplicationDetailPage() {
 
     if (currentFilters.status !== 'All') {
       filtered = filtered.filter(app => app.status === currentFilters.status);
+    }
+
+    if (shouldSortByCategory) {
+      filtered = sortByCategoryPriority(filtered);
     }
 
     setFilteredApplications(filtered);
@@ -498,6 +578,13 @@ function ApplicationDetailPage() {
             <button className="detail-export-btn" onClick={handleExport}>
               <Download size={15} style={{ marginRight: '0.4rem' }} />
               Export
+            </button>
+            <button
+              className={`detail-sort-btn ${sortByCategory ? 'active' : ''}`}
+              onClick={handleSortByCategory}
+              type="button"
+            >
+              {sortByCategory ? 'Sorted: Category 1 > 2 > 3' : 'Sort by Category'}
             </button>
           </div>
 
