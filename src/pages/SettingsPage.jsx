@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User } from 'lucide-react';
 import axios from 'axios';
+import { isAdminDarkModeEnabled, setAdminDarkModeEnabled } from '../utils/adminTheme';
 import '../styles/SettingsPage.css';
 
 function SettingsPage() {
@@ -21,6 +22,7 @@ function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordFeedback, setPasswordFeedback] = useState({ type: '', message: '' });
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isNightMode, setIsNightMode] = useState(() => isAdminDarkModeEnabled());
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -30,6 +32,14 @@ function SettingsPage() {
       navigate('/login');
     }
   }, [navigate]);
+
+  const handleToggleNightMode = () => {
+    setIsNightMode((prevMode) => {
+      const nextMode = !prevMode;
+      setAdminDarkModeEnabled(nextMode);
+      return nextMode;
+    });
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -233,6 +243,16 @@ function SettingsPage() {
       </nav>
       <div className="admin-content-full">
         <main className="admin-main-full settings-main">
+          <div className="settings-section">
+            <h2 className="settings-title">Display Mode</h2>
+            <p className="current-deadline">
+              Switch between light mode and night mode for this settings page.
+            </p>
+            <button className="mode-toggle-btn" onClick={handleToggleNightMode}>
+              {isNightMode ? 'Switch to Light Mode' : 'Switch to Night Mode'}
+            </button>
+          </div>
+
           <div className="settings-section">
             <h2 className="settings-title">Set Date Range</h2>
             <p className="current-range">
