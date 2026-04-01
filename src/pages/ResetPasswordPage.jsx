@@ -234,23 +234,6 @@ function ResetPasswordPage() {
               >
                 {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend verification code'}
               </a>
-
-              <a
-                href="#"
-                className="forgot-password"
-                onClick={(e) => {
-                  e.preventDefault()
-                  setIsCodeSent(false)
-                  setVerificationCode('')
-                  setNewPassword('')
-                  setConfirmPassword('')
-                  setResendCooldown(0)
-                  setError('')
-                  setSuccess('')
-                }}
-              >
-                Use a different email?
-              </a>
             </form>
           )}
         </div>
