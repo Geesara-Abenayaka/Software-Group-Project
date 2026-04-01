@@ -147,26 +147,6 @@ function ApplicationDetailPage() {
       }
 
       if (applicationsResult.status === 'fulfilled' && applicationsResult.value?.success) {
-        // Transform the data to match the expected format
-        const transformedApplications = applicationsData.data.map((app, index) => {
-          const gpaValue = getBestGpa(app.qualifications);
-          const category = getCategoryFromGpa(gpaValue);
-          const normalizedStatus = String(app.status || 'pending');
-
-          return {
-            id: app._id,
-            displayId: `APP${String(index + 1).padStart(3, '0')}`,
-            nic: app.nicNo,
-            fullName: app.fullName,
-            nameWithInitials: app.nameWithInitials,
-            gpaValue,
-            category,
-            status: normalizedStatus.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
-            email: app.email,
-            mobile: app.mobile,
-            submittedAt: new Date(app.submittedAt).toLocaleDateString()
-          };
-        });
         const transformedApplications = applicationsResult.value.data.map((app) => ({
           id: app._id,
           displayId: getStableDisplayId(app._id),

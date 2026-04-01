@@ -13,8 +13,25 @@ import {
 const router = express.Router();
 
 const ADMIN_LIST_FIELDS = [
+  '_id',
   'program',
   'title',
+  'fullName',
+  'nameWithInitials',
+  'nicNo',
+  'telephone',
+  'mobile',
+  'email',
+  'status',
+  'oaMarks',
+  'writingMarks',
+  'interviewMarks',
+  'graduationDate',
+  'submittedAt',
+  'createdAt',
+  'updatedAt'
+].join(' ');
+
 const APPLICATION_SUMMARY_FIELDS = [
   '_id',
   'program',
@@ -33,8 +50,6 @@ const APPLICATION_SUMMARY_FIELDS = [
   'submittedAt',
   'createdAt',
   'updatedAt'
-  'createdAt',
-  'submittedAt'
 ].join(' ');
 
 // Create a new application
@@ -375,8 +390,6 @@ router.get('/nic/:nicNo', async (req, res) => {
   }
 });
 
-// Send bulk email to selected applications in a program
-router.post('/program/:program/bulk-email', async (req, res) => {
 // Get lightweight summaries by program
 router.get('/program/:program/summary', async (req, res) => {
   try {
