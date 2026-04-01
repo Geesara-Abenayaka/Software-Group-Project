@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import LoginPage from './pages/LoginPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import HomePage from './pages/HomePage'
 import ProgramDetailPage from './pages/ProgramDetailPage'
 import AdminDashboard from './pages/AdminDashboard'
@@ -23,7 +24,10 @@ import './App.css'
 function AppRoutes() {
   const location = useLocation()
   const [isDarkModeEnabled, setIsDarkModeEnabled] = useState(() => isAdminDarkModeEnabled())
-  const hideChatbot = location.pathname.startsWith('/admin') || location.pathname === '/login'
+  const hideChatbot =
+    location.pathname.startsWith('/admin') ||
+    location.pathname === '/login' ||
+    location.pathname === '/reset-password'
 
   useEffect(() => {
     const unsubscribe = subscribeToAdminThemeChange((enabled) => {
@@ -53,6 +57,7 @@ function AppRoutes() {
         <Route path="/programs/:shortCode" element={<ProgramDetailPage />} />
         <Route path="/apply" element={<ApplicationFormPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/applications" element={<ApplicationsPage />} />
         <Route path="/admin/applications/:programId" element={<ApplicationDetailPage />} />
