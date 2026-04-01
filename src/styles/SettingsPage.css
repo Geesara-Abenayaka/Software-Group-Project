@@ -21,6 +21,17 @@
   margin: 0 0 1rem 0;
 }
 
+.display-mode-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.display-mode-row .settings-title {
+  margin: 0;
+}
+
 .current-range,
 .current-deadline {
   font-size: 0.95rem;
@@ -148,21 +159,69 @@
   transition: all 0.2s;
 }
 
-.mode-toggle-btn {
-  padding: 0.75rem 2rem;
-  background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
+.mode-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
 }
 
-.mode-toggle-btn:hover {
-  background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
-  transform: translateY(-1px);
+.mode-switch {
+  width: 68px;
+  height: 30px;
+  border: none;
+  border-radius: 999px;
+  background: #d1d5db;
+  padding: 3px 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  position: relative;
+}
+
+.mode-switch-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  z-index: 1;
+}
+
+.mode-switch-icon-sun {
+  color: #92400e;
+}
+
+.mode-switch-icon-moon {
+  color: #374151;
+}
+
+.mode-switch-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transform: translateX(0);
+  transition: transform 0.2s ease;
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  z-index: 2;
+}
+
+.mode-switch.active {
+  background: #111827;
+}
+
+.mode-switch.active .mode-switch-dot {
+  transform: translateX(38px);
+}
+
+.mode-switch:focus-visible {
+  outline: 2px solid #8b0000;
+  outline-offset: 2px;
 }
 
 .set-range-btn:hover,
@@ -295,7 +354,28 @@ body.admin-dark-mode .deadline-input:focus {
   border-color: #fbbf24;
 }
 
+body.admin-dark-mode .mode-switch {
+  background: #475569;
+}
+
+body.admin-dark-mode .mode-switch.active {
+  background: #f59e0b;
+}
+
+body.admin-dark-mode .mode-switch-icon-sun {
+  color: #fde68a;
+}
+
+body.admin-dark-mode .mode-switch-icon-moon {
+  color: #e2e8f0;
+}
+
 @media (max-width: 768px) {
+  .display-mode-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .calendars-wrapper {
     grid-template-columns: 1fr;
   }
