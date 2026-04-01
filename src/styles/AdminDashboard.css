@@ -1032,3 +1032,105 @@
     font-size: 0.73rem;
   }
 }
+
+body.admin-dark-mode .admin-app {
+  background-color: #0f172a;
+}
+
+body.admin-dark-mode .admin-content-full,
+body.admin-dark-mode .admin-main-full {
+  background: #0f172a;
+}
+
+body.admin-dark-mode .admin-header,
+body.admin-dark-mode .admin-navbar {
+  background: #111827;
+}
+
+body.admin-dark-mode .user-info {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+body.admin-dark-mode .logout-btn {
+  background-color: #1f2937;
+  color: #f3f4f6;
+}
+
+body.admin-dark-mode .logout-btn:hover {
+  background-color: #374151;
+}
+
+body.admin-dark-mode .program-card-admin,
+body.admin-dark-mode .settings-section,
+body.admin-dark-mode .search-section,
+body.admin-dark-mode .applications-table-container,
+body.admin-dark-mode .search-table-container,
+body.admin-dark-mode .dashboard-card,
+body.admin-dark-mode .chart-card,
+body.admin-dark-mode .table-container,
+body.admin-dark-mode .download-card,
+body.admin-dark-mode .marks-card,
+body.admin-dark-mode .applications-card,
+body.admin-dark-mode .results-table,
+body.admin-dark-mode .programs-grid-admin > div {
+  background: #1f2937;
+  border-color: #374151;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+body.admin-dark-mode .programs-title-admin,
+body.admin-dark-mode .card-title-admin,
+body.admin-dark-mode .settings-title,
+body.admin-dark-mode .page-heading,
+body.admin-dark-mode .search-title,
+body.admin-dark-mode .applications-title,
+body.admin-dark-mode h1,
+body.admin-dark-mode h2,
+body.admin-dark-mode h3 {
+  color: #e5e7eb;
+}
+
+body.admin-dark-mode .programs-subtitle-admin,
+body.admin-dark-mode .card-description-admin,
+body.admin-dark-mode .search-subtitle,
+body.admin-dark-mode .current-range,
+body.admin-dark-mode .current-deadline,
+body.admin-dark-mode p,
+body.admin-dark-mode label,
+body.admin-dark-mode .stat-label,
+body.admin-dark-mode .field-label {
+  color: #cbd5e1;
+}
+
+body.admin-dark-mode input,
+body.admin-dark-mode select,
+body.admin-dark-mode textarea,
+body.admin-dark-mode .deadline-input,
+body.admin-dark-mode .search-input,
+body.admin-dark-mode .filter-select {
+  background: #0f172a;
+  color: #e5e7eb;
+  border-color: #475569;
+}
+
+body.admin-dark-mode table,
+body.admin-dark-mode thead,
+body.admin-dark-mode tbody,
+body.admin-dark-mode tr,
+body.admin-dark-mode th,
+body.admin-dark-mode td {
+  border-color: #334155;
+}
+
+body.admin-dark-mode th,
+body.admin-dark-mode td,
+body.admin-dark-mode .table-text,
+body.admin-dark-mode .application-id,
+body.admin-dark-mode .program-name {
+  color: #e5e7eb;
+}
+
+body.admin-dark-mode .table-row:hover,
+body.admin-dark-mode tbody tr:hover {
+  background: #273449;
+}
