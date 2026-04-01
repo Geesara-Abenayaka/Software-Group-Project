@@ -173,6 +173,38 @@
   border-left: 4px solid #8b0000;
 }
 
+body.admin-dark-mode .download-title,
+body.admin-dark-mode .download-subtitle,
+body.admin-dark-mode .section-title,
+body.admin-dark-mode .section-description,
+body.admin-dark-mode .group-label,
+body.admin-dark-mode .checkbox-label,
+body.admin-dark-mode .radio-label {
+  color: #e5e7eb;
+}
+
+body.admin-dark-mode .download-section {
+  background: #1f2937;
+  border-color: #374151;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+body.admin-dark-mode .select-link {
+  color: #93c5fd;
+}
+
+body.admin-dark-mode .select-link:hover {
+  color: #bfdbfe;
+}
+
+body.admin-dark-mode .download-list-btn {
+  background: #374151;
+}
+
+body.admin-dark-mode .download-list-btn:hover {
+  background: #4b5563;
+}
+
 @media (max-width: 1200px) {
   .fields-grid {
     grid-template-columns: repeat(3, 1fr);

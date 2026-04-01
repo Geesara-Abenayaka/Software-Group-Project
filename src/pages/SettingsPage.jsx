@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User } from 'lucide-react';
+import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User, Sun, Moon } from 'lucide-react';
 import axios from 'axios';
 import { isAdminDarkModeEnabled, setAdminDarkModeEnabled } from '../utils/adminTheme';
 import '../styles/SettingsPage.css';
@@ -244,13 +244,27 @@ function SettingsPage() {
       <div className="admin-content-full">
         <main className="admin-main-full settings-main">
           <div className="settings-section">
-            <h2 className="settings-title">Display Mode</h2>
-            <p className="current-deadline">
-              Switch between light mode and night mode for this settings page.
-            </p>
-            <button className="mode-toggle-btn" onClick={handleToggleNightMode}>
-              {isNightMode ? 'Switch to Light Mode' : 'Switch to Night Mode'}
-            </button>
+            <div className="display-mode-row">
+              <h2 className="settings-title">Display Mode</h2>
+              <div className="mode-toggle-row">
+                <button
+                  type="button"
+                  className={`mode-switch ${isNightMode ? 'active' : ''}`}
+                  onClick={handleToggleNightMode}
+                  role="switch"
+                  aria-checked={isNightMode}
+                  aria-label="Toggle night mode"
+                >
+                  <span className="mode-switch-icon mode-switch-icon-sun">
+                    <Sun size={14} />
+                  </span>
+                  <span className="mode-switch-icon mode-switch-icon-moon">
+                    <Moon size={14} />
+                  </span>
+                  <span className="mode-switch-dot"></span>
+                </button>
+              </div>
+            </div>
           </div>
 
           <div className="settings-section">

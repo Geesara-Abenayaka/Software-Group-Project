@@ -362,6 +362,63 @@
   padding: 0 0.15rem;
 }
 
+body.admin-dark-mode .search-title,
+body.admin-dark-mode .search-subtitle,
+body.admin-dark-mode .filter-group label,
+body.admin-dark-mode .stat-label,
+body.admin-dark-mode .stat-value,
+body.admin-dark-mode .table-info,
+body.admin-dark-mode .page-info {
+  color: #e5e7eb;
+}
+
+body.admin-dark-mode .search-container,
+body.admin-dark-mode .stat-card,
+body.admin-dark-mode .applications-table-container {
+  background: #1f2937;
+  border-color: #374151;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+body.admin-dark-mode .search-input,
+body.admin-dark-mode .filter-group select,
+body.admin-dark-mode .filter-group input[type="date"],
+body.admin-dark-mode .page-select,
+body.admin-dark-mode .page-btn {
+  background: #0f172a;
+  border-color: #475569;
+  color: #e5e7eb;
+}
+
+body.admin-dark-mode .applications-table thead,
+body.admin-dark-mode .table-footer {
+  background: #111827;
+}
+
+body.admin-dark-mode .applications-table th,
+body.admin-dark-mode .applications-table td,
+body.admin-dark-mode .app-id,
+body.admin-dark-mode .app-id-link {
+  color: #e5e7eb;
+}
+
+body.admin-dark-mode .applications-table th,
+body.admin-dark-mode .applications-table td,
+body.admin-dark-mode .applications-table tbody tr,
+body.admin-dark-mode .table-footer {
+  border-color: #334155;
+}
+
+body.admin-dark-mode .applications-table tbody tr:hover,
+body.admin-dark-mode .page-btn:hover {
+  background: #273449;
+}
+
+body.admin-dark-mode .page-btn:disabled {
+  background: #1f2937;
+  border-color: #374151;
+}
+
 @media (max-width: 1400px) {
   .filters-row {
     grid-template-columns: repeat(3, 1fr);
