@@ -1,6 +1,8 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import User from '../models/User.js';
+import { sendBulkEmail } from '../utils/emailService.js';
 
 const router = express.Router();
 
@@ -116,6 +118,100 @@ router.post('/change-password', async (req, res) => {
   } catch (error) {
     console.error('Change password error:', error);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const normalizedEmail = (email || '').trim().toLowerCase();
+
+    if (!normalizedEmail) {
+      return res.status(400).json({ message: 'Email is required.' });
+    }
+
+    const user = await User.findOne({ email: normalizedEmail, role: 'admin' });
+
+    if (user) {
+      const verificationCode = String(Math.floor(100000 + Math.random() * 900000));
+      const hashedToken = crypto.createHash('sha256').update(verificationCode).digest('hex');
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+      user.passwordResetToken = hashedToken;
+      user.passwordResetExpiresAt = expiresAt;
+      await user.save();
+
+      const emailContent = [
+        `Hello ${user.name || 'Admin'},`,
+        '',
+        'We received a request to reset your admin password.',
+        `Your verification code: ${verificationCode}`,
+        '',
+        'This code expires in 10 minutes.',
+        'If you did not request this, you can ignore this email.'
+      ].join('\n');
+
+      try {
+        await sendBulkEmail({
+          recipients: [{
+            email: normalizedEmail,
+            fullName: user.name,
+            applicationId: user._id?.toString()
+          }],
+          subject: 'Admin Password Reset',
+          content: emailContent,
+          programName: ''
+        });
+      } catch (emailError) {
+        console.error('Forgot password email error:', emailError);
+      }
+    }
+
+    return res.json({
+      message: 'If that admin email exists, a verification code has been sent.'
+    });
+  } catch (error) {
+    console.error('Forgot password route error:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { code, email, newPassword } = req.body;
+    const normalizedEmail = (email || '').trim().toLowerCase();
+
+    if (!code || !normalizedEmail || !newPassword) {
+      return res.status(400).json({ message: 'code, email and newPassword are required.' });
+    }
+
+    const validationError = validateNewPassword(newPassword);
+    if (validationError) {
+      return res.status(400).json({ message: validationError });
+    }
+
+    const hashedToken = crypto.createHash('sha256').update(String(code)).digest('hex');
+
+    const user = await User.findOne({
+      email: normalizedEmail,
+      role: 'admin',
+      passwordResetToken: hashedToken,
+      passwordResetExpiresAt: { $gt: new Date() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired verification code.' });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    user.passwordResetToken = null;
+    user.passwordResetExpiresAt = null;
+    await user.save();
+
+    return res.json({ message: 'Password reset successful.' });
+  } catch (error) {
+    console.error('Reset password route error:', error);
+    return res.status(500).json({ message: 'Server error' });
   }
 });
 
