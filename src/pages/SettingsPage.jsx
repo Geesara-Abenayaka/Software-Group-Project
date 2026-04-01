@@ -268,7 +268,7 @@ function SettingsPage() {
           </div>
 
           <div className="settings-section">
-            <h2 className="settings-title">Set Date Range</h2>
+            <h2 className="settings-title set-date-range-title">Set Date Range</h2>
             <p className="current-range">
               Current Range: <strong>{currentDateRange.start}</strong> to <strong>{currentDateRange.end}</strong>
             </p>
