@@ -5,6 +5,7 @@ import User from '../models/User.js';
 import { sendBulkEmail } from '../utils/emailService.js';
 
 const router = express.Router();
+const ADMIN_RECOVERY_EMAIL = 'admin@uom.lk';
 
 const isBcryptHash = (value) => typeof value === 'string' && /^\$2[aby]\$\d{2}\$/.test(value);
 
@@ -130,6 +131,10 @@ router.post('/forgot-password', async (req, res) => {
       return res.status(400).json({ message: 'Email is required.' });
     }
 
+    if (normalizedEmail !== ADMIN_RECOVERY_EMAIL) {
+      return res.status(400).json({ message: 'Only admin email can reset password here.' });
+    }
+
     const user = await User.findOne({ email: normalizedEmail, role: 'admin' });
 
     if (user) {
@@ -183,6 +188,10 @@ router.post('/reset-password', async (req, res) => {
 
     if (!code || !normalizedEmail || !newPassword) {
       return res.status(400).json({ message: 'code, email and newPassword are required.' });
+    }
+
+    if (normalizedEmail !== ADMIN_RECOVERY_EMAIL) {
+      return res.status(400).json({ message: 'Only admin email can reset password here.' });
     }
 
     const validationError = validateNewPassword(newPassword);

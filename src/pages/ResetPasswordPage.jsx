@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import '../App.css'
 
+const ADMIN_RECOVERY_EMAIL = 'admin@uom.lk'
+
 function ResetPasswordPage() {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
@@ -37,6 +39,11 @@ function ResetPasswordPage() {
       return
     }
 
+    if (email.trim().toLowerCase() !== ADMIN_RECOVERY_EMAIL) {
+      setError('Only admin email can reset password here.')
+      return
+    }
+
     try {
       setLoading(true)
       const response = await axios.post('http://localhost:5000/api/auth/forgot-password', {
@@ -67,6 +74,11 @@ function ResetPasswordPage() {
       return
     }
 
+    if (email.trim().toLowerCase() !== ADMIN_RECOVERY_EMAIL) {
+      setError('Only admin email can reset password here.')
+      return
+    }
+
     try {
       setLoading(true)
       const response = await axios.post('http://localhost:5000/api/auth/forgot-password', {
@@ -88,6 +100,11 @@ function ResetPasswordPage() {
 
     if (!verificationCode || !newPassword || !confirmPassword) {
       setError('Please fill all fields.')
+      return
+    }
+
+    if (email.trim().toLowerCase() !== ADMIN_RECOVERY_EMAIL) {
+      setError('Only admin email can reset password here.')
       return
     }
 
