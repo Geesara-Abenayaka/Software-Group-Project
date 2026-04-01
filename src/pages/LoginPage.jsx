@@ -92,7 +92,14 @@ function LoginPage() {
               Sign In
             </button>
 
-            <a href="#" className="forgot-password">
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault()
+                navigate('/reset-password')
+              }}
+              className="forgot-password"
+            >
               Forgot your password?
             </a>
           </form>
