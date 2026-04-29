@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import '../styles/FloatingAssistant.css'
 
-const HISTORY_KEY = 'floating_assistant_history_v1'
 const PROGRAMS_KEY = 'floating_assistant_programs_v1'
 
 const QUICK_QUESTIONS = [
@@ -164,25 +163,12 @@ function FloatingAssistant() {
   const navigate = useNavigate()
   const [isOpen, setIsOpen] = useState(false)
   const [input, setInput] = useState('')
-  const [messages, setMessages] = useState(() => {
-    const persisted = localStorage.getItem(HISTORY_KEY)
-    if (persisted) {
-      try {
-        const parsed = JSON.parse(persisted)
-        if (Array.isArray(parsed)) {
-          return parsed
-        }
-      } catch {
-        // ignore
-      }
-    }
-    return [
-      createMessage(
-        'bot',
-        'Hi there! I am your course advisor assistant. I can recommend programs based on your interests and answer questions about the site.'
-      )
-    ]
-  })
+  const [messages, setMessages] = useState([
+    createMessage(
+      'bot',
+      'Hi there! I am your course advisor assistant. I can recommend programs based on your interests and answer questions about the site.'
+    )
+  ])
   const [programs, setPrograms] = useState(() => {
     const cached = sessionStorage.getItem(PROGRAMS_KEY)
     if (!cached) return []
@@ -202,8 +188,8 @@ function FloatingAssistant() {
   }, [messages, isOpen])
 
   useEffect(() => {
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(messages.slice(-40)))
-  }, [messages])
+    localStorage.removeItem('floating_assistant_history_v1')
+  }, [])
 
   useEffect(() => {
     if (programs.length === 0) {
