@@ -14,6 +14,7 @@ import DownloadFormsPage from './pages/DownloadFormsPage'
 import MarksPage from './pages/MarksPage'
 import SettingsPage from './pages/SettingsPage'
 import AdmissionChatbot from './components/AdmissionChatbot'
+import FloatingAssistant from './components/FloatingAssistant'
 import {
   isAdminDarkModeEnabled,
   subscribeToAdminThemeChange
@@ -68,7 +69,12 @@ function AppRoutes() {
         <Route path="/admin/settings" element={<SettingsPage />} />
       </Routes>
 
-      {!hideChatbot && <AdmissionChatbot />}
+      {!hideChatbot && (
+        <>
+          <AdmissionChatbot />
+          <FloatingAssistant />
+        </>
+      )}
     </>
   )
 }
