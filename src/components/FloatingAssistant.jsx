@@ -28,6 +28,10 @@ const FAQ_KNOWLEDGE = [
     answer: 'To apply, browse the homepage programs and click any program\'s View Details button. From the program page, choose Apply and follow the instructions with your documents, payment confirmation, and declaration.'
   },
   {
+    keywords: ['fee', 'application fee', 'how much is the application fee', 'payment', 'how should i pay', 'how to pay', 'payment method'],
+    answer: 'The application fee is Rs. 2,000. Please pay by bank transfer and upload the payment confirmation receipt in the application form before submitting.'
+  },
+  {
     keywords: ['documents', 'required documents', 'upload', 'attachments'],
     answer: 'The site requires your NIC, degree certificate, membership proof, transcript, and payment confirmation. Upload each document clearly before submitting the form.'
   },
@@ -85,14 +89,18 @@ const createMessage = (role, text, meta = {}) => ({
 })
 
 const findFAQAnswer = (query) => {
-  const tokens = tokenize(query)
+  const normalized = normalize(query)
   for (const item of FAQ_KNOWLEDGE) {
-    const matches = item.keywords.filter((keyword) => tokenize(keyword).every((token) => tokens.includes(token)))
-    if (matches.length > 0) {
+    if (item.keywords.some((keyword) => normalized.includes(normalize(keyword)))) {
       return item.answer
     }
   }
   return null
+}
+
+const isCourseRelatedQuery = (query) => {
+  const normalized = normalize(query)
+  return /recommend|suggest|programs?|course|degree|specialization|study|data science|business analytics|information systems|project management|finance|marketing|cyber security|machine learning|ai|artificial intelligence/.test(normalized)
 }
 
 const matchCourseIntent = (query) => {
@@ -236,8 +244,22 @@ function FloatingAssistant() {
     await new Promise((resolve) => setTimeout(resolve, 350 + Math.min(650, trimmed.length * 10)))
 
     const faqAnswer = findFAQAnswer(trimmed)
-    const courseResponse = loadRecommendations(trimmed)
-    const botText = faqAnswer ? `${faqAnswer}\n\n${courseResponse.message}` : courseResponse.message
+    const shouldShowCourses = isCourseRelatedQuery(trimmed)
+    let courseResponse = null
+
+    if (faqAnswer && shouldShowCourses) {
+      courseResponse = loadRecommendations(trimmed)
+    } else if (!faqAnswer) {
+      courseResponse = loadRecommendations(trimmed)
+    } else {
+      setRecommendationCards([])
+    }
+
+    const botText = faqAnswer
+      ? courseResponse
+        ? `${faqAnswer}\n\n${courseResponse.message}`
+        : faqAnswer
+      : courseResponse.message
 
     setIsTyping(false)
     setMessages((prev) => [
@@ -246,7 +268,6 @@ function FloatingAssistant() {
         topic: faqAnswer ? 'Site Help' : 'Course Recommendation'
       })
     ])
-
     setQuickSuggestions([
       'Recommend another course',
       'How do I apply?',
