@@ -35,6 +35,16 @@ function ApplicationFormPage() {
     message: '',
     extracted: { accountNumbers: [], amounts: [], requiredAccountNumber: '0043618', requiredFee: 2000 }
   });
+  const [isPaymentGateOpen, setIsPaymentGateOpen] = useState(false);
+  const [paymentGateStatus, setPaymentGateStatus] = useState('idle');
+  const [paymentGateData, setPaymentGateData] = useState({
+    method: 'card',
+    accountNumber: '',
+    expiry: '',
+    cvv: '',
+    accountName: '',
+    mobileNumber: ''
+  });
   const [captchaValue, setCaptchaValue] = useState('');
   const [captchaError, setCaptchaError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -544,6 +554,49 @@ function ApplicationFormPage() {
       });
       return false;
     }
+  };
+
+  const updatePaymentGateData = (field, value) => {
+    setPaymentGateData((prev) => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handlePaymentGateMethodChange = (method) => {
+    setPaymentGateData({
+      method,
+      accountNumber: '',
+      expiry: '',
+      cvv: '',
+      accountName: '',
+      mobileNumber: ''
+    });
+    setPaymentGateStatus('idle');
+  };
+
+  const isPaymentGateValid = () => {
+    const { method, accountNumber, expiry, cvv, accountName, mobileNumber } = paymentGateData;
+    if (method === 'card') {
+      return accountNumber.trim().length >= 12 && expiry.trim() !== '' && cvv.trim().length >= 3;
+    }
+    if (method === 'bank') {
+      return accountName.trim() !== '' && accountNumber.trim().length >= 6;
+    }
+    return mobileNumber.trim().length >= 7;
+  };
+
+  const handlePaymentGateSubmit = (event) => {
+    event.preventDefault();
+    if (!isPaymentGateValid()) {
+      setPaymentGateStatus('failed');
+      return;
+    }
+
+    setPaymentGateStatus('processing');
+    setTimeout(() => {
+      setPaymentGateStatus('success');
+    }, 900);
   };
 
   const addQualification = () => {
@@ -1766,6 +1819,139 @@ function ApplicationFormPage() {
         </div>
       )}
 
+      {isPaymentGateOpen && (
+        <div className="payment-gate-overlay" role="dialog" aria-modal="true">
+          <div className="payment-gate-modal">
+            <div className="payment-gate-header">
+              <div>
+                <h3>Payment Gate</h3>
+                <p>Simulated payment interface for application fee checkout.</p>
+              </div>
+              <button
+                type="button"
+                className="payment-gate-close"
+                onClick={() => setIsPaymentGateOpen(false)}
+                aria-label="Close payment gate"
+              >
+                ×
+              </button>
+            </div>
+
+            <form className="payment-gate-body" onSubmit={handlePaymentGateSubmit}>
+              <div className="payment-gate-methods">
+                {['card', 'bank', 'mobile'].map((method) => (
+                  <button
+                    key={method}
+                    type="button"
+                    className={`payment-gate-method ${paymentGateData.method === method ? 'active' : ''}`}
+                    onClick={() => handlePaymentGateMethodChange(method)}
+                  >
+                    {method === 'card' ? 'Card' : method === 'bank' ? 'Bank Transfer' : 'Mobile Pay'}
+                  </button>
+                ))}
+              </div>
+
+              <div className="payment-gate-summary">
+                <div className="payment-gate-item">
+                  <span>Amount</span>
+                  <strong>Rs. 2,000</strong>
+                </div>
+                <div className="payment-gate-item">
+                  <span>Account</span>
+                  <strong>0043618</strong>
+                </div>
+              </div>
+
+              {paymentGateData.method === 'card' && (
+                <>
+                  <div className="payment-gate-input-group">
+                    <label>Card Number</label>
+                    <input
+                      type="text"
+                      value={paymentGateData.accountNumber}
+                      onChange={(e) => updatePaymentGateData('accountNumber', e.target.value)}
+                      placeholder="1234 5678 9012 3456"
+                    />
+                  </div>
+                  <div className="payment-gate-row">
+                    <div className="payment-gate-input-group">
+                      <label>Expiry</label>
+                      <input
+                        type="text"
+                        value={paymentGateData.expiry}
+                        onChange={(e) => updatePaymentGateData('expiry', e.target.value)}
+                        placeholder="MM/YY"
+                      />
+                    </div>
+                    <div className="payment-gate-input-group">
+                      <label>CVV</label>
+                      <input
+                        type="text"
+                        value={paymentGateData.cvv}
+                        onChange={(e) => updatePaymentGateData('cvv', e.target.value)}
+                        placeholder="123"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {paymentGateData.method === 'bank' && (
+                <>
+                  <div className="payment-gate-input-group">
+                    <label>Account Name</label>
+                    <input
+                      type="text"
+                      value={paymentGateData.accountName}
+                      onChange={(e) => updatePaymentGateData('accountName', e.target.value)}
+                      placeholder="Payee name"
+                    />
+                  </div>
+                  <div className="payment-gate-input-group">
+                    <label>Account Number</label>
+                    <input
+                      type="text"
+                      value={paymentGateData.accountNumber}
+                      onChange={(e) => updatePaymentGateData('accountNumber', e.target.value)}
+                      placeholder="0043618"
+                    />
+                  </div>
+                </>
+              )}
+
+              {paymentGateData.method === 'mobile' && (
+                <div className="payment-gate-input-group">
+                  <label>Mobile Number</label>
+                  <input
+                    type="text"
+                    value={paymentGateData.mobileNumber}
+                    onChange={(e) => updatePaymentGateData('mobileNumber', e.target.value)}
+                    placeholder="0771234567"
+                  />
+                </div>
+              )}
+
+              <div className="payment-gate-actions">
+                <button type="button" className="payment-gate-action-button payment-gate-cancel" onClick={() => setIsPaymentGateOpen(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="payment-gate-action-button" disabled={paymentGateStatus === 'processing'}>
+                  {paymentGateStatus === 'processing' ? 'Processing...' : paymentGateStatus === 'success' ? 'Done' : 'Pay Rs. 2,000'}
+                </button>
+              </div>
+
+              {paymentGateStatus === 'failed' && (
+                <div className="payment-gate-error">Please complete all required payment details.</div>
+              )}
+
+              {paymentGateStatus === 'success' && (
+                <div className="payment-gate-success">Payment simulated successfully. Upload your payslip to continue.</div>
+              )}
+            </form>
+          </div>
+        </div>
+      )}
+
       <div className="form-header">
         <h1>UNIVERSITY OF MORATUWA</h1>
         <h2>FACULTY OF ENGINEERING</h2>
@@ -2700,6 +2886,17 @@ function ApplicationFormPage() {
           </div>
 
           <div className="form-group">
+            <label>Pay Now</label>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px' }}>
+              <button
+                type="button"
+                className="payment-gate-launch"
+                onClick={() => setIsPaymentGateOpen(true)}
+              >
+                <span className="payment-gate-icon" aria-hidden="true">💳</span>
+                Pay Now
+              </button>
+            </div>
             <label>Payment Confirmation / Bank Receipt</label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
               <button
