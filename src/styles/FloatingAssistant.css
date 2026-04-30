@@ -1,7 +1,7 @@
 .floating-assistant-wrapper {
   position: fixed;
   right: 20px;
-  bottom: 100px;
+  bottom: 20px;
   z-index: 1400;
   display: flex;
   flex-direction: column;
