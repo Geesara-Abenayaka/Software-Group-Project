@@ -11,18 +11,24 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    # 1. Build Frontend (at root)
+    # 1. Create Frontend Production Environment
+    - name: Setup Frontend Environment
+      run: |
+        rm -f .env.production
+        touch .env.production
+        echo "VITE_API_URL=http://18.189.3.216:5000/api" >> .env.production
+
+    # 2. Build Frontend
     - name: Install Frontend Dependencies & Build
       run: |
         npm ci
-        npm run build --if-present
+        npm run build
 
-    # 2. Setup and Restart Backend (inside /server)
+    # 3. Setup Backend Environment
     - name: Setup Backend Environment
       working-directory: ./server
       run: |
         npm ci
-        # Force a clean .env file creation
         rm -f .env
         touch .env
         echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" >> .env
@@ -37,10 +43,15 @@ jobs:
         echo "GEMINI_VISION_MODEL=${{ secrets.GEMINI_VISION_MODEL }}" >> .env
         echo "ALLOW_TESSERACT_FALLBACK=${{ secrets.ALLOW_TESSERACT_FALLBACK }}" >> .env
 
-    # 3. Clean up PM2 and Restart
-    - name: Deploy with PM2
+    # 4. Deploy Frontend Build
+    - name: Deploy Frontend
       run: |
-        # Kill the "api" process to free port 5000
+        sudo rm -rf /var/www/html/*
+        sudo cp -r dist/* /var/www/html/
+
+    # 5. Restart Backend with PM2
+    - name: Deploy Backend with PM2
+      run: |
         pm2 delete api || true
-        # Start or Restart the "server" process
         pm2 restart server --update-env || pm2 start server/server.js --name server
+        pm2 save
