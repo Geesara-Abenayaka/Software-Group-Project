@@ -177,7 +177,7 @@ function SearchApplicationsPage() {
 
   const fetchPrograms = async () => {
     try {
-      const response = await fetchWithTimeout('/api/programs', 8000);
+      const response = await fetchWithTimeout('http://localhost:5000/api/programs', 8000);
       const data = await response.json();
       if (data.success && Array.isArray(data.data)) {
         setPrograms(data.data);
@@ -190,7 +190,7 @@ function SearchApplicationsPage() {
   const fetchApplications = async () => {
     try {
       setLoading(true);
-      const response = await fetchWithTimeout('/api/applications/summary', 8000);
+      const response = await fetchWithTimeout('http://localhost:5000/api/applications/summary', 8000);
       const data = await response.json();
       
       if (data.success) {
@@ -217,7 +217,7 @@ function SearchApplicationsPage() {
     }
 
     try {
-      const response = await fetch(`/api/applications/${applicationId}`, {
+      const response = await fetch(`http://localhost:5000/api/applications/${applicationId}`, {
         method: 'DELETE'
       });
 
