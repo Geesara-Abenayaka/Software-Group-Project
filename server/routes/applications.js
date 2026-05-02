@@ -12,6 +12,26 @@ import {
 
 const router = express.Router();
 
+const ADMIN_LIST_FIELDS = [
+  '_id',
+  'program',
+  'title',
+  'fullName',
+  'nameWithInitials',
+  'nicNo',
+  'telephone',
+  'mobile',
+  'email',
+  'status',
+  'oaMarks',
+  'writingMarks',
+  'interviewMarks',
+  'graduationDate',
+  'submittedAt',
+  'createdAt',
+  'updatedAt'
+].join(' ');
+
 const APPLICATION_SUMMARY_FIELDS = [
   '_id',
   'program',
@@ -22,8 +42,14 @@ const APPLICATION_SUMMARY_FIELDS = [
   'telephone',
   'mobile',
   'email',
+  'status',
+  'oaMarks',
+  'writingMarks',
+  'interviewMarks',
+  'graduationDate',
+  'submittedAt',
   'createdAt',
-  'submittedAt'
+  'updatedAt'
 ].join(' ');
 
 // Create a new application
@@ -200,12 +226,34 @@ router.post('/', async (req, res) => {
 // Get all applications
 router.get('/', async (req, res) => {
   try {
-    const applications = await Application.find().sort({ submittedAt: -1 });
+    const { page = 1, limit = 50, program, status } = req.query;
+    const hasPagination = req.query.page !== undefined || req.query.limit !== undefined;
+    const parsedPage = Math.max(parseInt(page, 10) || 1, 1);
+    const parsedLimit = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 200);
+
+    const query = {};
+    if (program) query.program = String(program);
+    if (status) query.status = String(status);
+
+    const applicationsQuery = Application.find(query)
+      .select(ADMIN_LIST_FIELDS)
+      .sort({ submittedAt: -1 })
+      .lean();
+
+    if (hasPagination) {
+      applicationsQuery.skip((parsedPage - 1) * parsedLimit).limit(parsedLimit);
+    }
+
+    const applications = await applicationsQuery;
+    const total = await Application.countDocuments(query);
     
     res.json({
       success: true,
       data: applications,
-      count: applications.length
+      count: applications.length,
+      total,
+      page: hasPagination ? parsedPage : null,
+      limit: hasPagination ? parsedLimit : null
     });
   } catch (error) {
     console.error('Error fetching applications:', error);
@@ -244,7 +292,10 @@ router.get('/summary', async (req, res) => {
 router.get('/program/:program', async (req, res) => {
   try {
     const { program } = req.params;
-    const applications = await Application.find({ program }).sort({ submittedAt: -1 });
+    const applications = await Application.find({ program })
+      .select(ADMIN_LIST_FIELDS)
+      .sort({ submittedAt: -1 })
+      .lean();
     
     res.json({
       success: true,
@@ -256,6 +307,84 @@ router.get('/program/:program', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching applications by program',
+      error: error.message
+    });
+  }
+});
+
+// Lightweight summary endpoint for admin dashboards
+router.get('/summary/by-program', async (req, res) => {
+  try {
+    const summary = await Application.aggregate([
+      {
+        $group: {
+          _id: '$program',
+          total: { $sum: 1 },
+          pending: {
+            $sum: {
+              $cond: [{ $eq: ['$status', 'pending'] }, 1, 0]
+            }
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          program: '$_id',
+          total: 1,
+          pending: 1
+        }
+      }
+    ]);
+
+    return res.json({
+      success: true,
+      data: summary
+    });
+  } catch (error) {
+    console.error('Error fetching application summary:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error fetching application summary',
+      error: error.message
+    });
+  }
+});
+
+// Fast lookup by NIC for admin marks page
+router.get('/nic/:nicNo', async (req, res) => {
+  try {
+    const { nicNo } = req.params;
+    const normalizedNic = String(nicNo || '').trim();
+
+    if (!normalizedNic) {
+      return res.status(400).json({
+        success: false,
+        message: 'NIC is required'
+      });
+    }
+
+    const application = await Application.findOne({ nicNo: normalizedNic })
+      .select(ADMIN_LIST_FIELDS + ' qualifications')
+      .sort({ submittedAt: -1 })
+      .lean();
+
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: 'Application not found for NIC'
+      });
+    }
+
+    return res.json({
+      success: true,
+      data: application
+    });
+  } catch (error) {
+    console.error('Error fetching application by NIC:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error fetching application by NIC',
       error: error.message
     });
   }
@@ -403,7 +532,7 @@ router.get('/:id/view', async (req, res) => {
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const application = await Application.findById(id);
+    const application = await Application.findById(id).lean();
     
     if (!application) {
       return res.status(404).json({

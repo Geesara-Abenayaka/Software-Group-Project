@@ -16,7 +16,7 @@ function LoginPage() {
 
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/login`, {
-        email,
+        email: email.trim(),
         password
       })
 
@@ -93,7 +93,14 @@ function LoginPage() {
               Sign In
             </button>
 
-            <a href="#" className="forgot-password">
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault()
+                navigate('/reset-password')
+              }}
+              className="forgot-password"
+            >
               Forgot your password?
             </a>
           </form>

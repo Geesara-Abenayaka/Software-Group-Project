@@ -319,6 +319,39 @@
   display: none;
 }
 
+body.admin-dark-mode .application-form-page {
+  background: #0f172a;
+}
+
+body.admin-dark-mode .admin-header-fixed {
+  background: #111827;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+body.admin-dark-mode .status-update-bar label,
+body.admin-dark-mode .loading-container p,
+body.admin-dark-mode .file-name {
+  color: #e5e7eb;
+}
+
+body.admin-dark-mode .status-select-header,
+body.admin-dark-mode .file-action-btn {
+  background: #1f2937;
+  color: #e5e7eb;
+  border-color: #475569;
+}
+
+body.admin-dark-mode .view-value,
+body.admin-dark-mode .qualification-item.view-only,
+body.admin-dark-mode .membership-item.view-only,
+body.admin-dark-mode .experience-item.view-only,
+body.admin-dark-mode .file-item-with-actions,
+body.admin-dark-mode .no-data {
+  background: #1f2937;
+  border-color: #374151;
+  color: #e5e7eb;
+}
+
 .file-action-btn.view-btn {
   border-color: #d1d5db;
   color: #6b7280;

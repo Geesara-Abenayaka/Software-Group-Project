@@ -1,5 +1,18 @@
 import mongoose from 'mongoose';
 
+const qualificationSchema = new mongoose.Schema({
+  university: String,
+  degree: String,
+  specialization: String,
+  duration: String,
+  graduationDate: String,
+  gpa: {
+    type: Number,
+    min: [0, 'GPA must be greater than or equal to 0'],
+    max: [4, 'GPA must be less than or equal to 4.0']
+  }
+}, { _id: false });
+
 const applicationSchema = new mongoose.Schema({
   // Program Information
   program: {
@@ -41,13 +54,7 @@ const applicationSchema = new mongoose.Schema({
   },
   
   // Qualifications
-  qualifications: [{
-    university: String,
-    degree: String,
-    specialization: String,
-    duration: String,
-    graduationDate: String
-  }],
+  qualifications: [qualificationSchema],
   
   // Registration Status
   partTime: {
@@ -132,6 +139,11 @@ const applicationSchema = new mongoose.Schema({
   timestamps: true
 });
 
+// Optimizes admin list/filter/sort and NIC search queries.
+applicationSchema.index({ program: 1, submittedAt: -1 });
+applicationSchema.index({ status: 1, submittedAt: -1 });
+applicationSchema.index({ nicNo: 1 });
+applicationSchema.index({ submittedAt: -1 });
 applicationSchema.index({ program: 1, nicNo: 1 }, { unique: true });
 
 const Application = mongoose.model('Application', applicationSchema);
