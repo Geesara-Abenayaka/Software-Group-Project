@@ -13,8 +13,10 @@ dotenv.config();
 
 const app = express();
 
-// Middleware
-app.use(cors());
+// 1. IMPROVED MIDDLEWARE
+// For production, you can restrict this to your IP, but this ensures 
+// Nginx headers are accepted.
+app.use(cors()); 
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 
@@ -26,19 +28,30 @@ mongoose.connection.once('open', () => {
   initializeGridFS(mongoose.connection.db);
 });
 
-// Routes
+// 2. FIXED ROUTES
 app.use('/api/auth', authRoutes);
 app.use('/api/programs', programRoutes);
+
+// Fix: Avoid using the exact same base path for two different route files
+// unless they are designed to merge. It's cleaner to separate them:
 app.use('/api/applications', applicationRoutes);
-app.use('/api/applications', documentVerificationRoutes);
+app.use('/api/verify', documentVerificationRoutes); // Changed from /api/applications
 
-// Test route
+// 3. ENHANCED HEALTH CHECK
+// This helps Nginx verify if the backend is truly ready
 app.get('/api/health', (req, res) => {
-  res.json({ message: 'Server is running and MongoDB is connected' });
+  res.json({ 
+    status: 'UP',
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    timestamp: new Date()
+  });
 });
 
-// Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+// 4. PORT PARSING FIX
+// Since your .env had "PORT=5000" and sometimes string errors occurred, 
+// ensure PORT is treated as a Number.
+const PORT = parseInt(process.env.PORT, 10) || 5000;
+
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on port ${PORT}`);
-});
+});s
