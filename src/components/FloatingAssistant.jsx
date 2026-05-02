@@ -223,6 +223,7 @@ function FloatingAssistant() {
     setRecommendationCards(matches.list)
     return matches
   }
+  //hi
 
   const addBotResponse = async (question) => {
     const trimmed = question.trim()
