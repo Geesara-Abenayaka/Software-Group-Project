@@ -47,7 +47,7 @@ function ProgramDetailPage() {
         setLoading(true);
       }
 
-      const response = await fetch(`http://localhost:5000/api/programs/${shortCode}`);
+      const response = await fetch(`/api/programs/${shortCode}`);
       const data = await response.json();
       
       if (data.success) {

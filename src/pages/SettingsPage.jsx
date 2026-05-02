@@ -69,7 +69,7 @@ function SettingsPage() {
     setPasswordFeedback({ type: '', message: '' });
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/change-password', {
+      const response = await axios.post('/api/auth/change-password', {
         userId: user.id,
         currentPassword,
         newPassword

@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import '../App.css'
-import API_BASE_URL from '../utils/apiConfig'
 
 function LoginPage() {
   const [email, setEmail] = useState('')
@@ -15,7 +14,7 @@ function LoginPage() {
     setError('')
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/login`, {
+      const response = await axios.post(`/api/auth/login`, {
         email: email.trim(),
         password
       })

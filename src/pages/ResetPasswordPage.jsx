@@ -46,7 +46,7 @@ function ResetPasswordPage() {
 
     try {
       setLoading(true)
-      const response = await axios.post('http://localhost:5000/api/auth/forgot-password', {
+      const response = await axios.post('/api/auth/forgot-password', {
         email: email.trim()
       })
       setSuccess(response.data?.message || 'If that admin email exists, a verification code has been sent.')
@@ -81,7 +81,7 @@ function ResetPasswordPage() {
 
     try {
       setLoading(true)
-      const response = await axios.post('http://localhost:5000/api/auth/forgot-password', {
+      const response = await axios.post('/api/auth/forgot-password', {
         email: email.trim()
       })
       setSuccess(response.data?.message || 'Verification code sent.')
@@ -115,7 +115,7 @@ function ResetPasswordPage() {
 
     try {
       setLoading(true)
-      const response = await axios.post('http://localhost:5000/api/auth/reset-password', {
+      const response = await axios.post('/api/auth/reset-password', {
         code: verificationCode,
         email: email.trim(),
         newPassword

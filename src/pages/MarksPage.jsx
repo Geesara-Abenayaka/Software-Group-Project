@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User } from 'lucide-react';
 import '../styles/MarksPage.css';
-import API_BASE_URL from '../utils/apiConfig';
 
 function MarksPage() {
   const navigate = useNavigate();
@@ -48,7 +47,7 @@ function MarksPage() {
       const query = selectedCourse && selectedCourse !== 'All'
         ? `?program=${encodeURIComponent(selectedCourse)}`
         : '';
-      const response = await fetch(`${API_BASE_URL}/applications${query}`);
+      const response = await fetch(`/api/applications${query}`);
       const result = await response.json();
       
       if (result.success) {
@@ -188,7 +187,7 @@ function MarksPage() {
 
   const fetchApplicationByNIC = async (nic) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/applications/nic/${encodeURIComponent(nic)}`);
+      const response = await fetch(`/api/applications/nic/${encodeURIComponent(nic)}`);
       const result = await response.json();
       
       if (result.success) {
@@ -321,7 +320,7 @@ function MarksPage() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/applications/${appId}`, {
+      const response = await fetch(`/api/applications/${appId}`, {
         method: 'DELETE'
       });
 
@@ -376,7 +375,7 @@ function MarksPage() {
 
     try {
       // Update marks via API
-      const response = await fetch(`${API_BASE_URL}/applications/${selectedApplicationId}/marks`, {
+      const response = await fetch(`/api/applications/${selectedApplicationId}/marks`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'

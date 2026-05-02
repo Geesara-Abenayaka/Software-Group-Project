@@ -203,7 +203,7 @@ function FloatingAssistant() {
     if (programs.length === 0) {
       const fetchPrograms = async () => {
         try {
-          const response = await fetch('http://localhost:5000/api/programs')
+          const response = await fetch('/api/programs')
           const data = await response.json()
           if (data?.success && Array.isArray(data.data)) {
             setPrograms(data.data)

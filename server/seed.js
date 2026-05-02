@@ -27,7 +27,7 @@ const seedUsers = async () => {
     });
     
     console.log('Collection cleared');
-
+     //hi
     // Create dummy admin users 
     const users = [
       {
