@@ -171,6 +171,10 @@ function ApplicationDetailPage() {
   };
 
   const getSelectableApplications = (sourceApplications) => {
+    if (!Array.isArray(sourceApplications)) {
+      return [];
+    }
+
     return sourceApplications.filter(
       (application) => typeof application.email === 'string' && application.email.trim()
     );
