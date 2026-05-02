@@ -44,10 +44,7 @@ function MarksPage() {
 
   const fetchApplications = async () => {
     try {
-      const query = selectedCourse && selectedCourse !== 'All'
-        ? `?program=${encodeURIComponent(selectedCourse)}`
-        : '';
-      const response = await fetch(`/api/applications${query}`);
+      const response = await fetch('http://localhost:5000/api/applications');
       const result = await response.json();
       
       if (result.success) {
@@ -57,8 +54,8 @@ function MarksPage() {
         // Transform data to match the expected format
         const transformedData = result.data
           .filter(app => {
-            const match = selectedCourse === 'All' ||
-              app.program?.toLowerCase() === selectedCourse.toLowerCase();
+            const match = selectedCourse === 'All' || 
+                         app.program?.toLowerCase() === selectedCourse.toLowerCase();
             console.log(`App program: "${app.program}", Selected: "${selectedCourse}", Match: ${match}`);
             return match;
           })
@@ -187,11 +184,12 @@ function MarksPage() {
 
   const fetchApplicationByNIC = async (nic) => {
     try {
-      const response = await fetch(`/api/applications/nic/${encodeURIComponent(nic)}`);
+      const response = await fetch('http://localhost:5000/api/applications');
       const result = await response.json();
       
       if (result.success) {
-        const application = result.data;
+        // Find application with matching NIC
+        const application = result.data.find(app => app.nicNo === nic);
         
         if (application) {
           // Clear NIC error if application found
@@ -279,26 +277,6 @@ function MarksPage() {
           setSelectedApplication(null);
           setSelectedApplicationId(null);
         }
-      } else {
-        setNicError('No submitted application found with this NIC number');
-
-        setFormData(prev => ({
-          nic: prev.nic,
-          surname: '',
-          otherNames: '',
-          oaMarks: '',
-          writingMarks: '',
-          interviewMarks: '',
-          applicationStatus: '',
-          graduationDate: ''
-        }));
-        setMarksErrors({
-          oaMarks: '',
-          writingMarks: '',
-          interviewMarks: ''
-        });
-        setSelectedApplication(null);
-        setSelectedApplicationId(null);
       }
     } catch (error) {
       console.error('Error fetching application by NIC:', error);
@@ -320,7 +298,7 @@ function MarksPage() {
     }
 
     try {
-      const response = await fetch(`/api/applications/${appId}`, {
+      const response = await fetch(`http://localhost:5000/api/applications/${appId}`, {
         method: 'DELETE'
       });
 
@@ -375,7 +353,7 @@ function MarksPage() {
 
     try {
       // Update marks via API
-      const response = await fetch(`/api/applications/${selectedApplicationId}/marks`, {
+      const response = await fetch(`http://localhost:5000/api/applications/${selectedApplicationId}/marks`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'

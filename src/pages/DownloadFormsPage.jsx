@@ -31,7 +31,7 @@ function DownloadFormsPage() {
   const fetchPrograms = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/programs');
+      const response = await fetch('http://localhost:5000/api/programs');
       const data = await response.json();
       
       if (data.success) {
@@ -432,7 +432,7 @@ function DownloadFormsPage() {
       }
 
       // Fetch applications
-      const response = await fetch('/api/applications');
+      const response = await fetch('http://localhost:5000/api/applications');
       const data = await response.json();
 
       if (!data.success) {
@@ -526,7 +526,7 @@ function DownloadFormsPage() {
   const handleDownloadApproved = async () => {
     try {
       // Fetch applications
-      const response = await fetch('/api/applications');
+      const response = await fetch('http://localhost:5000/api/applications');
       const data = await response.json();
 
       if (!data.success) {

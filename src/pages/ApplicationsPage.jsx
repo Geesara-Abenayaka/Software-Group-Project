@@ -34,7 +34,7 @@ function ApplicationsPage() {
   const fetchPrograms = async () => {
     try {
       setLoading(true);
-      const response = await fetchWithTimeout('/api/programs', 8000);
+      const response = await fetchWithTimeout('http://localhost:5000/api/programs', 8000);
       const data = await response.json();
       
       if (data.success) {
@@ -45,7 +45,7 @@ function ApplicationsPage() {
         setPrograms(basePrograms);
 
         // Fetch pending counts in background so a slow endpoint doesn't block the page render.
-        fetchWithTimeout('/api/applications/summary', 6000)
+        fetchWithTimeout('http://localhost:5000/api/applications/summary', 6000)
           .then((appsResponse) => appsResponse.json())
           .then((appsData) => {
             if (!appsData?.success || !Array.isArray(appsData.data)) {

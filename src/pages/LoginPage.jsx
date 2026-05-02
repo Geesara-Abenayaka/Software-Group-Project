@@ -14,8 +14,8 @@ function LoginPage() {
     setError('')
 
     try {
-      const response = await axios.post(`/api/auth/login`, {
-        email: email.trim(),
+      const response = await axios.post('http://localhost:5000/api/auth/login', {
+        email,
         password
       })
 
@@ -92,14 +92,7 @@ function LoginPage() {
               Sign In
             </button>
 
-            <a
-              href="#"
-              onClick={(e) => {
-                e.preventDefault()
-                navigate('/reset-password')
-              }}
-              className="forgot-password"
-            >
+            <a href="#" className="forgot-password">
               Forgot your password?
             </a>
           </form>
