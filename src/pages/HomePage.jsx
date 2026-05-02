@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import API_BASE_URL from '../utils/apiConfig';
 
 function HomePage() {
   const navigate = useNavigate();
@@ -31,7 +32,7 @@ function HomePage() {
   const fetchPrograms = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/programs');
+      const response = await fetch(`${API_BASE_URL}/programs`);
       const data = await response.json();
       
       if (data.success) {
@@ -53,7 +54,7 @@ function HomePage() {
     try {
       setOpeningProgram(program.shortCode);
 
-      const response = await fetch(`http://localhost:5000/api/programs/${program.shortCode}`);
+      const response = await fetch(`${API_BASE_URL}/programs/${program.shortCode}`);
       const data = await response.json();
 
       navigate(`/programs/${program.shortCode}`, {

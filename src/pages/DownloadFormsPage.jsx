@@ -4,6 +4,7 @@ import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, Lo
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import '../styles/DownloadFormsPage.css';
+import API_BASE_URL from '../utils/apiConfig';
 
 function DownloadFormsPage() {
   const navigate = useNavigate();
@@ -31,7 +32,7 @@ function DownloadFormsPage() {
   const fetchPrograms = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/programs');
+      const response = await fetch(`${API_BASE_URL}/programs`);
       const data = await response.json();
       
       if (data.success) {
@@ -432,7 +433,7 @@ function DownloadFormsPage() {
       }
 
       // Fetch applications
-      const response = await fetch('http://localhost:5000/api/applications');
+      const response = await fetch(`${API_BASE_URL}/applications`);
       const data = await response.json();
 
       if (!data.success) {
@@ -526,7 +527,7 @@ function DownloadFormsPage() {
   const handleDownloadApproved = async () => {
     try {
       // Fetch applications
-      const response = await fetch('http://localhost:5000/api/applications');
+      const response = await fetch(`${API_BASE_URL}/applications`);
       const data = await response.json();
 
       if (!data.success) {

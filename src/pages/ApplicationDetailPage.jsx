@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User, Mail, Send, X, Trash2 } from 'lucide-react';
 import '../styles/AdminDashboard.css';
 import '../styles/ApplicationDetailPage.css';
+import API_BASE_URL from '../utils/apiConfig';
 
 const fetchWithTimeout = async (url, timeoutMs = 8000) => {
   const controller = new AbortController();
@@ -76,8 +77,8 @@ function ApplicationDetailPage() {
     try {
       setLoading(true);
       const [programResult, applicationsResult] = await Promise.allSettled([
-        fetchWithTimeout(`http://localhost:5000/api/programs/${programId}`, 8000).then((response) => response.json()),
-        fetchWithTimeout(`http://localhost:5000/api/applications/program/${programId}/summary`, 8000).then((response) => response.json())
+        fetchWithTimeout(`${API_BASE_URL}/programs/${programId}`, 8000).then((response) => response.json()),
+        fetchWithTimeout(`${API_BASE_URL}/applications/program/${programId}/summary`, 8000).then((response) => response.json())
       ]);
 
       if (programResult.status === 'fulfilled' && programResult.value?.success) {
@@ -87,8 +88,12 @@ function ApplicationDetailPage() {
       }
 
       if (applicationsResult.status === 'fulfilled' && applicationsResult.value?.success) {
+        const applicationsData = Array.isArray(applicationsResult.value.data)
+          ? applicationsResult.value.data
+          : [];
+
         // Transform the data to match the expected format
-        const transformedApplications = applicationsResult.value.data.map((app) => ({
+        const transformedApplications = applicationsData.map((app) => ({
           id: app._id,
           displayId: getStableDisplayId(app._id),
           nic: app.nicNo || '-',
@@ -194,6 +199,10 @@ function ApplicationDetailPage() {
   };
 
   const getSelectableApplications = (sourceApplications) => {
+    if (!Array.isArray(sourceApplications)) {
+      return [];
+    }
+
     return sourceApplications.filter(
       (application) => typeof application.email === 'string' && application.email.trim() && application.status === 'Approved'
     );
@@ -268,7 +277,7 @@ function ApplicationDetailPage() {
       setBulkEmailError('');
       setBulkEmailSuccess('');
 
-      const response = await fetch(`http://localhost:5000/api/applications/program/${programId}/bulk-email`, {
+      const response = await fetch(`${API_BASE_URL}/applications/program/${programId}/bulk-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -311,7 +320,7 @@ function ApplicationDetailPage() {
 
   const handleUpdateStatus = async (applicationId, newStatus) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/applications/${applicationId}/status`, {
+      const response = await fetch(`${API_BASE_URL}/applications/${applicationId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'
@@ -345,7 +354,7 @@ function ApplicationDetailPage() {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/applications/${applicationId}`, {
+      const response = await fetch(`${API_BASE_URL}/applications/${applicationId}`, {
         method: 'DELETE'
       });
 

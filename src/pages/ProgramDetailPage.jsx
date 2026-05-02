@@ -2,6 +2,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import '../styles/ProgramDetailPage.css';
 import { generateCourseDetailsPDF, generateCallForApplicationPDF } from '../utils/pdfGenerator';
+import API_BASE_URL from '../utils/apiConfig';
 
 function ProgramDetailPage() {
   const { shortCode } = useParams();
@@ -47,7 +48,7 @@ function ProgramDetailPage() {
         setLoading(true);
       }
 
-      const response = await fetch(`http://localhost:5000/api/programs/${shortCode}`);
+      const response = await fetch(`${API_BASE_URL}/programs/${shortCode}`);
       const data = await response.json();
       
       if (data.success) {

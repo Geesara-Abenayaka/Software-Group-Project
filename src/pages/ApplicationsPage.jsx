@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User } from 'lucide-react';
 import '../styles/ApplicationsPage.css';
+import API_BASE_URL from '../utils/apiConfig';
 
 const fetchWithTimeout = async (url, timeoutMs = 8000) => {
   const controller = new AbortController();
@@ -34,7 +35,7 @@ function ApplicationsPage() {
   const fetchPrograms = async () => {
     try {
       setLoading(true);
-      const response = await fetchWithTimeout('http://localhost:5000/api/programs', 8000);
+      const response = await fetchWithTimeout(`${API_BASE_URL}/programs`, 8000);
       const data = await response.json();
       
       if (data.success) {
@@ -45,7 +46,7 @@ function ApplicationsPage() {
         setPrograms(basePrograms);
 
         // Fetch pending counts in background so a slow endpoint doesn't block the page render.
-        fetchWithTimeout('http://localhost:5000/api/applications/summary', 6000)
+        fetchWithTimeout(`${API_BASE_URL}/applications/summary`, 6000)
           .then((appsResponse) => appsResponse.json())
           .then((appsData) => {
             if (!appsData?.success || !Array.isArray(appsData.data)) {
