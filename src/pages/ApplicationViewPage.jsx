@@ -35,7 +35,7 @@ function ApplicationViewPage() {
   const fetchApplicationDetails = async () => {
     try {
       setLoading(true);
-      const response = await fetchWithTimeout(`http://localhost:5000/api/applications/${applicationId}/view`, 8000);
+      const response = await fetchWithTimeout(`/api/applications/${applicationId}/view`, 8000);
       const data = await response.json();
       
       if (data.success) {
@@ -43,7 +43,7 @@ function ApplicationViewPage() {
         
         // Fetch program details
         if (data.data.program) {
-          const programResponse = await fetchWithTimeout(`http://localhost:5000/api/programs/${data.data.program}`, 8000);
+          const programResponse = await fetchWithTimeout(`/api/programs/${data.data.program}`, 8000);
           const programData = await programResponse.json();
           if (programData.success) {
             setProgram(programData.data);
@@ -68,7 +68,7 @@ function ApplicationViewPage() {
 
   const handleUpdateStatus = async (newStatus) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/applications/${applicationId}/status`, {
+      const response = await fetch(`/api/applications/${applicationId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'
@@ -367,7 +367,7 @@ function ApplicationViewPage() {
                     <span className="file-name">📄 {file.fileName}</span>
                     <div className="file-actions">
                       <a 
-                        href={`http://localhost:5000/api/applications/${applicationId}/file/${file.fileId}`} 
+                        href={`/api/applications/${applicationId}/file/${file.fileId}`} 
                         target="_blank"
                         rel="noopener noreferrer"
                         className="file-action-btn view-btn"
@@ -391,7 +391,7 @@ function ApplicationViewPage() {
                 <span className="file-name">📄 {application.documents.nic.fileName}</span>
                 <div className="file-actions">
                   <a 
-                    href={`http://localhost:5000/api/applications/${applicationId}/file/${application.documents.nic.fileId}`} 
+                    href={`/api/applications/${applicationId}/file/${application.documents.nic.fileId}`} 
                     target="_blank"
                     rel="noopener noreferrer"
                     className="file-action-btn view-btn"
@@ -415,7 +415,7 @@ function ApplicationViewPage() {
                     <span className="file-name">📄 {file.fileName}</span>
                     <div className="file-actions">
                       <a 
-                        href={`http://localhost:5000/api/applications/${applicationId}/file/${file.fileId}`} 
+                        href={`/api/applications/${applicationId}/file/${file.fileId}`} 
                         target="_blank"
                         rel="noopener noreferrer"
                         className="file-action-btn view-btn"
@@ -439,7 +439,7 @@ function ApplicationViewPage() {
                 <span className="file-name">📄 {application.documents.transcript.fileName}</span>
                 <div className="file-actions">
                   <a 
-                    href={`http://localhost:5000/api/applications/${applicationId}/file/${application.documents.transcript.fileId}`} 
+                    href={`/api/applications/${applicationId}/file/${application.documents.transcript.fileId}`} 
                     target="_blank"
                     rel="noopener noreferrer"
                     className="file-action-btn view-btn"
@@ -461,7 +461,7 @@ function ApplicationViewPage() {
                 <span className="file-name">📄 {application.documents.paymentConfirmation.fileName}</span>
                 <div className="file-actions">
                   <a 
-                    href={`http://localhost:5000/api/applications/${applicationId}/file/${application.documents.paymentConfirmation.fileId}`} 
+                    href={`/api/applications/${applicationId}/file/${application.documents.paymentConfirmation.fileId}`} 
                     target="_blank"
                     rel="noopener noreferrer"
                     className="file-action-btn view-btn"

@@ -31,7 +31,7 @@ function HomePage() {
   const fetchPrograms = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/programs');
+      const response = await fetch('/api/programs');
       const data = await response.json();
       
       if (data.success) {
@@ -53,7 +53,7 @@ function HomePage() {
     try {
       setOpeningProgram(program.shortCode);
 
-      const response = await fetch(`http://localhost:5000/api/programs/${program.shortCode}`);
+      const response = await fetch(`/api/programs/${program.shortCode}`);
       const data = await response.json();
 
       navigate(`/programs/${program.shortCode}`, {
