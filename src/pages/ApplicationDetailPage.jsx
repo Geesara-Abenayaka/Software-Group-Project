@@ -1,29 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User, Mail, Send, X, Trash2 } from 'lucide-react';
+import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User, Mail, Send, X } from 'lucide-react';
+import API_BASE_URL from '../utils/apiConfig';
 import '../styles/AdminDashboard.css';
 import '../styles/ApplicationDetailPage.css';
-import API_BASE_URL from '../utils/apiConfig';
-
-const fetchWithTimeout = async (url, timeoutMs = 8000) => {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch(url, { signal: controller.signal });
-    return response;
-  } finally {
-    clearTimeout(timeoutId);
-  }
-};
-
-const getStableDisplayId = (mongoId) => {
-  const safeId = String(mongoId || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-  if (!safeId) {
-    return 'UNKNOWN';
-  }
-  return safeId.substring(0, 8);
-};
 
 function ApplicationDetailPage() {
   const navigate = useNavigate();
@@ -76,33 +56,30 @@ function ApplicationDetailPage() {
   const fetchProgramAndApplications = async () => {
     try {
       setLoading(true);
-      const [programResult, applicationsResult] = await Promise.allSettled([
-        fetchWithTimeout(`${API_BASE_URL}/programs/${programId}`, 8000).then((response) => response.json()),
-        fetchWithTimeout(`${API_BASE_URL}/applications/program/${programId}/summary`, 8000).then((response) => response.json())
-      ]);
-
-      if (programResult.status === 'fulfilled' && programResult.value?.success) {
-        setProgram(programResult.value.data);
-      } else {
-        setProgram(null);
+      // Fetch program details
+      const programResponse = await fetch(`${API_BASE_URL}/programs/${programId}`);
+      const programData = await programResponse.json();
+      
+      if (programData.success) {
+        setProgram(programData.data);
       }
 
-      if (applicationsResult.status === 'fulfilled' && applicationsResult.value?.success) {
-        const applicationsData = Array.isArray(applicationsResult.value.data)
-          ? applicationsResult.value.data
-          : [];
-
+      // Fetch applications for this program
+      const applicationsResponse = await fetch(`${API_BASE_URL}/applications/program/${programId}`);
+      const applicationsData = await applicationsResponse.json();
+      
+      if (applicationsData.success) {
         // Transform the data to match the expected format
-        const transformedApplications = applicationsData.map((app) => ({
+        const transformedApplications = applicationsData.data.map((app, index) => ({
           id: app._id,
-          displayId: getStableDisplayId(app._id),
-          nic: app.nicNo || '-',
-          fullName: app.fullName || '-',
-          nameWithInitials: app.nameWithInitials || '-',
+          displayId: `APP${String(index + 1).padStart(3, '0')}`,
+          nic: app.nicNo,
+          fullName: app.fullName,
+          nameWithInitials: app.nameWithInitials,
           category: app.category ||
                    (app.program === 'msc-cs' ? 'Category 1' :
                     app.program === 'msc-ai' ? 'Category 2' : 'Category 3'),
-          status: String(app.status || 'pending').split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+          status: app.status.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
           email: app.email,
           mobile: app.mobile,
           submittedAt: new Date(app.submittedAt).toLocaleDateString()
@@ -115,11 +92,12 @@ function ApplicationDetailPage() {
         setApplications([]);
         setFilteredApplications([]);
       }
+      
+      setLoading(false);
     } catch (err) {
       console.error('Error fetching data:', err);
       setApplications([]);
       setFilteredApplications([]);
-    } finally {
       setLoading(false);
     }
   };
@@ -140,8 +118,8 @@ function ApplicationDetailPage() {
 
     if (search) {
       filtered = filtered.filter(app =>
-        String(app.fullName || '').toLowerCase().includes(search.toLowerCase()) ||
-        String(app.nic || '').includes(search) ||
+        app.fullName.toLowerCase().includes(search.toLowerCase()) ||
+        app.nic.includes(search) ||
         app.id.toLowerCase().includes(search.toLowerCase())
       );
     }
@@ -183,12 +161,6 @@ function ApplicationDetailPage() {
         'Current application status: {{status}}.',
         'Reference ID: {{applicationId}}.',
         '',
-        'Interview Details:',
-        'Date: {{interviewDate}}',
-        'Time: {{interviewTime}}',
-        '',
-        'Please ensure you are available for the interview at the scheduled date and time. If you have any conflicts, please contact the admissions office immediately.',
-        '',
         'If you need clarification, please contact the admissions office.',
         '',
         'Best regards,',
@@ -199,12 +171,8 @@ function ApplicationDetailPage() {
   };
 
   const getSelectableApplications = (sourceApplications) => {
-    if (!Array.isArray(sourceApplications)) {
-      return [];
-    }
-
     return sourceApplications.filter(
-      (application) => typeof application.email === 'string' && application.email.trim() && application.status === 'Approved'
+      (application) => typeof application.email === 'string' && application.email.trim()
     );
   };
 
@@ -362,14 +330,8 @@ function ApplicationDetailPage() {
 
       if (result.success) {
         alert('Application deleted successfully!');
-        // Remove only the deleted row from local state to avoid full table reload.
-        setApplications((prevApplications) => (
-          prevApplications.filter((application) => application.id !== applicationId)
-        ));
-        setFilteredApplications((prevFilteredApplications) => (
-          prevFilteredApplications.filter((application) => application.id !== applicationId)
-        ));
-        setSelectedRecipientIds((prevIds) => prevIds.filter((id) => id !== applicationId));
+        // Refresh the applications list
+        fetchProgramAndApplications();
       } else {
         alert('Failed to delete application: ' + result.message);
       }
@@ -551,19 +513,18 @@ function ApplicationDetailPage() {
                   <th>Name with Initials</th>
                   <th>Category</th>
                   <th>Status</th>
-                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan="7" className="no-apps-msg">
+                    <td colSpan="6" className="no-apps-msg">
                       <div className="loading-spinner" style={{ margin: '0 auto' }}></div>
                     </td>
                   </tr>
                 ) : filteredApplications.length === 0 ? (
                   <tr>
-                    <td colSpan="7" className="no-apps-msg">No applications found</td>
+                    <td colSpan="6" className="no-apps-msg">No applications found</td>
                   </tr>
                 ) : (
                   filteredApplications.map((app) => (
@@ -589,17 +550,6 @@ function ApplicationDetailPage() {
                         <span className={`detail-status-pill ${getStatusClass(app.status)}`}>
                           {getStatusIcon(app.status)} {app.status}
                         </span>
-                      </td>
-                      <td>
-                        <button
-                          type="button"
-                          className="detail-delete-btn detail-delete-icon-btn"
-                          onClick={() => handleDeleteApplication(app.id, app.fullName)}
-                          aria-label={`Delete application ${app.displayId}`}
-                          title="Delete application"
-                        >
-                          <Trash2 size={16} />
-                        </button>
                       </td>
                     </tr>
                   ))
@@ -679,7 +629,7 @@ function ApplicationDetailPage() {
                   <section className="bulk-email-editor">
                     <div className="bulk-email-editor-heading">
                       <h4>Email Content</h4>
-                      <span>Use tokens: {'{{name}}'}, {'{{status}}'}, {'{{applicationId}}'}, {'{{program}}'}, {'{{interviewDate}}'}, {'{{interviewTime}}'}</span>
+                      <span>Use tokens: {'{{name}}'}, {'{{status}}'}, {'{{applicationId}}'}, {'{{program}}'}</span>
                     </div>
 
                     <label className="bulk-email-field-label" htmlFor="bulk-email-subject">Subject</label>
