@@ -40,4 +40,5 @@ jobs:
         echo "GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}" >> .env
         echo "GEMINI_VISION_MODEL=${{ secrets.GEMINI_VISION_MODEL }}" >> .env
         echo "ALLOW_TESSERACT_FALLBACK=${{ secrets.ALLOW_TESSERACT_FALLBACK }}" >> .env
+    - run: pm2 restart api
 
