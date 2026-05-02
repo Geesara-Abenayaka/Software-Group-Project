@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User, Mail, Send, X } from 'lucide-react';
+import API_BASE_URL from '../utils/apiConfig';
 import '../styles/AdminDashboard.css';
 import '../styles/ApplicationDetailPage.css';
 
@@ -56,7 +57,7 @@ function ApplicationDetailPage() {
     try {
       setLoading(true);
       // Fetch program details
-      const programResponse = await fetch(`http://localhost:5000/api/programs/${programId}`);
+      const programResponse = await fetch(`${API_BASE_URL}/programs/${programId}`);
       const programData = await programResponse.json();
       
       if (programData.success) {
@@ -64,7 +65,7 @@ function ApplicationDetailPage() {
       }
 
       // Fetch applications for this program
-      const applicationsResponse = await fetch(`http://localhost:5000/api/applications/program/${programId}`);
+      const applicationsResponse = await fetch(`${API_BASE_URL}/applications/program/${programId}`);
       const applicationsData = await applicationsResponse.json();
       
       if (applicationsData.success) {
@@ -244,7 +245,7 @@ function ApplicationDetailPage() {
       setBulkEmailError('');
       setBulkEmailSuccess('');
 
-      const response = await fetch(`http://localhost:5000/api/applications/program/${programId}/bulk-email`, {
+      const response = await fetch(`${API_BASE_URL}/applications/program/${programId}/bulk-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -287,7 +288,7 @@ function ApplicationDetailPage() {
 
   const handleUpdateStatus = async (applicationId, newStatus) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/applications/${applicationId}/status`, {
+      const response = await fetch(`${API_BASE_URL}/applications/${applicationId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'
@@ -321,7 +322,7 @@ function ApplicationDetailPage() {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/applications/${applicationId}`, {
+      const response = await fetch(`${API_BASE_URL}/applications/${applicationId}`, {
         method: 'DELETE'
       });
 
