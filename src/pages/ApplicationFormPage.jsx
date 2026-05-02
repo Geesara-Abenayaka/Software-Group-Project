@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/ApplicationFormPage.css';
+import API_BASE_URL from '../utils/apiConfig';
 
 function ApplicationFormPage() {
   const navigate = useNavigate();
@@ -497,7 +498,7 @@ function ApplicationFormPage() {
         contentBase64: await readFileAsBase64(paymentFile)
       };
 
-      const response = await fetch('http://localhost:5000/api/applications/verify-payment-receipt', {
+      const response = await fetch(`${API_BASE_URL}/applications/verify-payment-receipt`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -820,7 +821,7 @@ function ApplicationFormPage() {
         }))
       );
 
-      const response = await fetch('http://localhost:5000/api/applications/verify-documents', {
+      const response = await fetch(`${API_BASE_URL}/applications/verify-documents`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -1020,7 +1021,7 @@ function ApplicationFormPage() {
         }))
       );
 
-      const response = await fetch('http://localhost:5000/api/applications/extract-memberships', {
+      const response = await fetch(`${API_BASE_URL}/applications/extract-memberships`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -1095,7 +1096,7 @@ function ApplicationFormPage() {
         }))
       );
 
-      const response = await fetch('http://localhost:5000/api/applications/extract-work-experience', {
+      const response = await fetch(`${API_BASE_URL}/applications/extract-work-experience`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -1602,7 +1603,7 @@ function ApplicationFormPage() {
         controller.abort();
       }, 120000); // 2 minutes
       
-      const response = await fetch('http://localhost:5000/api/applications', {
+      const response = await fetch(`${API_BASE_URL}/applications`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

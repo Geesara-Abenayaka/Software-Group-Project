@@ -717,24 +717,57 @@ router.get('/:appId/file/:fileId', async (req, res) => {
 router.post('/program/:program/bulk-email', async (req, res) => {
   try {
     const { program } = req.params;
-    const { subject, message } = req.body;
+    const { subject, message, applicationIds = [] } = req.body;
 
-    // Get all applications for this program with status 'approved'
-    const applications = await Application.find({ program, status: 'approved' });
+    const normalizedApplicationIds = Array.isArray(applicationIds)
+      ? applicationIds.filter(Boolean)
+      : [];
+
+    const query = { program };
+    if (normalizedApplicationIds.length > 0) {
+      query._id = { $in: normalizedApplicationIds };
+    } else {
+      query.status = 'approved';
+    }
+
+    const applications = await Application.find(query);
 
     if (applications.length === 0) {
+      const messageText = normalizedApplicationIds.length > 0
+        ? 'No matching applications found for the selected recipients'
+        : 'No approved applications found for this program';
+
       return res.status(400).json({
         success: false,
-        message: 'No approved applications found for this program'
+        message: messageText
       });
     }
 
+    const programQuery = mongoose.Types.ObjectId.isValid(program)
+      ? { $or: [{ _id: program }, { shortCode: program }] }
+      : { shortCode: program };
+
+    const programRecord = await Program.findOne(programQuery).select('title shortCode');
+
+    const recipients = applications.map((application) => ({
+      applicationId: application._id.toString(),
+      fullName: application.fullName,
+      email: application.email,
+      status: application.status,
+      program: application.program
+    }));
+
     // Send emails
-    const emailResults = await sendBulkEmail(applications, subject, message);
+    const emailResults = await sendBulkEmail({
+      recipients,
+      subject,
+      content: message,
+      programName: programRecord?.title || programRecord?.shortCode || program
+    });
 
     return res.json({
       success: true,
-      message: `Emails sent to ${emailResults.successful} applicants`,
+      message: `Emails sent to ${emailResults.sentCount} recipient(s)`,
       data: emailResults
     });
   } catch (error) {

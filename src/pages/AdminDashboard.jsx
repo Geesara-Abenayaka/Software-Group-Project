@@ -14,6 +14,7 @@ import {
   Trash2
 } from 'lucide-react';
 import '../styles/AdminDashboard.css';
+import API_BASE_URL from '../utils/apiConfig';
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -55,7 +56,7 @@ function AdminDashboard() {
   const fetchPrograms = async () => {
     try {
       setLoading(true);
-      const progResponse = await fetch('http://localhost:5000/api/programs');
+      const progResponse = await fetch(`${API_BASE_URL}/programs`);
       const progData = await progResponse.json();
 
       if (progData.success) {
@@ -66,7 +67,7 @@ function AdminDashboard() {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 6000);
 
-        fetch('http://localhost:5000/api/applications/summary', { signal: controller.signal })
+        fetch(`${API_BASE_URL}/applications/summary`, { signal: controller.signal })
           .then((response) => response.json())
           .then((appsData) => {
             if (!appsData?.success || !Array.isArray(appsData.data)) {
@@ -207,7 +208,7 @@ function AdminDashboard() {
         resourcesCount: editingProgram.resources?.length || 3
       };
 
-      const response = await fetch(`http://localhost:5000/api/programs/${editingProgram._id}`, {
+      const response = await fetch(`${API_BASE_URL}/programs/${editingProgram._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -251,7 +252,7 @@ function AdminDashboard() {
         resourcesCount: 3
       };
 
-      const response = await fetch('http://localhost:5000/api/programs', {
+      const response = await fetch(`${API_BASE_URL}/programs`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -281,7 +282,7 @@ function AdminDashboard() {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/programs/${programId}`, {
+      const response = await fetch(`${API_BASE_URL}/programs/${programId}`, {
         method: 'DELETE'
       });
 

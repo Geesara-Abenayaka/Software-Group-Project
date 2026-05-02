@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User } from 'lucide-react';
 import axios from 'axios';
 import '../styles/SettingsPage.css';
+import API_BASE_URL from '../utils/apiConfig';
 
 function SettingsPage() {
   const navigate = useNavigate();
@@ -96,7 +97,7 @@ function SettingsPage() {
     setPasswordFeedback({ type: '', message: '' });
 
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/change-password', {
+      const response = await axios.post(`${API_BASE_URL}/auth/change-password`, {
         userId: user.id,
         currentPassword,
         newPassword

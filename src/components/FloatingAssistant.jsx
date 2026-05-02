@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import API_BASE_URL from '../utils/apiConfig'
 import '../styles/FloatingAssistant.css'
 
 const PROGRAMS_KEY = 'floating_assistant_programs_v1'
@@ -203,7 +204,11 @@ function FloatingAssistant() {
     if (programs.length === 0) {
       const fetchPrograms = async () => {
         try {
+<<<<<<< HEAD
+          const response = await fetch(`${API_BASE_URL}/programs`)
+=======
           const response = await fetch('/api/programs')
+>>>>>>> main
           const data = await response.json()
           if (data?.success && Array.isArray(data.data)) {
             setPrograms(data.data)

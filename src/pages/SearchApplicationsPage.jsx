@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User, FileText, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import '../styles/SearchApplicationsPage.css';
+import API_BASE_URL from '../utils/apiConfig';
 
 const fetchWithTimeout = async (url, timeoutMs = 8000) => {
   const controller = new AbortController();
@@ -177,7 +178,7 @@ function SearchApplicationsPage() {
 
   const fetchPrograms = async () => {
     try {
-      const response = await fetchWithTimeout('http://localhost:5000/api/programs', 8000);
+      const response = await fetchWithTimeout(`${API_BASE_URL}/programs`, 8000);
       const data = await response.json();
       if (data.success && Array.isArray(data.data)) {
         setPrograms(data.data);
@@ -190,7 +191,7 @@ function SearchApplicationsPage() {
   const fetchApplications = async () => {
     try {
       setLoading(true);
-      const response = await fetchWithTimeout('http://localhost:5000/api/applications/summary', 8000);
+      const response = await fetchWithTimeout(`${API_BASE_URL}/applications/summary`, 8000);
       const data = await response.json();
       
       if (data.success) {
@@ -217,7 +218,7 @@ function SearchApplicationsPage() {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/applications/${applicationId}`, {
+      const response = await fetch(`${API_BASE_URL}/applications/${applicationId}`, {
         method: 'DELETE'
       });
 
