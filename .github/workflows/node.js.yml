@@ -1,4 +1,4 @@
-name: Node.js CI
+name: Node.js CI/CD
 
 on:
   push:
@@ -14,9 +14,7 @@ jobs:
     # 1. Create Frontend Production Environment
     - name: Setup Frontend Environment
       run: |
-        rm -f .env.production
-        touch .env.production
-        echo "VITE_API_URL=http://18.189.3.216:5000/api" >> .env.production
+        echo "VITE_API_URL=http://18.189.3.216:5000/api" > .env.production
 
     # 2. Build Frontend
     - name: Install Frontend Dependencies & Build
@@ -29,9 +27,7 @@ jobs:
       working-directory: ./server
       run: |
         npm ci
-        rm -f .env
-        touch .env
-        echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" >> .env
+        echo "MONGODB_URI=${{ secrets.MONGODB_URI }}" > .env
         echo "PORT=5000" >> .env
         echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> .env
         echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
@@ -51,7 +47,8 @@ jobs:
 
     # 5. Restart Backend with PM2
     - name: Deploy Backend with PM2
+      working-directory: ./server
       run: |
-        pm2 delete api || true
-        pm2 restart server --update-env || pm2 start server/server.js --name server
+        # Use 'api' as the name to match your manual setup
+        pm2 restart api --update-env || pm2 start server.js --name api
         pm2 save
