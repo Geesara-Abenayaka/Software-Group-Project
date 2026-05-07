@@ -5,25 +5,28 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  deploy:
     runs-on: self-hosted
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout Code
+      uses: actions/checkout@v4
 
-    # 1. Create Frontend Production Environment
-    - name: Setup Frontend Environment
-      run: |
-        echo "VITE_API_URL=http://3.239.89.39:5000/api" > .env.production
-
-    # 2. Build Frontend
-    - name: Install Frontend Dependencies & Build
+    # --- FRONTEND SECTION ---
+    - name: Build Frontend
       run: |
         npm ci
+        echo "VITE_API_URL=http://18.189.3.216:5000/api" > .env.production
         npm run build
 
-    # 3. Setup Backend Environment
-    - name: Setup Backend Environment
+    - name: Deploy Frontend to Nginx
+      run: |
+        sudo rm -rf /var/www/html/*
+        sudo cp -r dist/* /var/www/html/
+        sudo systemctl restart nginx || true
+
+    # --- BACKEND SECTION ---
+    - name: Setup Backend & Environment
       working-directory: ./server
       run: |
         npm ci
@@ -39,16 +42,9 @@ jobs:
         echo "GEMINI_VISION_MODEL=${{ secrets.GEMINI_VISION_MODEL }}" >> .env
         echo "ALLOW_TESSERACT_FALLBACK=${{ secrets.ALLOW_TESSERACT_FALLBACK }}" >> .env
 
-    # 4. Deploy Frontend Build
-    - name: Deploy Frontend
-      run: |
-        sudo rm -rf /var/www/html/*
-        sudo cp -r dist/* /var/www/html/
-
-    # 5. Restart Backend with PM2
     - name: Deploy Backend with PM2
-      working-directory: ./server
       run: |
-        # Use 'api' as the name to match your manual setup
-        pm2 restart api --update-env || pm2 start server.js --name api
+        # Navigating to server folder to ensure PM2 picks up the right context
+        cd server
+        pm2 restart server --update-env || pm2 start server.js --name server
         pm2 save
