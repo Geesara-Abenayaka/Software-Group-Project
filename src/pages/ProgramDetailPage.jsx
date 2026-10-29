@@ -71,7 +71,7 @@ function ProgramDetailPage() {
   const handleResourceClick = (resource) => {
     // Handle Online Application or form type resources
     if (resource.name === 'Online Application' || resource.type === 'form') {
-      navigate('/apply', { state: { program: program.shortCode, programName: program.name } });
+      navigate('/apply', { state: { program: program.shortCode, programName: program.title } });
     } 
     // Handle Course Details PDF generation
     else if (resource.type === 'pdf' && resource.name.includes('Course Details')) {

@@ -16,6 +16,24 @@ import {
 import '../styles/AdminDashboard.css';
 import API_BASE_URL from '../utils/apiConfig';
 
+const createEmptyProgram = () => ({
+  title: '',
+  shortCode: '',
+  description: '',
+  detailedDescription: '',
+  deadline: '',
+  selectionExams: '',
+  specializations: [],
+  resourcesCount: 0,
+  resources: [
+    { name: 'Online Application', type: 'form' }
+  ],
+  deadlines: {
+    application: '',
+    selectionExams: ''
+  }
+});
+
 function AdminDashboard() {
   const navigate = useNavigate();
   const [programs, setPrograms] = useState([]);
@@ -25,22 +43,7 @@ function AdminDashboard() {
   const [editingProgram, setEditingProgram] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [newProgram, setNewProgram] = useState({
-    title: '',
-    shortCode: '',
-    description: '',
-    detailedDescription: '',
-    deadline: '',
-    specializations: [],
-    resourcesCount: 0,
-    resources: [
-      { name: 'Online Application', type: 'form' }
-    ],
-    deadlines: {
-      application: '',
-      selectionExams: ''
-    }
-  });
+  const [newProgram, setNewProgram] = useState(createEmptyProgram);
 
   useEffect(() => {
     // Check if user is logged in
@@ -107,9 +110,27 @@ function AdminDashboard() {
     navigate('/login');
   };
 
-  const handleEditProgram = (program) => {
-    setEditingProgram({...program});
-    setShowEditModal(true);
+  const handleEditProgram = async (program) => {
+    // The programs list leaves out deadlines, resources and the detailed description,
+    // so load the full program before editing; saving a partial copy would overwrite them.
+    try {
+      const response = await fetch(`${API_BASE_URL}/programs/${program._id}`);
+      const data = await response.json();
+
+      if (!data.success) {
+        alert('Failed to load program details: ' + (data.message || 'Unknown error'));
+        return;
+      }
+
+      setEditingProgram({
+        ...data.data,
+        selectionExams: data.data.deadlines?.selectionExams || ''
+      });
+      setShowEditModal(true);
+    } catch (err) {
+      console.error('Error loading program details:', err);
+      alert('Failed to load program details: ' + err.message);
+    }
   };
 
   const handleCloseModal = () => {
@@ -118,43 +139,13 @@ function AdminDashboard() {
   };
 
   const handleOpenAddModal = () => {
-    setNewProgram({
-      title: '',
-      shortCode: '',
-      description: '',
-      detailedDescription: '',
-      deadline: '',
-      specializations: [],
-      resourcesCount: 0,
-      resources: [
-        { name: 'Online Application', type: 'form' }
-      ],
-      deadlines: {
-        application: '',
-        selectionExams: ''
-      }
-    });
+    setNewProgram(createEmptyProgram());
     setShowAddModal(true);
   };
 
   const handleCloseAddModal = () => {
     setShowAddModal(false);
-    setNewProgram({
-      title: '',
-      shortCode: '',
-      description: '',
-      detailedDescription: '',
-      deadline: '',
-      specializations: [],
-      resourcesCount: 0,
-      resources: [
-        { name: 'Online Application', type: 'form' }
-      ],
-      deadlines: {
-        application: '',
-        selectionExams: ''
-      }
-    });
+    setNewProgram(createEmptyProgram());
   };
 
   const handleInputChange = (e) => {
@@ -191,13 +182,14 @@ function AdminDashboard() {
   const handleSaveProgram = async () => {
     try {
       // Filter out empty specializations before saving
+      const { selectionExams, ...programFields } = editingProgram;
       const programToSave = {
-        ...editingProgram,
+        ...programFields,
         specializations: editingProgram.specializations?.filter(spec => spec.name.trim() !== '') || [],
         // Ensure deadlines object is properly formatted
         deadlines: {
           application: editingProgram.deadline,
-          selectionExams: editingProgram.deadlines?.selectionExams || '08th and 09th November 2025'
+          selectionExams: (selectionExams || '').trim()
         },
         // Ensure resources exist
         resources: editingProgram.resources || [
@@ -237,12 +229,13 @@ function AdminDashboard() {
   const handleAddProgram = async () => {
     try {
       // Filter out empty specializations before saving
+      const { selectionExams, ...programFields } = newProgram;
       const programToSave = {
-        ...newProgram,
+        ...programFields,
         specializations: newProgram.specializations?.filter(spec => spec.name.trim() !== '') || [],
         deadlines: {
           application: newProgram.deadline,
-          selectionExams: '08th and 09th November 2025'
+          selectionExams: (selectionExams || '').trim()
         },
         resources: [
           { name: `${newProgram.title} - Course Details`, type: 'pdf', fileSize: '5.8 KB' },
@@ -569,6 +562,17 @@ function AdminDashboard() {
               </div>
 
               <div className="form-group-modal">
+                <label>Selection Exams / Interviews</label>
+                <input
+                  type="text"
+                  name="selectionExams"
+                  value={editingProgram.selectionExams || ''}
+                  onChange={handleInputChange}
+                  placeholder="e.g., 08th and 09th November 2026"
+                />
+              </div>
+
+              <div className="form-group-modal">
                 <label>Specializations</label>
                 {editingProgram.specializations && editingProgram.specializations.map((spec, index) => (
                   <div key={index} className="specialization-input-group">
@@ -682,6 +686,17 @@ function AdminDashboard() {
                   onChange={handleNewProgramInputChange}
                   placeholder="e.g., March 31, 2024"
                   required
+                />
+              </div>
+
+              <div className="form-group-modal">
+                <label>Selection Exams / Interviews</label>
+                <input
+                  type="text"
+                  name="selectionExams"
+                  value={newProgram.selectionExams}
+                  onChange={handleNewProgramInputChange}
+                  placeholder="e.g., 08th and 09th November 2026"
                 />
               </div>
 

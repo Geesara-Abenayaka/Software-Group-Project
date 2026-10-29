@@ -263,6 +263,7 @@
 .cat-1 { background: #dcfce7; color: #166534; }
 .cat-2 { background: #fef3c7; color: #92400e; }
 .cat-3 { background: #ffedd5; color: #9a3412; }
+.cat-none { background: #f3f4f6; color: #6b7280; }
 
 /* -- Status pills ------------------------------------------ */
 .detail-status-pill {

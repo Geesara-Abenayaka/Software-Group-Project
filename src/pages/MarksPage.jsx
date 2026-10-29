@@ -11,6 +11,7 @@ function MarksPage() {
     // Restore selected course from localStorage or default to 'All'
     return localStorage.getItem('selectedCourse') || 'All';
   });
+  const [programs, setPrograms] = useState([]);
   const [searchText, setSearchText] = useState('');
   const [applications, setApplications] = useState([]);
   const [selectedApplication, setSelectedApplication] = useState(null);
@@ -42,6 +43,32 @@ function MarksPage() {
     }
     fetchApplications();
   }, [navigate, selectedCourse]);
+
+  // The course filter lists the real programs, so new programs appear without code changes.
+  useEffect(() => {
+    const fetchPrograms = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/programs`);
+        const result = await response.json();
+
+        if (result.success) {
+          setPrograms(result.data);
+
+          // A course remembered from before may no longer exist (e.g. the old "mba-ds" option).
+          const storedCourse = localStorage.getItem('selectedCourse') || 'All';
+          const storedCourseExists = storedCourse === 'All' || result.data.some(program => program.shortCode === storedCourse);
+          if (!storedCourseExists) {
+            localStorage.setItem('selectedCourse', 'All');
+            setSelectedCourse('All');
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching programs:', err);
+      }
+    };
+
+    fetchPrograms();
+  }, []);
 
   const fetchApplications = async () => {
     try {
@@ -483,11 +510,11 @@ function MarksPage() {
                 className="course-dropdown"
               >
                 <option value="All">All Courses</option>
-                <option value="mba-it">MBA-IT</option>
-                <option value="mba-egov">MBA-eGov</option>
-                <option value="mba-ds">MBA-DS</option>
-                <option value="msc-cs">MSc-CS</option>
-                <option value="msc-ds-ai">MSc-DS-AI</option>
+                {programs.map((program) => (
+                  <option key={program.shortCode} value={program.shortCode}>
+                    {program.title}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

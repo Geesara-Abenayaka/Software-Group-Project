@@ -86,6 +86,11 @@ function SearchApplicationsPage() {
       filtered = filtered.filter(app => app.program === filters.program);
     }
 
+    // Category is derived on the server from the applicant's best GPA.
+    if (filters.category !== 'All Categories') {
+      filtered = filtered.filter(app => (app.category || 'No GPA') === filters.category);
+    }
+
     if (filters.status !== 'All Status') {
       const statusLower = filters.status.toLowerCase();
       filtered = filtered.filter(app => app.status.toLowerCase() === statusLower);
@@ -379,6 +384,10 @@ function SearchApplicationsPage() {
                   onChange={(e) => setFilters({ ...filters, category: e.target.value })}
                 >
                   <option>All Categories</option>
+                  <option>Category 1</option>
+                  <option>Category 2</option>
+                  <option>Category 3</option>
+                  <option>No GPA</option>
                 </select>
               </div>
 

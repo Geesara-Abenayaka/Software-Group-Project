@@ -5,6 +5,33 @@ import API_BASE_URL from '../utils/apiConfig';
 import '../styles/AdminDashboard.css';
 import '../styles/ApplicationDetailPage.css';
 
+const NO_GPA_CATEGORY = 'No GPA';
+
+const CATEGORY_PRIORITY = {
+  'Category 1': 1,
+  'Category 2': 2,
+  'Category 3': 3,
+  [NO_GPA_CATEGORY]: 4
+};
+
+// Category 1 first, highest GPA first within a category, applicants without a GPA last.
+const sortByCategoryPriority = (list) => {
+  return [...list].sort((a, b) => {
+    const categoryDiff = (CATEGORY_PRIORITY[a.category] || 99) - (CATEGORY_PRIORITY[b.category] || 99);
+    if (categoryDiff !== 0) {
+      return categoryDiff;
+    }
+
+    const gpaA = Number.isFinite(a.bestGpa) ? a.bestGpa : -1;
+    const gpaB = Number.isFinite(b.bestGpa) ? b.bestGpa : -1;
+    if (gpaA !== gpaB) {
+      return gpaB - gpaA;
+    }
+
+    return a.displayId.localeCompare(b.displayId);
+  });
+};
+
 function ApplicationDetailPage() {
   const navigate = useNavigate();
   const { programId } = useParams();
@@ -18,6 +45,7 @@ function ApplicationDetailPage() {
     category: 'All',
     status: 'All'
   });
+  const [sortByCategory, setSortByCategory] = useState(false);
   const [isBulkEmailOpen, setIsBulkEmailOpen] = useState(false);
   const [selectedRecipientIds, setSelectedRecipientIds] = useState([]);
   const [bulkSubject, setBulkSubject] = useState('');
@@ -76,9 +104,9 @@ function ApplicationDetailPage() {
           nic: app.nicNo,
           fullName: app.fullName,
           nameWithInitials: app.nameWithInitials,
-          category: app.category ||
-                   (app.program === 'msc-cs' ? 'Category 1' :
-                    app.program === 'msc-ai' ? 'Category 2' : 'Category 3'),
+          // Derived on the server from the applicant's best GPA, the same way for every program.
+          category: app.category || NO_GPA_CATEGORY,
+          bestGpa: Number.isFinite(app.bestGpa) ? app.bestGpa : null,
           status: app.status.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
           email: app.email,
           mobile: app.mobile,
@@ -86,7 +114,7 @@ function ApplicationDetailPage() {
         }));
         
         setApplications(transformedApplications);
-        setFilteredApplications(transformedApplications);
+        applyFilters(searchText, filters, transformedApplications);
       } else {
         // If no applications found, set empty array
         setApplications([]);
@@ -113,8 +141,19 @@ function ApplicationDetailPage() {
     applyFilters(searchText, newFilters);
   };
 
-  const applyFilters = (search, currentFilters) => {
-    let filtered = [...applications];
+  const handleSortByCategory = () => {
+    const nextSortByCategory = !sortByCategory;
+    setSortByCategory(nextSortByCategory);
+    applyFilters(searchText, filters, applications, nextSortByCategory);
+  };
+
+  const applyFilters = (
+    search,
+    currentFilters,
+    sourceApplications = applications,
+    shouldSortByCategory = sortByCategory
+  ) => {
+    let filtered = [...sourceApplications];
 
     if (search) {
       filtered = filtered.filter(app =>
@@ -130,6 +169,10 @@ function ApplicationDetailPage() {
 
     if (currentFilters.status !== 'All') {
       filtered = filtered.filter(app => app.status === currentFilters.status);
+    }
+
+    if (shouldSortByCategory) {
+      filtered = sortByCategoryPriority(filtered);
     }
 
     setFilteredApplications(filtered);
@@ -353,7 +396,8 @@ function ApplicationDetailPage() {
   const getCatClass = (cat) => {
     if (cat === 'Category 1') return 'cat-1';
     if (cat === 'Category 2') return 'cat-2';
-    return 'cat-3';
+    if (cat === 'Category 3') return 'cat-3';
+    return 'cat-none';
   };
 
   const getStatusClass = (status) => {
@@ -484,6 +528,7 @@ function ApplicationDetailPage() {
               <option>Category 1</option>
               <option>Category 2</option>
               <option>Category 3</option>
+              <option>{NO_GPA_CATEGORY}</option>
             </select>
             <select
               className="detail-filter-select"
@@ -499,6 +544,14 @@ function ApplicationDetailPage() {
             <button className="detail-export-btn" onClick={handleExport}>
               <Download size={15} style={{ marginRight: '0.4rem' }} />
               Export
+            </button>
+            <button
+              className={`detail-sort-btn ${sortByCategory ? 'active' : ''}`}
+              onClick={handleSortByCategory}
+              type="button"
+              aria-pressed={sortByCategory}
+            >
+              {sortByCategory ? 'Sorted: Category 1 > 2 > 3' : 'Sort by Category'}
             </button>
           </div>
 
@@ -544,6 +597,7 @@ function ApplicationDetailPage() {
                       <td>
                         <span className={`detail-cat-badge ${getCatClass(app.category)}`}>
                           {app.category}
+                          {app.bestGpa !== null && ` · ${app.bestGpa.toFixed(2)}`}
                         </span>
                       </td>
                       <td>

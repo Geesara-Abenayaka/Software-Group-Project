@@ -3,6 +3,41 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/ApplicationFormPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 
+const MAX_GPA = 4;
+
+// Returns an error message, or '' when the GPA is valid.
+const getGpaError = (value) => {
+  const trimmedValue = String(value ?? '').trim();
+  if (!trimmedValue) {
+    return 'GPA is required';
+  }
+
+  const gpa = Number(trimmedValue);
+  if (!Number.isFinite(gpa)) {
+    return 'GPA must be a number';
+  }
+
+  if (gpa < 0 || gpa > MAX_GPA) {
+    return `GPA must be between 0 and ${MAX_GPA.toFixed(1)}`;
+  }
+
+  return '';
+};
+
+// Removes the error at `index` from an index-keyed error map and shifts later entries down by one.
+const removeIndexedError = (errors, index) => {
+  const adjusted = {};
+  Object.keys(errors).forEach(key => {
+    const keyIndex = parseInt(key, 10);
+    if (keyIndex < index) {
+      adjusted[keyIndex] = errors[key];
+    } else if (keyIndex > index) {
+      adjusted[keyIndex - 1] = errors[key];
+    }
+  });
+  return adjusted;
+};
+
 function ApplicationFormPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -11,6 +46,7 @@ function ApplicationFormPage() {
   const [nicError, setNicError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [graduationDateErrors, setGraduationDateErrors] = useState({});
+  const [gpaErrors, setGpaErrors] = useState({});
   const [membershipDateErrors, setMembershipDateErrors] = useState({});
   const [fileErrors, setFileErrors] = useState({});
   const [documentVerification, setDocumentVerification] = useState({
@@ -72,7 +108,8 @@ function ApplicationFormPage() {
       degree: '',
       specialization: '',
       duration: '',
-      graduationDate: ''
+      graduationDate: '',
+      gpa: ''
     }],
     partTime: false,
     alreadyRegistered: false,
@@ -553,7 +590,8 @@ function ApplicationFormPage() {
         degree: '',
         specialization: '',
         duration: '',
-        graduationDate: ''
+        graduationDate: '',
+        gpa: ''
       }]
     }));
 
@@ -566,30 +604,17 @@ function ApplicationFormPage() {
       alert('At least one qualification is required');
       return;
     }
-    
+
     setFormData(prev => ({
       ...prev,
       qualifications: prev.qualifications.filter((_, i) => i !== index)
     }));
 
     resetNameAndDegreeVerification();
-    
-    // Also remove the error for this index if it exists
-    setGraduationDateErrors(prev => {
-      const updated = { ...prev };
-      delete updated[index];
-      // Adjust remaining error indices
-      const adjusted = {};
-      Object.keys(updated).forEach(key => {
-        const keyIndex = parseInt(key);
-        if (keyIndex > index) {
-          adjusted[keyIndex - 1] = updated[key];
-        } else {
-          adjusted[keyIndex] = updated[key];
-        }
-      });
-      return adjusted;
-    });
+
+    // Also remove the errors for this index and shift the later ones down
+    setGraduationDateErrors(prev => removeIndexedError(prev, index));
+    setGpaErrors(prev => removeIndexedError(prev, index));
   };
 
   const addMembership = () => {
@@ -672,6 +697,20 @@ function ApplicationFormPage() {
     // Validate graduation date if that field is being changed
     if (field === 'graduationDate') {
       validateGraduationDate(value, index);
+    }
+
+    // Check the GPA range while typing; an empty GPA is reported on submit
+    if (field === 'gpa') {
+      const message = String(value).trim() ? getGpaError(value) : '';
+      setGpaErrors(prev => {
+        const next = { ...prev };
+        if (message) {
+          next[index] = message;
+        } else {
+          delete next[index];
+        }
+        return next;
+      });
     }
   };
 
@@ -1402,6 +1441,14 @@ function ApplicationFormPage() {
         scrollToSection(qualificationsSectionRef);
         return;
       }
+
+      const gpaError = getGpaError(qualification.gpa);
+      if (gpaError) {
+        setGpaErrors(prev => ({ ...prev, [i]: gpaError }));
+        await showSubmissionModalError(`Academic Qualification ${i + 1}: ${gpaError}.`);
+        scrollToSection(qualificationsSectionRef);
+        return;
+      }
     }
 
     for (let i = 0; i < formData.memberships.length; i += 1) {
@@ -1442,6 +1489,7 @@ function ApplicationFormPage() {
       const gradDate = formData.qualifications[i].graduationDate;
       if (gradDate && !datePattern.test(gradDate)) {
         await showSubmissionModalError('Please enter valid graduation date in mm/dd/yyyy format');
+        scrollToSection(qualificationsSectionRef);
         return;
       }
     }
@@ -1451,6 +1499,7 @@ function ApplicationFormPage() {
       const joinedDate = formData.memberships[i].dateJoined;
       if (joinedDate && !datePattern.test(joinedDate)) {
         await showSubmissionModalError('Please enter valid date joined in mm/dd/yyyy format for membership');
+        scrollToSection(membershipsSectionRef);
         return;
       }
     }
@@ -1460,6 +1509,7 @@ function ApplicationFormPage() {
     if (!nicPattern.test(formData.nicNo)) {
       setNicError('Enter valid NIC number (12 digits or 9 digits + V)');
       await showSubmissionModalError('Please enter a valid NIC number');
+      focusField('input[name="nicNo"]');
       return;
     }
     
@@ -1468,6 +1518,7 @@ function ApplicationFormPage() {
     if (!emailPattern.test(formData.email)) {
       setEmailError('Enter valid email address (e.g., name@gmail.com)');
       await showSubmissionModalError('Please enter a valid email address');
+      focusField('input[name="email"]');
       return;
     }
     
@@ -1475,6 +1526,7 @@ function ApplicationFormPage() {
     if (formData.mobile.length !== 10) {
       setMobileError('Mobile number must be exactly 10 digits');
       await showSubmissionModalError('Please enter a valid 10-digit mobile number');
+      focusField('input[name="mobile"]');
       return;
     }
     
@@ -1482,6 +1534,7 @@ function ApplicationFormPage() {
     if (formData.telephone.length !== 10) {
       setTelephoneError('Telephone number must be exactly 10 digits');
       await showSubmissionModalError('Please enter a valid 10-digit telephone number');
+      focusField('input[name="telephone"]');
       return;
     }
 
@@ -1489,6 +1542,10 @@ function ApplicationFormPage() {
       await showSubmissionModalError('Captcha is incorrect. Please try again.');
       setFormData((prev) => ({ ...prev, captcha: '' }));
       generateCaptcha();
+      scrollToSection(declarationSectionRef);
+      setTimeout(() => {
+        captchaInputRef.current?.focus();
+      }, 200);
       return;
     }
 
@@ -1587,6 +1644,10 @@ function ApplicationFormPage() {
       // Prepare the data to send (convert files to base64 format)
       const dataToSend = {
         ...formData,
+        qualifications: formData.qualifications.map((qualification) => ({
+          ...qualification,
+          gpa: Number(qualification.gpa)
+        })),
         documents: {
           degreeCertificate: await convertFilesToBase64(formData.documents.degreeCertificate),
           membershipProofs: await convertFilesToBase64(formData.documents.membershipProofs),
@@ -1680,7 +1741,7 @@ function ApplicationFormPage() {
 
       <form onSubmit={handleSubmit} className="application-form">
         {/* Personal Particulars */}
-        <div className="form-section" ref={qualificationsSectionRef}>
+        <div className="form-section">
           <h3 className="section-title required">Personal Particulars</h3>
           
           <div className="form-group">
@@ -1840,7 +1901,7 @@ function ApplicationFormPage() {
         </div>
 
         {/* Academic Qualifications */}
-        <div className="form-section" ref={membershipsSectionRef}>
+        <div className="form-section" ref={qualificationsSectionRef}>
           <h3 className="section-title">Academic Qualifications</h3>
           
           {formData.qualifications.map((qual, index) => (
@@ -1949,6 +2010,27 @@ function ApplicationFormPage() {
                     </div>
                   )}
                 </div>
+                <div className="form-group">
+                  <label htmlFor={`qualification-gpa-${index}`}>GPA (Max {MAX_GPA.toFixed(1)})</label>
+                  <input
+                    id={`qualification-gpa-${index}`}
+                    type="number"
+                    inputMode="decimal"
+                    step="0.01"
+                    min="0"
+                    max={MAX_GPA}
+                    value={qual.gpa ?? ''}
+                    onChange={(e) => handleQualificationChange(index, 'gpa', e.target.value)}
+                    placeholder="e.g. 3.75"
+                    className={gpaErrors[index] ? 'input-error' : ''}
+                  />
+                  {gpaErrors[index] && (
+                    <div className="error-box">
+                      <span className="error-icon">⚠</span>
+                      <span className="error-text">{gpaErrors[index]}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -1973,7 +2055,7 @@ function ApplicationFormPage() {
         </div>
 
         {/* Membership of Professional Organizations */}
-        <div className="form-section" ref={experiencesSectionRef}>
+        <div className="form-section" ref={membershipsSectionRef}>
           <h3 className="section-title">Membership of Professional Organizations</h3>
           
           {formData.memberships.map((membership, index) => (
@@ -2064,7 +2146,7 @@ function ApplicationFormPage() {
         </div>
 
         {/* Work Experience */}
-        <div className="form-section" ref={documentsSectionRef}>
+        <div className="form-section" ref={experiencesSectionRef}>
           <h3 className="section-title">Work Experience (most recent first)</h3>
           
           {formData.experiences.map((exp, index) => (
@@ -2208,7 +2290,7 @@ function ApplicationFormPage() {
         </div>
 
         {/* Documents */}
-        <div className="form-section" ref={declarationSectionRef}>
+        <div className="form-section" ref={documentsSectionRef}>
           <h3 className="section-title required">Documents</h3>
           <p className="document-note">
             * Please make sure each file is 4 MB or less (Please upload the files in PDF format). All documents are required.
@@ -2683,7 +2765,7 @@ function ApplicationFormPage() {
         </div>
 
         {/* Declaration */}
-        <div className="form-section">
+        <div className="form-section" ref={declarationSectionRef}>
           <h3 className="section-title">Declaration</h3>
           <div className="declaration-text">
             <p>
