@@ -9,8 +9,12 @@ import {
   deleteMultipleFiles,
   getFileMetadata
 } from '../utils/gridfsService.js';
+import { parseGpa, isValidGpa, withGpaCategory, MAX_GPA } from '../utils/gpaCategory.js';
 
 const router = express.Router();
+
+// Loaded alongside list fields so each application's GPA category can be derived.
+const GPA_FIELD = 'qualifications.gpa';
 
 const ADMIN_LIST_FIELDS = [
   '_id',
@@ -61,6 +65,21 @@ router.post('/', async (req, res) => {
     // Normalize key fields so duplicate checks are reliable.
     applicationData.program = String(applicationData.program || '').trim();
     applicationData.nicNo = String(applicationData.nicNo || '').trim().toUpperCase();
+
+    // Check GPAs before any files are written, so a rejected application leaves no orphaned uploads.
+    if (Array.isArray(applicationData.qualifications)) {
+      applicationData.qualifications = applicationData.qualifications.map((qualification) => ({
+        ...qualification,
+        gpa: parseGpa(qualification?.gpa)
+      }));
+
+      if (!applicationData.qualifications.every((qualification) => isValidGpa(qualification.gpa))) {
+        return res.status(400).json({
+          success: false,
+          message: `GPA must be a number between 0 and ${MAX_GPA}.`
+        });
+      }
+    }
 
     // Prevent multiple submissions for the same NIC in the same program.
     const duplicateApplication = await Application.findOne({
@@ -236,7 +255,7 @@ router.get('/', async (req, res) => {
     if (status) query.status = String(status);
 
     const applicationsQuery = Application.find(query)
-      .select(ADMIN_LIST_FIELDS)
+      .select(`${ADMIN_LIST_FIELDS} ${GPA_FIELD}`)
       .sort({ submittedAt: -1 })
       .lean();
 
@@ -246,10 +265,10 @@ router.get('/', async (req, res) => {
 
     const applications = await applicationsQuery;
     const total = await Application.countDocuments(query);
-    
+
     res.json({
       success: true,
-      data: applications,
+      data: applications.map((application) => withGpaCategory(application, { keepQualifications: false })),
       count: applications.length,
       total,
       page: hasPagination ? parsedPage : null,
@@ -269,13 +288,13 @@ router.get('/', async (req, res) => {
 router.get('/summary', async (req, res) => {
   try {
     const applications = await Application.find()
-      .select(APPLICATION_SUMMARY_FIELDS)
+      .select(`${APPLICATION_SUMMARY_FIELDS} ${GPA_FIELD}`)
       .sort({ submittedAt: -1 })
       .lean();
 
     res.json({
       success: true,
-      data: applications,
+      data: applications.map((application) => withGpaCategory(application, { keepQualifications: false })),
       count: applications.length
     });
   } catch (error) {
@@ -293,13 +312,13 @@ router.get('/program/:program', async (req, res) => {
   try {
     const { program } = req.params;
     const applications = await Application.find({ program })
-      .select(ADMIN_LIST_FIELDS)
+      .select(`${ADMIN_LIST_FIELDS} ${GPA_FIELD}`)
       .sort({ submittedAt: -1 })
       .lean();
-    
+
     res.json({
       success: true,
-      data: applications,
+      data: applications.map((application) => withGpaCategory(application, { keepQualifications: false })),
       count: applications.length
     });
   } catch (error) {
@@ -378,7 +397,7 @@ router.get('/nic/:nicNo', async (req, res) => {
 
     return res.json({
       success: true,
-      data: application
+      data: withGpaCategory(application)
     });
   } catch (error) {
     console.error('Error fetching application by NIC:', error);
@@ -510,7 +529,7 @@ router.get('/:id/view', async (req, res) => {
     }
 
     const lightweightApplication = {
-      ...application,
+      ...withGpaCategory(application),
       documents: processedDocuments
     };
 
