@@ -41,6 +41,10 @@ const FAQ_KNOWLEDGE = [
     answer: 'Deadlines are listed on each program card and the program details page. Make sure you submit the application before the listed deadline to avoid missing the intake.'
   },
   {
+    keywords: ['contact', 'email', 'e-mail', 'phone', 'reach', 'office'],
+    answer: 'You can contact the Department of Computer Science & Engineering postgraduate office by email at postgrad@cse.mrt.ac.lk.'
+  },
+  {
     keywords: ['login', 'admin', 'staff', 'access'],
     answer: 'This assistant is for student course discovery and site help. Admin access is available from the Login page at the top of the homepage.'
   },
@@ -73,6 +77,16 @@ const FALLBACK_COURSES = [
   }
 ]
 
+// Words that say nothing about a student's interest; ignored when ranking programs.
+const STOP_WORDS = new Set([
+  'a', 'an', 'the', 'is', 'are', 'am', 'be', 'i', 'me', 'my', 'we', 'you', 'your', 'it', 'this', 'that', 'these',
+  'to', 'for', 'of', 'in', 'on', 'at', 'by', 'with', 'about', 'and', 'or', 'any', 'some', 'there', 'other', 'another',
+  'what', 'which', 'who', 'how', 'when', 'where', 'why', 'do', 'does', 'can', 'could', 'would', 'should', 'will',
+  'want', 'need', 'like', 'tell', 'show', 'give', 'find', 'please', 'have', 'has', 'get', 'interested',
+  'recommend', 'suggest', 'program', 'programs', 'programme', 'programmes', 'course', 'courses',
+  'degree', 'degrees', 'study', 'focus', 'area', 'areas'
+])
+
 const normalize = (value) => String(value || '').toLowerCase().trim()
 
 const tokenize = (value) =>
@@ -80,6 +94,15 @@ const tokenize = (value) =>
     .replace(/[^a-z0-9\s]/g, ' ')
     .split(/\s+/)
     .filter(Boolean)
+
+// Treats "programs" and "program" as the same word.
+const singularize = (word) => (word.length > 3 && word.endsWith('s') ? word.slice(0, -1) : word)
+
+const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+// Whole-word match (plural allowed), so short keywords like "ai" don't match inside "email".
+const containsPhrase = (text, phrase) =>
+  new RegExp(`\\b${escapeRegExp(normalize(phrase))}(s|es)?\\b`).test(normalize(text))
 
 const createMessage = (role, text, meta = {}) => ({
   id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -90,9 +113,8 @@ const createMessage = (role, text, meta = {}) => ({
 })
 
 const findFAQAnswer = (query) => {
-  const normalized = normalize(query)
   for (const item of FAQ_KNOWLEDGE) {
-    if (item.keywords.some((keyword) => normalized.includes(normalize(keyword)))) {
+    if (item.keywords.some((keyword) => containsPhrase(query, keyword))) {
       return item.answer
     }
   }
@@ -101,14 +123,13 @@ const findFAQAnswer = (query) => {
 
 const isCourseRelatedQuery = (query) => {
   const normalized = normalize(query)
-  return /recommend|suggest|programs?|course|degree|specialization|study|data science|business analytics|information systems|project management|finance|marketing|cyber security|machine learning|ai|artificial intelligence/.test(normalized)
+  return /\b(recommend\w*|suggest\w*|programs?|programmes?|courses?|degrees?|speciali[sz]ations?|study|data science|business analytics|information systems|project management|finance|marketing|cyber ?security|machine learning|ai|artificial intelligence)\b/.test(normalized)
 }
 
 const matchCourseIntent = (query) => {
-  const normalized = normalize(query)
   for (const intent of COURSE_INTENT_MATCHERS) {
     for (const keyword of intent.keywords) {
-      if (normalized.includes(keyword)) {
+      if (containsPhrase(query, keyword)) {
         return intent.label
       }
     }
@@ -116,12 +137,29 @@ const matchCourseIntent = (query) => {
   return null
 }
 
+// Whole words only, ignoring filler words, so "what is the email?" doesn't match every program.
+const toKeywords = (value) => {
+  const words = tokenize(value)
+    .filter((word) => !STOP_WORDS.has(word))
+    .map(singularize)
+  // Also join neighbouring words, so "cyber security" matches "Cybersecurity"
+  const joinedWords = words.slice(1).map((word, index) => `${words[index]}${word}`)
+  return [...words, ...joinedWords]
+}
+
 const rankPrograms = (query, programs = []) => {
-  const queryTokens = tokenize(query)
+  const queryTokens = toKeywords(query)
+  if (queryTokens.length === 0) {
+    return []
+  }
+
   return programs
     .map((program) => {
-      const content = normalize(`${program.title} ${program.description || ''} ${program.shortCode || ''}`)
-      const score = queryTokens.reduce((sum, token) => (content.includes(token) ? sum + 1 : sum), 0)
+      const specializations = (program.specializations || []).map((spec) => spec.name).join(' ')
+      const programWords = new Set(
+        toKeywords(`${program.title} ${program.description || ''} ${program.shortCode || ''} ${specializations}`)
+      )
+      const score = queryTokens.reduce((sum, token) => (programWords.has(token) ? sum + 1 : sum), 0)
       return { ...program, score }
     })
     .filter((program) => program.score > 0)
@@ -145,7 +183,7 @@ const getCourseSuggestions = (query, programs = []) => {
   }
 
   if (intent) {
-    const fallback = FALLBACK_COURSES.filter((course) => course.tags.some((tag) => intent.toLowerCase().includes(tag)))
+    const fallback = FALLBACK_COURSES.filter((course) => course.tags.some((tag) => containsPhrase(intent, tag)))
     const fallbackList = fallback.length > 0 ? fallback : FALLBACK_COURSES
     return {
       message: `Here are recommended program types for ${intent.toLowerCase()} interests:`,
