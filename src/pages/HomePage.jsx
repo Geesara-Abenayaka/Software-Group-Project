@@ -110,7 +110,7 @@ function HomePage() {
             </svg>
           </div>
           <div className="header-text">
-            <h1 className="university-name">University of ruhuna</h1>
+            <h1 className="university-name">University of ruhuna123</h1>
             <p className="portal-subtitle">Postgraduate Management Information System</p>
           </div>
           <button type="button" className="admin-login-btn" onClick={handleAdminLogin}>

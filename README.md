@@ -69,3 +69,31 @@ EMAIL_SIMULATION=true
 - If backend shows `EADDRINUSE: address already in use :::5000`, another process is already using port 5000.
 	- Stop the existing process, or
 	- Run backend on another port (`PORT=5001`) and update frontend API URLs accordingly.
+
+## Jenkins deployment
+
+The root `Jenkinsfile` builds the frontend and backend Docker images, pushes both
+the Git commit tag and `latest` to Docker Hub, then replaces the running
+containers. Docker commands run on the Jenkins agent, so that agent must be the
+EC2 host where the application should run (or otherwise have access to that
+host's Docker daemon). It needs Git, Docker, and a POSIX shell.
+
+1. In Jenkins, create a **Username with password** credential with ID
+   `dockerhub-credentials` for Docker Hub.
+2. Create a **Secret text** credential with ID `mongodb-uri` containing the
+   MongoDB connection string. Do not put database credentials in the
+   `Jenkinsfile` or commit them to Git.
+3. Create a Pipeline job configured as **Pipeline script from SCM**, using this
+   repository, the `main` branch, and `Jenkinsfile` as the script path.
+4. Configure a GitHub repository webhook pointing to
+   `https://<your-jenkins-host>/github-webhook/`, with `application/json` as the
+   content type and push events enabled. Jenkins must be reachable by GitHub.
+   The `githubPush()` trigger also requires the Jenkins GitHub plugin.
+5. Ensure the EC2 security group allows inbound HTTP on port 80. The pipeline
+   also publishes the backend on port 5000, as in the previous deployment
+   setup.
+
+There are already two GitHub Actions workflows under `.github/workflows/` that
+also run on pushes to `main`. Disable them in GitHub or remove their push
+triggers if Jenkins should be the only deployment mechanism; otherwise both
+systems may deploy at the same time.
