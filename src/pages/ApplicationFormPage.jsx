@@ -1489,6 +1489,7 @@ function ApplicationFormPage() {
       const gradDate = formData.qualifications[i].graduationDate;
       if (gradDate && !datePattern.test(gradDate)) {
         await showSubmissionModalError('Please enter valid graduation date in mm/dd/yyyy format');
+        scrollToSection(qualificationsSectionRef);
         return;
       }
     }
@@ -1498,6 +1499,7 @@ function ApplicationFormPage() {
       const joinedDate = formData.memberships[i].dateJoined;
       if (joinedDate && !datePattern.test(joinedDate)) {
         await showSubmissionModalError('Please enter valid date joined in mm/dd/yyyy format for membership');
+        scrollToSection(membershipsSectionRef);
         return;
       }
     }
@@ -1507,6 +1509,7 @@ function ApplicationFormPage() {
     if (!nicPattern.test(formData.nicNo)) {
       setNicError('Enter valid NIC number (12 digits or 9 digits + V)');
       await showSubmissionModalError('Please enter a valid NIC number');
+      focusField('input[name="nicNo"]');
       return;
     }
     
@@ -1515,6 +1518,7 @@ function ApplicationFormPage() {
     if (!emailPattern.test(formData.email)) {
       setEmailError('Enter valid email address (e.g., name@gmail.com)');
       await showSubmissionModalError('Please enter a valid email address');
+      focusField('input[name="email"]');
       return;
     }
     
@@ -1522,6 +1526,7 @@ function ApplicationFormPage() {
     if (formData.mobile.length !== 10) {
       setMobileError('Mobile number must be exactly 10 digits');
       await showSubmissionModalError('Please enter a valid 10-digit mobile number');
+      focusField('input[name="mobile"]');
       return;
     }
     
@@ -1529,6 +1534,7 @@ function ApplicationFormPage() {
     if (formData.telephone.length !== 10) {
       setTelephoneError('Telephone number must be exactly 10 digits');
       await showSubmissionModalError('Please enter a valid 10-digit telephone number');
+      focusField('input[name="telephone"]');
       return;
     }
 
@@ -1536,6 +1542,10 @@ function ApplicationFormPage() {
       await showSubmissionModalError('Captcha is incorrect. Please try again.');
       setFormData((prev) => ({ ...prev, captcha: '' }));
       generateCaptcha();
+      scrollToSection(declarationSectionRef);
+      setTimeout(() => {
+        captchaInputRef.current?.focus();
+      }, 200);
       return;
     }
 
@@ -1731,7 +1741,7 @@ function ApplicationFormPage() {
 
       <form onSubmit={handleSubmit} className="application-form">
         {/* Personal Particulars */}
-        <div className="form-section" ref={qualificationsSectionRef}>
+        <div className="form-section">
           <h3 className="section-title required">Personal Particulars</h3>
           
           <div className="form-group">
@@ -1891,7 +1901,7 @@ function ApplicationFormPage() {
         </div>
 
         {/* Academic Qualifications */}
-        <div className="form-section" ref={membershipsSectionRef}>
+        <div className="form-section" ref={qualificationsSectionRef}>
           <h3 className="section-title">Academic Qualifications</h3>
           
           {formData.qualifications.map((qual, index) => (
@@ -2045,7 +2055,7 @@ function ApplicationFormPage() {
         </div>
 
         {/* Membership of Professional Organizations */}
-        <div className="form-section" ref={experiencesSectionRef}>
+        <div className="form-section" ref={membershipsSectionRef}>
           <h3 className="section-title">Membership of Professional Organizations</h3>
           
           {formData.memberships.map((membership, index) => (
@@ -2136,7 +2146,7 @@ function ApplicationFormPage() {
         </div>
 
         {/* Work Experience */}
-        <div className="form-section" ref={documentsSectionRef}>
+        <div className="form-section" ref={experiencesSectionRef}>
           <h3 className="section-title">Work Experience (most recent first)</h3>
           
           {formData.experiences.map((exp, index) => (
@@ -2280,7 +2290,7 @@ function ApplicationFormPage() {
         </div>
 
         {/* Documents */}
-        <div className="form-section" ref={declarationSectionRef}>
+        <div className="form-section" ref={documentsSectionRef}>
           <h3 className="section-title required">Documents</h3>
           <p className="document-note">
             * Please make sure each file is 4 MB or less (Please upload the files in PDF format). All documents are required.
@@ -2755,7 +2765,7 @@ function ApplicationFormPage() {
         </div>
 
         {/* Declaration */}
-        <div className="form-section">
+        <div className="form-section" ref={declarationSectionRef}>
           <h3 className="section-title">Declaration</h3>
           <div className="declaration-text">
             <p>
