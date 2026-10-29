@@ -3,6 +3,41 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/ApplicationFormPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 
+const MAX_GPA = 4;
+
+// Returns an error message, or '' when the GPA is valid.
+const getGpaError = (value) => {
+  const trimmedValue = String(value ?? '').trim();
+  if (!trimmedValue) {
+    return 'GPA is required';
+  }
+
+  const gpa = Number(trimmedValue);
+  if (!Number.isFinite(gpa)) {
+    return 'GPA must be a number';
+  }
+
+  if (gpa < 0 || gpa > MAX_GPA) {
+    return `GPA must be between 0 and ${MAX_GPA.toFixed(1)}`;
+  }
+
+  return '';
+};
+
+// Removes the error at `index` from an index-keyed error map and shifts later entries down by one.
+const removeIndexedError = (errors, index) => {
+  const adjusted = {};
+  Object.keys(errors).forEach(key => {
+    const keyIndex = parseInt(key, 10);
+    if (keyIndex < index) {
+      adjusted[keyIndex] = errors[key];
+    } else if (keyIndex > index) {
+      adjusted[keyIndex - 1] = errors[key];
+    }
+  });
+  return adjusted;
+};
+
 function ApplicationFormPage() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -11,6 +46,7 @@ function ApplicationFormPage() {
   const [nicError, setNicError] = useState('');
   const [emailError, setEmailError] = useState('');
   const [graduationDateErrors, setGraduationDateErrors] = useState({});
+  const [gpaErrors, setGpaErrors] = useState({});
   const [membershipDateErrors, setMembershipDateErrors] = useState({});
   const [fileErrors, setFileErrors] = useState({});
   const [documentVerification, setDocumentVerification] = useState({
@@ -72,7 +108,8 @@ function ApplicationFormPage() {
       degree: '',
       specialization: '',
       duration: '',
-      graduationDate: ''
+      graduationDate: '',
+      gpa: ''
     }],
     partTime: false,
     alreadyRegistered: false,
@@ -553,7 +590,8 @@ function ApplicationFormPage() {
         degree: '',
         specialization: '',
         duration: '',
-        graduationDate: ''
+        graduationDate: '',
+        gpa: ''
       }]
     }));
 
@@ -566,30 +604,17 @@ function ApplicationFormPage() {
       alert('At least one qualification is required');
       return;
     }
-    
+
     setFormData(prev => ({
       ...prev,
       qualifications: prev.qualifications.filter((_, i) => i !== index)
     }));
 
     resetNameAndDegreeVerification();
-    
-    // Also remove the error for this index if it exists
-    setGraduationDateErrors(prev => {
-      const updated = { ...prev };
-      delete updated[index];
-      // Adjust remaining error indices
-      const adjusted = {};
-      Object.keys(updated).forEach(key => {
-        const keyIndex = parseInt(key);
-        if (keyIndex > index) {
-          adjusted[keyIndex - 1] = updated[key];
-        } else {
-          adjusted[keyIndex] = updated[key];
-        }
-      });
-      return adjusted;
-    });
+
+    // Also remove the errors for this index and shift the later ones down
+    setGraduationDateErrors(prev => removeIndexedError(prev, index));
+    setGpaErrors(prev => removeIndexedError(prev, index));
   };
 
   const addMembership = () => {
@@ -672,6 +697,20 @@ function ApplicationFormPage() {
     // Validate graduation date if that field is being changed
     if (field === 'graduationDate') {
       validateGraduationDate(value, index);
+    }
+
+    // Check the GPA range while typing; an empty GPA is reported on submit
+    if (field === 'gpa') {
+      const message = String(value).trim() ? getGpaError(value) : '';
+      setGpaErrors(prev => {
+        const next = { ...prev };
+        if (message) {
+          next[index] = message;
+        } else {
+          delete next[index];
+        }
+        return next;
+      });
     }
   };
 
@@ -1402,6 +1441,14 @@ function ApplicationFormPage() {
         scrollToSection(qualificationsSectionRef);
         return;
       }
+
+      const gpaError = getGpaError(qualification.gpa);
+      if (gpaError) {
+        setGpaErrors(prev => ({ ...prev, [i]: gpaError }));
+        await showSubmissionModalError(`Academic Qualification ${i + 1}: ${gpaError}.`);
+        scrollToSection(qualificationsSectionRef);
+        return;
+      }
     }
 
     for (let i = 0; i < formData.memberships.length; i += 1) {
@@ -1587,6 +1634,10 @@ function ApplicationFormPage() {
       // Prepare the data to send (convert files to base64 format)
       const dataToSend = {
         ...formData,
+        qualifications: formData.qualifications.map((qualification) => ({
+          ...qualification,
+          gpa: Number(qualification.gpa)
+        })),
         documents: {
           degreeCertificate: await convertFilesToBase64(formData.documents.degreeCertificate),
           membershipProofs: await convertFilesToBase64(formData.documents.membershipProofs),
@@ -1946,6 +1997,27 @@ function ApplicationFormPage() {
                     <div className="error-box">
                       <span className="error-icon">⚠</span>
                       <span className="error-text">{graduationDateErrors[index]}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="form-group">
+                  <label htmlFor={`qualification-gpa-${index}`}>GPA (Max {MAX_GPA.toFixed(1)})</label>
+                  <input
+                    id={`qualification-gpa-${index}`}
+                    type="number"
+                    inputMode="decimal"
+                    step="0.01"
+                    min="0"
+                    max={MAX_GPA}
+                    value={qual.gpa ?? ''}
+                    onChange={(e) => handleQualificationChange(index, 'gpa', e.target.value)}
+                    placeholder="e.g. 3.75"
+                    className={gpaErrors[index] ? 'input-error' : ''}
+                  />
+                  {gpaErrors[index] && (
+                    <div className="error-box">
+                      <span className="error-icon">⚠</span>
+                      <span className="error-text">{gpaErrors[index]}</span>
                     </div>
                   )}
                 </div>
