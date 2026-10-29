@@ -1,22 +1,9 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import Program from './models/Program.js';
+import connectDB from './config/db.js';
 
 dotenv.config();
-
-const connectDB = async () => {
-  try {
-    const dbUsername = 'adminpanel';
-    const dbPassword = 'eAVM89vSCbATi8Tv';
-    const connectionString = `mongodb+srv://${dbUsername}:${dbPassword}@cluster0.mgyo1zg.mongodb.net/POST_GRADUATE_LMS_DB?appName=Cluster0`;
-    
-    await mongoose.connect(connectionString);
-    console.log('MongoDB connected successfully');
-  } catch (error) {
-    console.error('MongoDB connection error:', error.message);
-    process.exit(1);
-  }
-};
 
 const seedPrograms = async () => {
   try {

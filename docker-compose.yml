@@ -1,0 +1,19 @@
+services:
+  backend:
+    build: ./server
+    image: ${DOCKERHUB_USER:-lms}/lms-backend:latest
+    env_file:
+      - path: ./server/.env
+        required: false
+    restart: unless-stopped
+    # No "ports": the backend is only reachable through Nginx
+
+  frontend:
+    build: .
+    image: ${DOCKERHUB_USER:-lms}/lms-frontend:latest
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
