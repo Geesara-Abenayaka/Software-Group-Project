@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import '../App.css'
 import API_BASE_URL from '../utils/apiConfig'
@@ -93,9 +93,9 @@ function LoginPage() {
               Sign In
             </button>
 
-            <a href="#" className="forgot-password">
+            <Link to="/reset-password" className="forgot-password">
               Forgot your password?
-            </a>
+            </Link>
           </form>
         </div>
 
