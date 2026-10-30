@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import process from 'node:process';
 import mongoose from 'mongoose';
 import connectDB from './config/db.js';
 import Program from './models/Program.js';
