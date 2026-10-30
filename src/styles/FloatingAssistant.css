@@ -184,6 +184,42 @@
   color: #6b7280;
 }
 
+/* Formatted bot replies: paragraphs and "- " lists */
+.assistant-message p + p,
+.assistant-message p + ul,
+.assistant-message ul + p {
+  margin-top: 6px;
+}
+
+.assistant-message ul {
+  padding-left: 18px;
+}
+
+.assistant-message li + li {
+  margin-top: 4px;
+}
+
+.assistant-feedback {
+  display: inline-flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.assistant-feedback button {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.assistant-feedback button:hover,
+.assistant-feedback button[aria-pressed='true'] {
+  color: #8b1a1a;
+  font-weight: 700;
+}
+
 .typing-indicator {
   width: 90px;
   display: flex;
@@ -258,6 +294,23 @@
   font-size: 12px;
   font-weight: 700;
   align-self: center;
+}
+
+.recommendation-card .recommendation-reason {
+  margin-top: 4px;
+  color: #8b1a1a;
+  font-weight: 600;
+}
+
+.recommendation-actions {
+  display: flex;
+  gap: 8px;
+  margin: -4px 0 12px;
+}
+
+.assistant-quick-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .assistant-quick-actions {
