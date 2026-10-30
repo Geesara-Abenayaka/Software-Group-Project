@@ -2,7 +2,53 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/ApplicationFormPage.css';
 import API_BASE_URL from '../utils/apiConfig';
-import { MAX_GPA, getErrorSummary, getSectionOfField, validateApplication, validateField } from '../utils/applicationValidation';
+import { MAX_GPA, getErrorSummary, getSectionOfField, hasDocument, validateApplication, validateField } from '../utils/applicationValidation';
+import { loadDraft, mergeDraft, removeDraft, saveDraft } from '../utils/applicationDraft';
+
+const createEmptyFormData = (program) => ({
+  program,
+  title: '',
+  fullName: '',
+  nameWithInitials: '',
+  nicNo: '',
+  telephone: '',
+  mobile: '',
+  email: '',
+  contactAddress: '',
+  qualifications: [{
+    university: '',
+    degree: '',
+    specialization: '',
+    duration: '',
+    graduationDate: '',
+    gpa: ''
+  }],
+  partTime: false,
+  alreadyRegistered: false,
+  memberships: [{
+    organization: '',
+    category: '',
+    dateJoined: ''
+  }],
+  experiences: [{
+    fromMonth: '',
+    fromYear: '',
+    toMonth: '',
+    toYear: '',
+    company: '',
+    position: ''
+  }],
+  documents: {
+    degreeCertificate: [],
+    membershipProofs: [],
+    nic: null,
+    employerLetter: [],
+    transcript: null,
+    paymentConfirmation: null
+  },
+  declaration: false,
+  captcha: ''
+});
 
 // Removes the error at `index` from an index-keyed error map and shifts later entries down by one.
 const removeIndexedError = (errors, index) => {
@@ -72,51 +118,57 @@ function ApplicationFormPage() {
   const documentsSectionRef = useRef(null);
   const declarationSectionRef = useRef(null);
   const captchaInputRef = useRef(null);
-  
-  const [formData, setFormData] = useState({
-    program: location.state?.program || '',
-    title: '',
-    fullName: '',
-    nameWithInitials: '',
-    nicNo: '',
-    telephone: '',
-    mobile: '',
-    email: '',
-    contactAddress: '',
-    qualifications: [{
-      university: '',
-      degree: '',
-      specialization: '',
-      duration: '',
-      graduationDate: '',
-      gpa: ''
-    }],
-    partTime: false,
-    alreadyRegistered: false,
-    memberships: [{
-      organization: '',
-      category: '',
-      dateJoined: ''
-    }],
-    experiences: [{
-      fromMonth: '',
-      fromYear: '',
-      toMonth: '',
-      toYear: '',
-      company: '',
-      position: ''
-    }],
-    documents: {
-      degreeCertificate: [],
-      membershipProofs: [],
-      nic: null,
-      employerLetter: [],
-      transcript: null,
-      paymentConfirmation: null
-    },
-    declaration: false,
-    captcha: ''
-  });
+  const [submittedApplicationId, setSubmittedApplicationId] = useState('');
+
+  // Answers typed earlier for this programme come back after a refresh; files have to be chosen again.
+  // eslint-disable-next-line no-unused-vars -- shown by the "draft restored" banner (UI step 06)
+  const [draftSavedAt, setDraftSavedAt] = useState(() => loadDraft(location.state?.program)?.savedAt || null);
+  const [formData, setFormData] = useState(() => (
+    mergeDraft(createEmptyFormData(location.state?.program || ''), loadDraft(location.state?.program))
+  ));
+  // The form as it was loaded (or reset); it isn't saved again until the user changes something.
+  const untouchedFormDataRef = useRef(formData);
+  const hasChosenFiles = Object.values(formData.documents).some(hasDocument);
+
+  useEffect(() => {
+    // After a successful submit the draft is no longer needed. Running this here, after the
+    // cleanup below has cancelled any pending save, means a late save can't bring it back.
+    if (submittedApplicationId) {
+      removeDraft(formData.program);
+      return undefined;
+    }
+
+    if (formData === untouchedFormDataRef.current) {
+      return undefined;
+    }
+
+    const timer = setTimeout(() => saveDraft(formData), 1000);
+    return () => clearTimeout(timer);
+  }, [formData, submittedApplicationId]);
+
+  // Files can't be kept in a draft, so warn before the page is closed or reloaded with files chosen.
+  useEffect(() => {
+    if (!hasChosenFiles || submittedApplicationId) {
+      return undefined;
+    }
+
+    const warnBeforeLeaving = (event) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+
+    window.addEventListener('beforeunload', warnBeforeLeaving);
+    return () => window.removeEventListener('beforeunload', warnBeforeLeaving);
+  }, [hasChosenFiles, submittedApplicationId]);
+
+  // eslint-disable-next-line no-unused-vars -- used by the "Start over" button (UI step 06)
+  const discardDraft = () => {
+    removeDraft(formData.program);
+    const emptyFormData = createEmptyFormData(formData.program);
+    untouchedFormDataRef.current = emptyFormData;
+    setFormData(emptyFormData);
+    setDraftSavedAt(null);
+  };
 
   // Check if program is provided, if not redirect to homepage
   useEffect(() => {
@@ -1555,6 +1607,9 @@ function ApplicationFormPage() {
       const result = await response.json();
 
       if (result.success) {
+        // The id is kept for the reference number (formatReference); setting it also removes the draft.
+        setSubmittedApplicationId(result.data._id);
+        setDraftSavedAt(null);
         setSubmissionStatus('success');
         setSubmissionMessage('Application submitted successfully! Redirecting...');
         keepModalVisibleForRedirect = true;
