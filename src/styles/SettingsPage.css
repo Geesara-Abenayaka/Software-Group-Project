@@ -370,6 +370,96 @@ body.admin-dark-mode .mode-switch-icon-moon {
   color: #e2e8f0;
 }
 
+/* Course Advisor facts and feedback */
+.assistant-facts-input {
+  min-height: 220px;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.assistant-facts-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.reset-facts-btn {
+  padding: 0.75rem 1.5rem;
+  background: white;
+  color: #374151;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.reset-facts-btn:hover {
+  border-color: #8b0000;
+  color: #8b0000;
+}
+
+.set-deadline-btn:disabled,
+.reset-facts-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.assistant-feedback-filter {
+  max-width: 240px;
+}
+
+.assistant-feedback-table-wrap {
+  overflow-x: auto;
+}
+
+.assistant-feedback-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.assistant-feedback-table th,
+.assistant-feedback-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  vertical-align: top;
+  color: #374151;
+}
+
+.assistant-feedback-table th {
+  color: #1f2937;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.assistant-feedback-table td:first-child,
+.assistant-feedback-table td:nth-child(2) {
+  white-space: nowrap;
+}
+
+.feedback-source {
+  color: #6b7280;
+}
+
+body.admin-dark-mode .reset-facts-btn {
+  background: #0f172a;
+  border-color: #334155;
+  color: #e5e7eb;
+}
+
+body.admin-dark-mode .assistant-feedback-table th,
+body.admin-dark-mode .assistant-feedback-table td {
+  border-bottom-color: #334155;
+  color: #e5e7eb;
+}
+
+body.admin-dark-mode .feedback-source {
+  color: #94a3b8;
+}
+
 @media (max-width: 768px) {
   .display-mode-row {
     flex-direction: column;
