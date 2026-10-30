@@ -334,6 +334,10 @@ router.get('/program/:program', async (req, res) => {
 // Lightweight summary endpoint for admin dashboards
 router.get('/summary/by-program', async (req, res) => {
   try {
+    // Statuses are stored in more than one spelling ('approved' and 'Approved', 'Rejected', 'Application Rejected'),
+    // so compare them in lower case.
+    const status = { $toLower: '$status' };
+
     const summary = await Application.aggregate([
       {
         $group: {
@@ -341,7 +345,17 @@ router.get('/summary/by-program', async (req, res) => {
           total: { $sum: 1 },
           pending: {
             $sum: {
-              $cond: [{ $eq: ['$status', 'pending'] }, 1, 0]
+              $cond: [{ $eq: [status, 'pending'] }, 1, 0]
+            }
+          },
+          approved: {
+            $sum: {
+              $cond: [{ $eq: [status, 'approved'] }, 1, 0]
+            }
+          },
+          rejected: {
+            $sum: {
+              $cond: [{ $in: [status, ['rejected', 'application rejected']] }, 1, 0]
             }
           }
         }
@@ -351,7 +365,9 @@ router.get('/summary/by-program', async (req, res) => {
           _id: 0,
           program: '$_id',
           total: 1,
-          pending: 1
+          pending: 1,
+          approved: 1,
+          rejected: 1
         }
       }
     ]);
