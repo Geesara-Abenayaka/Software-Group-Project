@@ -2,27 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/ApplicationFormPage.css';
 import API_BASE_URL from '../utils/apiConfig';
-
-const MAX_GPA = 4;
-
-// Returns an error message, or '' when the GPA is valid.
-const getGpaError = (value) => {
-  const trimmedValue = String(value ?? '').trim();
-  if (!trimmedValue) {
-    return 'GPA is required';
-  }
-
-  const gpa = Number(trimmedValue);
-  if (!Number.isFinite(gpa)) {
-    return 'GPA must be a number';
-  }
-
-  if (gpa < 0 || gpa > MAX_GPA) {
-    return `GPA must be between 0 and ${MAX_GPA.toFixed(1)}`;
-  }
-
-  return '';
-};
+import { MAX_GPA, getErrorSummary, getSectionOfField, validateApplication, validateField } from '../utils/applicationValidation';
 
 // Removes the error at `index` from an index-keyed error map and shifts later entries down by one.
 const removeIndexedError = (errors, index) => {
@@ -701,7 +681,7 @@ function ApplicationFormPage() {
 
     // Check the GPA range while typing; an empty GPA is reported on submit
     if (field === 'gpa') {
-      const message = String(value).trim() ? getGpaError(value) : '';
+      const message = String(value).trim() ? validateField('gpa', value) : '';
       setGpaErrors(prev => {
         const next = { ...prev };
         if (message) {
@@ -1386,6 +1366,22 @@ function ApplicationFormPage() {
       sectionRef?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
+    // Personal fields are focused directly, so that section has no ref here.
+    const sectionRefs = {
+      academic: qualificationsSectionRef,
+      memberships: membershipsSectionRef,
+      work: experiencesSectionRef,
+      documents: documentsSectionRef,
+      declaration: declarationSectionRef
+    };
+
+    const personalErrorSetters = {
+      nicNo: setNicError,
+      email: setEmailError,
+      mobile: setMobileError,
+      telephone: setTelephoneError
+    };
+
     // Show loader immediately so long verification/preparation steps are visible to users.
     setIsSubmitting(true);
     setSubmissionStatus('submitting');
@@ -1407,145 +1403,38 @@ function ApplicationFormPage() {
       return;
     }
 
-    const requiredPersonalFields = [
-      { key: 'title', selector: 'select[name="title"]', label: 'Title' },
-      { key: 'fullName', selector: 'input[name="fullName"]', label: 'Full Name' },
-      { key: 'nameWithInitials', selector: 'input[name="nameWithInitials"]', label: 'Name with initials' },
-      { key: 'nicNo', selector: 'input[name="nicNo"]', label: 'NIC number' },
-      { key: 'telephone', selector: 'input[name="telephone"]', label: 'Telephone number' },
-      { key: 'mobile', selector: 'input[name="mobile"]', label: 'Mobile number' },
-      { key: 'email', selector: 'input[name="email"]', label: 'Email address' },
-      { key: 'contactAddress', selector: 'input[name="contactAddress"]', label: 'Contact address' }
-    ];
+    // Show the first problem (in page order) and take the user to it.
+    const errors = validateApplication(formData, { captchaValue });
+    const firstErrorKey = Object.keys(errors)[0];
 
-    for (const field of requiredPersonalFields) {
-      if (!String(formData[field.key] || '').trim()) {
-        await showSubmissionModalError(`Please fill ${field.label}.`);
-        focusField(field.selector);
-        return;
+    if (firstErrorKey) {
+      const message = errors[firstErrorKey];
+      const section = getSectionOfField(firstErrorKey);
+      const gpaErrorMatch = firstErrorKey.match(/^qualifications\.(\d+)\.gpa$/);
+
+      if (gpaErrorMatch) {
+        setGpaErrors(prev => ({ ...prev, [gpaErrorMatch[1]]: message }));
       }
-    }
-    
-    // Validate Personal Particulars - all fields must be filled
-    if (!formData.title || !formData.fullName || !formData.nameWithInitials || 
-        !formData.nicNo || !formData.telephone || !formData.mobile || 
-        !formData.email || !formData.contactAddress) {
-      await showSubmissionModalError('Please fill in all fields in Personal Particulars section. No fields can be left blank.');
-      return;
-    }
-
-    for (let i = 0; i < formData.qualifications.length; i += 1) {
-      const qualification = formData.qualifications[i];
-      if (!qualification.university || !qualification.degree || !qualification.specialization || !qualification.duration || !qualification.graduationDate) {
-        await showSubmissionModalError(`Please complete all fields in Academic Qualification ${i + 1}.`);
-        scrollToSection(qualificationsSectionRef);
-        return;
+      personalErrorSetters[firstErrorKey]?.(message);
+      if (firstErrorKey === 'captcha') {
+        setCaptchaError(message);
       }
 
-      const gpaError = getGpaError(qualification.gpa);
-      if (gpaError) {
-        setGpaErrors(prev => ({ ...prev, [i]: gpaError }));
-        await showSubmissionModalError(`Academic Qualification ${i + 1}: ${gpaError}.`);
-        scrollToSection(qualificationsSectionRef);
-        return;
-      }
-    }
+      await showSubmissionModalError(getErrorSummary(firstErrorKey, message));
 
-    for (let i = 0; i < formData.memberships.length; i += 1) {
-      const membership = formData.memberships[i];
-      if (!membership.organization || !membership.category || !membership.dateJoined) {
-        await showSubmissionModalError(`Please complete all fields in Membership ${i + 1}.`);
-        scrollToSection(membershipsSectionRef);
-        return;
+      if (section === 'personal') {
+        focusField(`[name="${firstErrorKey}"]`);
+      } else {
+        scrollToSection(sectionRefs[section]);
       }
-    }
 
-    for (let i = 0; i < formData.experiences.length; i += 1) {
-      const experience = formData.experiences[i];
-      if (!experience.fromMonth || !experience.fromYear || !experience.toMonth || !experience.toYear || !experience.company || !experience.position) {
-        await showSubmissionModalError(`Please complete all fields in Work Experience ${i + 1}.`);
-        scrollToSection(experiencesSectionRef);
-        return;
+      if (firstErrorKey === 'captcha') {
+        setFormData((prev) => ({ ...prev, captcha: '' }));
+        generateCaptcha();
+        setTimeout(() => {
+          captchaInputRef.current?.focus();
+        }, 200);
       }
-    }
-
-    const hasAllRequiredDocuments =
-      (Array.isArray(formData.documents.degreeCertificate) && formData.documents.degreeCertificate.length > 0)
-      && Boolean(formData.documents.nic)
-      && (Array.isArray(formData.documents.membershipProofs) && formData.documents.membershipProofs.length > 0)
-      && (Array.isArray(formData.documents.employerLetter) && formData.documents.employerLetter.length > 0)
-      && Boolean(formData.documents.transcript)
-      && Boolean(formData.documents.paymentConfirmation);
-
-    if (!hasAllRequiredDocuments) {
-      await showSubmissionModalError('Please upload all required documents before submitting.');
-      scrollToSection(documentsSectionRef);
-      return;
-    }
-    
-    // Validate graduation dates
-    const datePattern = /^(0[1-9]|1[0-2])\/(0[1-9]|[12][0-9]|3[01])\/\d{4}$/;
-    for (let i = 0; i < formData.qualifications.length; i++) {
-      const gradDate = formData.qualifications[i].graduationDate;
-      if (gradDate && !datePattern.test(gradDate)) {
-        await showSubmissionModalError('Please enter valid graduation date in mm/dd/yyyy format');
-        scrollToSection(qualificationsSectionRef);
-        return;
-      }
-    }
-    
-    // Validate membership dates
-    for (let i = 0; i < formData.memberships.length; i++) {
-      const joinedDate = formData.memberships[i].dateJoined;
-      if (joinedDate && !datePattern.test(joinedDate)) {
-        await showSubmissionModalError('Please enter valid date joined in mm/dd/yyyy format for membership');
-        scrollToSection(membershipsSectionRef);
-        return;
-      }
-    }
-    
-    // Validate NIC number
-    const nicPattern = /^(\d{12}|\d{9}V)$/;
-    if (!nicPattern.test(formData.nicNo)) {
-      setNicError('Enter valid NIC number (12 digits or 9 digits + V)');
-      await showSubmissionModalError('Please enter a valid NIC number');
-      focusField('input[name="nicNo"]');
-      return;
-    }
-    
-    // Validate email
-    const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    if (!emailPattern.test(formData.email)) {
-      setEmailError('Enter valid email address (e.g., name@gmail.com)');
-      await showSubmissionModalError('Please enter a valid email address');
-      focusField('input[name="email"]');
-      return;
-    }
-    
-    // Validate mobile number before submission
-    if (formData.mobile.length !== 10) {
-      setMobileError('Mobile number must be exactly 10 digits');
-      await showSubmissionModalError('Please enter a valid 10-digit mobile number');
-      focusField('input[name="mobile"]');
-      return;
-    }
-    
-    // Validate telephone number before submission
-    if (formData.telephone.length !== 10) {
-      setTelephoneError('Telephone number must be exactly 10 digits');
-      await showSubmissionModalError('Please enter a valid 10-digit telephone number');
-      focusField('input[name="telephone"]');
-      return;
-    }
-
-    if (String(formData.captcha || '').trim().toLowerCase() !== String(captchaValue || '').toLowerCase()) {
-      await showSubmissionModalError('Captcha is incorrect. Please try again.');
-      setFormData((prev) => ({ ...prev, captcha: '' }));
-      generateCaptcha();
-      scrollToSection(declarationSectionRef);
-      setTimeout(() => {
-        captchaInputRef.current?.focus();
-      }, 200);
       return;
     }
 
@@ -1592,18 +1481,6 @@ function ApplicationFormPage() {
       }
     }
 
-    if (String(formData.captcha || '').trim().toLowerCase() !== String(captchaValue || '').toLowerCase()) {
-      setCaptchaError('Captcha is incorrect. Please enter the exact text shown above.');
-      await showSubmissionModalError('Captcha is incorrect. Please enter the exact text shown above.');
-      setFormData((prev) => ({ ...prev, captcha: '' }));
-      generateCaptcha();
-      scrollToSection(declarationSectionRef);
-      setTimeout(() => {
-        captchaInputRef.current?.focus();
-      }, 200);
-      return;
-    }
-    
     try {
       
       // Helper function to convert File to base64
