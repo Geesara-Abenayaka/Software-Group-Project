@@ -54,6 +54,33 @@ const loadCachedPrograms = () => {
   }
 }
 
+// Reads Server-Sent Events from a fetch response and calls onEvent(name, data) for each one.
+const readEvents = async (response, onEvent) => {
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+
+  for (;;) {
+    const { value, done } = await reader.read()
+    if (done) {
+      return
+    }
+
+    buffer += decoder.decode(value, { stream: true })
+    let boundary = buffer.indexOf('\n\n')
+    while (boundary >= 0) {
+      const block = buffer.slice(0, boundary)
+      buffer = buffer.slice(boundary + 2)
+      const event = block.match(/^event: (.*)$/m)?.[1]
+      const data = block.match(/^data: (.*)$/m)?.[1]
+      if (event && data) {
+        onEvent(event, JSON.parse(data))
+      }
+      boundary = buffer.indexOf('\n\n')
+    }
+  }
+}
+
 // "/programs/msc-cs" -> "msc-cs"
 const getProgramCode = (pathname) => {
   const match = pathname.match(/^\/programs\/([^/]+)/)
@@ -98,6 +125,7 @@ function FloatingAssistant() {
   const [messages, setMessages] = useState(loadHistory)
   const [programs, setPrograms] = useState(loadCachedPrograms)
   const [isTyping, setIsTyping] = useState(false)
+  const [isStreaming, setIsStreaming] = useState(false)
   const [quickSuggestions, setQuickSuggestions] = useState(DEFAULT_FOLLOW_UPS)
   const [recommendationCards, setRecommendationCards] = useState([])
   const [quizStep, setQuizStep] = useState(null)
@@ -149,10 +177,13 @@ function FloatingAssistant() {
     setMessages((prev) => [...prev, ...newMessages])
   }
 
-  // Ask the server's AI assistant; if it is unavailable, answer with the offline keyword engine.
-  const askAssistant = async (history) => {
+  // Ask the server's AI assistant, passing its text to onText as it streams in.
+  // If it is unavailable, answer with the offline keyword engine.
+  const askAssistant = async (history, onText) => {
+    let streamed = ''
+
     try {
-      const response = await fetch(`${API_BASE_URL}/assistant/chat`, {
+      const response = await fetch(`${API_BASE_URL}/assistant/chat/stream`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -160,12 +191,27 @@ function FloatingAssistant() {
           context: { path: location.pathname, programShortCode: currentProgramCode }
         })
       })
-      const data = await response.json()
-      if (data.success) {
-        return { ...data, source: 'ai' }
+
+      if (response.ok && response.body) {
+        let result = null
+        await readEvents(response, (event, data) => {
+          if (event === 'delta') {
+            streamed += data.text
+            onText(streamed)
+          } else if (event === 'done') {
+            result = data
+          }
+        })
+        if (result) {
+          return { ...result, source: 'ai' }
+        }
       }
     } catch {
       // fall through to the local engine
+    }
+
+    if (streamed) {
+      return { reply: `${streamed.trim()}\n\nThe answer was cut off. Please ask again.`, recommendations: [], followUps: [], source: 'ai' }
     }
 
     return { ...getFallbackResponse(history[history.length - 1].text, programs), source: 'fallback' }
@@ -251,13 +297,30 @@ function FloatingAssistant() {
     setInput('')
     setIsTyping(true)
 
-    const answer = await askAssistant(history)
+    // The reply bubble appears with the first streamed text and grows as more arrives.
+    let streamingId = null
+    const answer = await askAssistant(history, (text) => {
+      if (streamingId) {
+        setMessages((prev) => prev.map((message) => (message.id === streamingId ? { ...message, text } : message)))
+        return
+      }
+      const message = createMessage('bot', text)
+      streamingId = message.id
+      setIsStreaming(true)
+      addMessages(message)
+    })
 
-    setIsTyping(false)
-    addMessages(createMessage('bot', answer.reply, {
+    const details = {
       topic: answer.recommendations?.length ? 'Course Recommendation' : 'Site Help',
       source: answer.source
-    }))
+    }
+    if (streamingId) {
+      setMessages((prev) => prev.map((message) => (message.id === streamingId ? { ...message, text: answer.reply, ...details } : message)))
+    } else {
+      addMessages(createMessage('bot', answer.reply, details))
+    }
+    setIsTyping(false)
+    setIsStreaming(false)
     setRecommendationCards(answer.recommendations || [])
     setQuickSuggestions(answer.followUps?.length ? answer.followUps : DEFAULT_FOLLOW_UPS)
   }
@@ -310,7 +373,24 @@ function FloatingAssistant() {
   }
 
   const handleFeedback = (messageId, helpful) => {
-    setMessages((prev) => prev.map((message) => (message.id === messageId ? { ...message, helpful } : message)))
+    const index = messages.findIndex((message) => message.id === messageId)
+    if (index < 0) {
+      return
+    }
+
+    const message = messages[index]
+    const question = message.source === 'quiz'
+      ? FIND_PROGRAMME
+      : messages.slice(0, index).reverse().find((item) => item.role === 'user')?.text || ''
+
+    setMessages((prev) => prev.map((item) => (item.id === messageId ? { ...item, helpful } : item)))
+
+    // Saved for admins to review in Settings; the chat works the same if this fails.
+    fetch(`${API_BASE_URL}/assistant/feedback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messageId, question, reply: message.text, helpful, source: message.source, path: location.pathname })
+    }).catch(() => {})
   }
 
   return (
@@ -394,7 +474,7 @@ function FloatingAssistant() {
                 </div>
               )}
 
-              {isTyping && (
+              {isTyping && !isStreaming && (
                 <div className="assistant-message bot typing-indicator" aria-label="Assistant typing">
                   <span></span>
                   <span></span>
