@@ -1,117 +1,21 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import API_BASE_URL from '../utils/apiConfig'
+import { getFallbackResponse, normalize, toRecommendation } from '../utils/assistantFallback'
+import { generateCourseDetailsPDF } from '../utils/pdfGenerator'
+import { QUIZ_QUESTIONS, scorePrograms } from '../utils/programQuiz'
 import '../styles/FloatingAssistant.css'
 
 const PROGRAMS_KEY = 'floating_assistant_programs_v1'
+const HISTORY_KEY = 'floating_assistant_history_v2'
 
-const QUICK_QUESTIONS = [
-  'Recommend a course for software architecture',
-  'What documents do I need?',
-  'How do I apply?',
-  'Show me programs with data or AI focus'
-]
+const FIND_PROGRAMME = 'Find my programme'
+const CANCEL_QUIZ = 'Cancel quiz'
 
-// Topics covered by the Department of Computer Science & Engineering programmes.
-const COURSE_INTENT_MATCHERS = [
-  { label: 'Data Science & AI', keywords: ['data science', 'machine learning', 'deep learning', 'ml', 'ai', 'artificial intelligence', 'big data', 'analytics'] },
-  { label: 'Software Architecture', keywords: ['software architecture', 'software engineering', 'software', 'architecture', 'programming'] },
-  { label: 'Security', keywords: ['cyber', 'security', 'information security', 'cybersecurity'] },
-  { label: 'Cloud Computing', keywords: ['cloud', 'cloud computing', 'distributed systems', 'devops'] },
-  { label: 'eGovernance', keywords: ['egovernance', 'e-governance', 'governance', 'government', 'public sector'] },
-  { label: 'IT Management', keywords: ['it management', 'mba', 'management', 'business', 'information systems', 'technology leadership'] }
-]
+const GENERAL_SUGGESTIONS = [FIND_PROGRAMME, 'What documents do I need?', 'How do I apply?', 'Compare MSc in CS and Master of CS']
+const DEFAULT_FOLLOW_UPS = [FIND_PROGRAMME, 'How do I apply?', 'What documents do I need?']
 
-const FAQ_KNOWLEDGE = [
-  {
-    keywords: ['apply', 'application process', 'how to apply', 'application'],
-    answer: 'To apply, browse the homepage programs and click any program\'s View Details button. From the program page, choose Apply and follow the instructions with your documents, payment confirmation, and declaration.'
-  },
-  {
-    keywords: ['fee', 'application fee', 'how much is the application fee', 'payment', 'how should i pay', 'how to pay', 'payment method'],
-    answer: 'The application fee is Rs. 2,000. Please pay by bank transfer and upload the payment confirmation receipt in the application form before submitting.'
-  },
-  {
-    keywords: ['documents', 'required documents', 'upload', 'attachments'],
-    answer: 'The site requires your NIC, degree certificate, membership proof, transcript, and payment confirmation. Upload each document clearly before submitting the form.'
-  },
-  {
-    keywords: ['deadline', 'last date', 'closing date'],
-    answer: 'Deadlines are listed on each program card and the program details page. Make sure you submit the application before the listed deadline to avoid missing the intake.'
-  },
-  {
-    keywords: ['contact', 'email', 'e-mail', 'phone', 'reach', 'office'],
-    answer: 'You can contact the Department of Computer Science & Engineering postgraduate office by email at postgrad@cse.mrt.ac.lk.'
-  },
-  {
-    keywords: ['login', 'admin', 'staff', 'access'],
-    answer: 'This assistant is for student course discovery and site help. Admin access is available from the Login page at the top of the homepage.'
-  },
-  {
-    keywords: ['program details', 'view details', 'details page', 'programme'],
-    answer: 'Click any program card on the homepage to see full details, specializations, deadlines, and application instructions.'
-  }
-]
-
-const FALLBACK_COURSES = [
-  {
-    title: 'Data Science & AI',
-    description: 'The MSc in Data Science & AI, or the Data Science specialisation of the MSc in Computer Science.',
-    tags: ['data', 'science', 'ai']
-  },
-  {
-    title: 'Software Architecture',
-    description: 'A specialisation of the MSc in Computer Science, for designing large software systems.',
-    tags: ['software', 'architecture']
-  },
-  {
-    title: 'IT Management',
-    description: 'The MBA in IT combines a general MBA with applying IT in management.',
-    tags: ['it', 'management']
-  },
-  {
-    title: 'Security Engineering',
-    description: 'A specialisation of the MSc in Computer Science, covering secure systems and networks.',
-    tags: ['security']
-  },
-  {
-    title: 'Cloud Computing',
-    description: 'A specialisation of the MSc in Computer Science, covering cloud platforms and distributed systems.',
-    tags: ['cloud']
-  },
-  {
-    title: 'eGovernance',
-    description: 'The MBA in eGovernance covers IT in government and public-sector management.',
-    tags: ['egovernance']
-  }
-]
-
-// Words that say nothing about a student's interest; ignored when ranking programs.
-const STOP_WORDS = new Set([
-  'a', 'an', 'the', 'is', 'are', 'am', 'be', 'i', 'me', 'my', 'we', 'you', 'your', 'it', 'this', 'that', 'these',
-  'to', 'for', 'of', 'in', 'on', 'at', 'by', 'with', 'about', 'and', 'or', 'any', 'some', 'there', 'other', 'another',
-  'what', 'which', 'who', 'how', 'when', 'where', 'why', 'do', 'does', 'can', 'could', 'would', 'should', 'will',
-  'want', 'need', 'like', 'tell', 'show', 'give', 'find', 'please', 'have', 'has', 'get', 'interested',
-  'recommend', 'suggest', 'program', 'programs', 'programme', 'programmes', 'course', 'courses',
-  'degree', 'degrees', 'study', 'focus', 'area', 'areas'
-])
-
-const normalize = (value) => String(value || '').toLowerCase().trim()
-
-const tokenize = (value) =>
-  normalize(value)
-    .replace(/[^a-z0-9\s]/g, ' ')
-    .split(/\s+/)
-    .filter(Boolean)
-
-// Treats "programs" and "program" as the same word.
-const singularize = (word) => (word.length > 3 && word.endsWith('s') ? word.slice(0, -1) : word)
-
-const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-
-// Whole-word match (plural allowed), so short keywords like "ai" don't match inside "email".
-const containsPhrase = (text, phrase) =>
-  new RegExp(`\\b${escapeRegExp(normalize(phrase))}(s|es)?\\b`).test(normalize(text))
+const GREETING = 'Hi there! I am your course advisor assistant. I can recommend programs based on your interests and answer questions about the site.'
 
 const createMessage = (role, text, meta = {}) => ({
   id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -121,97 +25,96 @@ const createMessage = (role, text, meta = {}) => ({
   ...meta
 })
 
-const findFAQAnswer = (query) => {
-  for (const item of FAQ_KNOWLEDGE) {
-    if (item.keywords.some((keyword) => containsPhrase(query, keyword))) {
-      return item.answer
+// The chat is kept for the browser session. Storage can be blocked, so failures are ignored.
+const loadHistory = () => {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem(HISTORY_KEY))
+    if (Array.isArray(saved) && saved.length > 0) {
+      return saved
     }
+  } catch {
+    // start a new chat
   }
-  return null
+  return [createMessage('bot', GREETING)]
 }
 
-const isCourseRelatedQuery = (query) => {
-  const normalized = normalize(query)
-  return /\b(recommend\w*|suggest\w*|programs?|programmes?|courses?|degrees?|speciali[sz]ations?|study|data science|software architecture|software engineering|cloud|cyber ?security|security|machine learning|ai|artificial intelligence|mba|it management|e-?governance)\b/.test(normalized)
-}
-
-const matchCourseIntent = (query) => {
-  for (const intent of COURSE_INTENT_MATCHERS) {
-    for (const keyword of intent.keywords) {
-      if (containsPhrase(query, keyword)) {
-        return intent.label
-      }
-    }
+const saveHistory = (messages) => {
+  try {
+    sessionStorage.setItem(HISTORY_KEY, JSON.stringify(messages))
+  } catch {
+    // the chat just won't survive a reload
   }
-  return null
 }
 
-// Whole words only, ignoring filler words, so "what is the email?" doesn't match every program.
-const toKeywords = (value) => {
-  const words = tokenize(value)
-    .filter((word) => !STOP_WORDS.has(word))
-    .map(singularize)
-  // Also join neighbouring words, so "cyber security" matches "Cybersecurity"
-  const joinedWords = words.slice(1).map((word, index) => `${words[index]}${word}`)
-  return [...words, ...joinedWords]
-}
-
-const rankPrograms = (query, programs = []) => {
-  const queryTokens = toKeywords(query)
-  if (queryTokens.length === 0) {
+const loadCachedPrograms = () => {
+  try {
+    return JSON.parse(sessionStorage.getItem(PROGRAMS_KEY)) || []
+  } catch {
     return []
   }
-
-  return programs
-    .map((program) => {
-      const specializations = (program.specializations || []).map((spec) => spec.name).join(' ')
-      const programWords = new Set(
-        toKeywords(`${program.title} ${program.description || ''} ${program.shortCode || ''} ${specializations}`)
-      )
-      const score = queryTokens.reduce((sum, token) => (programWords.has(token) ? sum + 1 : sum), 0)
-      return { ...program, score }
-    })
-    .filter((program) => program.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 3)
 }
 
-const getCourseSuggestions = (query, programs = []) => {
-  const intent = matchCourseIntent(query)
-  const recommendations = rankPrograms(query, programs)
+// Reads Server-Sent Events from a fetch response and calls onEvent(name, data) for each one.
+const readEvents = async (response, onEvent) => {
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
 
-  if (recommendations.length > 0) {
-    return {
-      message: `I found ${recommendations.length} relevant program${recommendations.length > 1 ? 's' : ''} based on your interest.`,
-      list: recommendations.map((program) => ({
-        title: program.title,
-        description: program.description || 'Open the program page for more details.',
-        shortCode: program.shortCode
-      }))
+  for (;;) {
+    const { value, done } = await reader.read()
+    if (done) {
+      return
+    }
+
+    buffer += decoder.decode(value, { stream: true })
+    let boundary = buffer.indexOf('\n\n')
+    while (boundary >= 0) {
+      const block = buffer.slice(0, boundary)
+      buffer = buffer.slice(boundary + 2)
+      const event = block.match(/^event: (.*)$/m)?.[1]
+      const data = block.match(/^data: (.*)$/m)?.[1]
+      if (event && data) {
+        onEvent(event, JSON.parse(data))
+      }
+      boundary = buffer.indexOf('\n\n')
     }
   }
+}
 
-  if (intent) {
-    const fallback = FALLBACK_COURSES.filter((course) => course.tags.some((tag) => containsPhrase(intent, tag)))
-    const fallbackList = fallback.length > 0 ? fallback : FALLBACK_COURSES
-    return {
-      message: `Here are recommended program types for ${intent.toLowerCase()} interests:`,
-      list: fallbackList.slice(0, 3).map((course) => ({
-        title: course.title,
-        description: course.description,
-        shortCode: null
-      }))
+// "/programs/msc-cs" -> "msc-cs"
+const getProgramCode = (pathname) => {
+  const match = pathname.match(/^\/programs\/([^/]+)/)
+  return match ? decodeURIComponent(match[1]) : null
+}
+
+const getPageSuggestions = (program) =>
+  program ? [`Tell me about ${program.title}`, 'Am I eligible?', 'When is the deadline?'] : GENERAL_SUGGESTIONS
+
+// Bot replies use **bold** and "- " lists. Rendered as elements, never as HTML.
+const renderInline = (text) =>
+  text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
+    part.startsWith('**') && part.endsWith('**') ? <strong key={i}>{part.slice(2, -2)}</strong> : part
+  )
+
+function FormattedText({ text }) {
+  const lines = text.split('\n').filter((line) => line.trim() !== '')
+  const blocks = []
+
+  lines.forEach((line, i) => {
+    if (line.trim().startsWith('- ')) {
+      const item = <li key={i}>{renderInline(line.trim().slice(2))}</li>
+      const last = blocks[blocks.length - 1]
+      if (last && last.type === 'ul') {
+        last.items.push(item)
+      } else {
+        blocks.push({ type: 'ul', items: [item] })
+      }
+    } else {
+      blocks.push({ type: 'p', content: <p key={i}>{renderInline(line)}</p> })
     }
-  }
+  })
 
-  return {
-    message: 'I can recommend programs based on your interests or answer general site questions. Try asking about software architecture, data science, or application help.',
-    list: FALLBACK_COURSES.slice(0, 3).map((course) => ({
-      title: course.title,
-      description: course.description,
-      shortCode: null
-    }))
-  }
+  return blocks.map((block, i) => (block.type === 'ul' ? <ul key={`ul-${i}`}>{block.items}</ul> : block.content))
 }
 
 function FloatingAssistant() {
@@ -219,25 +122,27 @@ function FloatingAssistant() {
   const navigate = useNavigate()
   const [isOpen, setIsOpen] = useState(false)
   const [input, setInput] = useState('')
-  const [messages, setMessages] = useState([
-    createMessage(
-      'bot',
-      'Hi there! I am your course advisor assistant. I can recommend programs based on your interests and answer questions about the site.'
-    )
-  ])
-  const [programs, setPrograms] = useState(() => {
-    const cached = sessionStorage.getItem(PROGRAMS_KEY)
-    if (!cached) return []
-    try {
-      return JSON.parse(cached)
-    } catch {
-      return []
-    }
-  })
+  const [messages, setMessages] = useState(loadHistory)
+  const [programs, setPrograms] = useState(loadCachedPrograms)
   const [isTyping, setIsTyping] = useState(false)
-  const [quickSuggestions, setQuickSuggestions] = useState(QUICK_QUESTIONS)
+  const [isStreaming, setIsStreaming] = useState(false)
+  const [quickSuggestions, setQuickSuggestions] = useState(DEFAULT_FOLLOW_UPS)
   const [recommendationCards, setRecommendationCards] = useState([])
+  const [quizStep, setQuizStep] = useState(null)
+  const [quizAnswers, setQuizAnswers] = useState({})
   const endRef = useRef(null)
+
+  const currentProgramCode = getProgramCode(location.pathname)
+  const currentProgram = programs.find((program) => program.shortCode === currentProgramCode)
+  const quizQuestion = quizStep === null ? null : QUIZ_QUESTIONS[quizStep]
+  const hasConversation = messages.some((message) => message.role === 'user')
+
+  // Quiz options while in the quiz; page-based suggestions until the first question; then the reply's follow-ups.
+  const suggestions = quizQuestion
+    ? [...quizQuestion.options.map((option) => option.label), CANCEL_QUIZ]
+    : hasConversation
+      ? quickSuggestions
+      : getPageSuggestions(currentProgram)
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -248,85 +153,196 @@ function FloatingAssistant() {
   }, [])
 
   useEffect(() => {
-    if (programs.length === 0) {
-      const fetchPrograms = async () => {
-        try {
-          const response = await fetch(`${API_BASE_URL}/programs`)
-          const data = await response.json()
-          if (data?.success && Array.isArray(data.data)) {
-            setPrograms(data.data)
-            sessionStorage.setItem(PROGRAMS_KEY, JSON.stringify(data.data))
-          }
-        } catch {
-          // keep fallback data only
-        }
-      }
-      fetchPrograms()
-    }
-  }, [programs.length])
+    saveHistory(messages)
+  }, [messages])
 
-  const loadRecommendations = (query) => {
-    const matches = getCourseSuggestions(query, programs)
-    setRecommendationCards(matches.list)
-    return matches
+  useEffect(() => {
+    // Use cached programs straight away, but refresh them so new programs appear.
+    const fetchPrograms = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/programs`)
+        const data = await response.json()
+        if (data?.success && Array.isArray(data.data)) {
+          setPrograms(data.data)
+          sessionStorage.setItem(PROGRAMS_KEY, JSON.stringify(data.data))
+        }
+      } catch {
+        // keep the cached programs
+      }
+    }
+    fetchPrograms()
+  }, [])
+
+  const addMessages = (...newMessages) => {
+    setMessages((prev) => [...prev, ...newMessages])
   }
 
-  const addBotResponse = async (question) => {
+  // Ask the server's AI assistant, passing its text to onText as it streams in.
+  // If it is unavailable, answer with the offline keyword engine.
+  const askAssistant = async (history, onText) => {
+    let streamed = ''
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/assistant/chat/stream`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: history.map(({ role, text }) => ({ role, text })),
+          context: { path: location.pathname, programShortCode: currentProgramCode }
+        })
+      })
+
+      if (response.ok && response.body) {
+        let result = null
+        await readEvents(response, (event, data) => {
+          if (event === 'delta') {
+            streamed += data.text
+            onText(streamed)
+          } else if (event === 'done') {
+            result = data
+          }
+        })
+        if (result) {
+          return { ...result, source: 'ai' }
+        }
+      }
+    } catch {
+      // fall through to the local engine
+    }
+
+    if (streamed) {
+      return { reply: `${streamed.trim()}\n\nThe answer was cut off. Please ask again.`, recommendations: [], followUps: [], source: 'ai' }
+    }
+
+    return { ...getFallbackResponse(history[history.length - 1].text, programs), source: 'fallback' }
+  }
+
+  const askQuizQuestion = (step) =>
+    createMessage('bot', QUIZ_QUESTIONS[step].text, {
+      kind: 'quiz',
+      topic: `Question ${step + 1} of ${QUIZ_QUESTIONS.length}`
+    })
+
+  const startQuiz = () => {
+    setInput('')
+    setRecommendationCards([])
+    setQuizAnswers({})
+    setQuizStep(0)
+    addMessages(createMessage('user', FIND_PROGRAMME, { kind: 'quiz' }), askQuizQuestion(0))
+  }
+
+  const cancelQuiz = () => {
+    setQuizStep(null)
+    setQuizAnswers({})
+    addMessages(createMessage('bot', 'Quiz cancelled. Ask me anything about the programmes.'))
+  }
+
+  const answerQuiz = (option) => {
+    const answers = { ...quizAnswers, [quizQuestion.id]: option.value }
+    const nextStep = quizStep + 1
+    const answer = createMessage('user', option.label, { kind: 'quiz' })
+
+    if (nextStep < QUIZ_QUESTIONS.length) {
+      setQuizAnswers(answers)
+      setQuizStep(nextStep)
+      addMessages(answer, askQuizQuestion(nextStep))
+      return
+    }
+
+    setQuizStep(null)
+    setQuizAnswers({})
+    setQuickSuggestions(DEFAULT_FOLLOW_UPS)
+
+    const results = scorePrograms(answers, programs)
+    if (results.length > 0) {
+      addMessages(answer, createMessage('bot', 'Here are the programmes that fit you best:', { source: 'quiz' }))
+      setRecommendationCards(results.map(({ program, reason }) => ({ ...toRecommendation(program), reason })))
+      return
+    }
+
+    const offered = programs.filter((program) => !program.isProposed)
+    const reply = offered.length > 0
+      ? 'No programme matched all your answers. These are the programmes we offer; ask me a question about any of them.'
+      : 'I couldn\'t load the programmes just now. Please try again in a moment.'
+    addMessages(answer, createMessage('bot', reply, { source: 'quiz' }))
+    setRecommendationCards(offered.map(toRecommendation))
+  }
+
+  const sendQuestion = async (question) => {
     const trimmed = question.trim()
-    if (!trimmed) {
+    if (!trimmed || isTyping) {
       return
     }
 
     if (normalize(trimmed) === '/clear') {
-      const cleared = createMessage('bot', 'Chat cleared. Ask me for course recommendations or site help.')
-      setMessages([cleared])
+      setMessages([createMessage('bot', 'Chat cleared. Ask me for course recommendations or site help.')])
       setRecommendationCards([])
+      setQuizStep(null)
+      setQuizAnswers({})
       setInput('')
       return
     }
 
-    setMessages((prev) => [...prev, createMessage('user', trimmed)])
+    if (normalize(trimmed) === normalize(FIND_PROGRAMME)) {
+      startQuiz()
+      return
+    }
+
+    // Typing a question during the quiz ends the quiz.
+    setQuizStep(null)
+    setQuizAnswers({})
+
+    const history = [...messages, createMessage('user', trimmed)]
+    setMessages(history)
     setInput('')
     setIsTyping(true)
 
-    await new Promise((resolve) => setTimeout(resolve, 350 + Math.min(650, trimmed.length * 10)))
+    // The reply bubble appears with the first streamed text and grows as more arrives.
+    let streamingId = null
+    const answer = await askAssistant(history, (text) => {
+      if (streamingId) {
+        setMessages((prev) => prev.map((message) => (message.id === streamingId ? { ...message, text } : message)))
+        return
+      }
+      const message = createMessage('bot', text)
+      streamingId = message.id
+      setIsStreaming(true)
+      addMessages(message)
+    })
 
-    const faqAnswer = findFAQAnswer(trimmed)
-    const shouldShowCourses = isCourseRelatedQuery(trimmed)
-    let courseResponse = null
-
-    if (faqAnswer && shouldShowCourses) {
-      courseResponse = loadRecommendations(trimmed)
-    } else if (!faqAnswer) {
-      courseResponse = loadRecommendations(trimmed)
-    } else {
-      setRecommendationCards([])
+    const details = {
+      topic: answer.recommendations?.length ? 'Course Recommendation' : 'Site Help',
+      source: answer.source
     }
-
-    const botText = faqAnswer
-      ? courseResponse
-        ? `${faqAnswer}\n\n${courseResponse.message}`
-        : faqAnswer
-      : courseResponse.message
-
+    if (streamingId) {
+      setMessages((prev) => prev.map((message) => (message.id === streamingId ? { ...message, text: answer.reply, ...details } : message)))
+    } else {
+      addMessages(createMessage('bot', answer.reply, details))
+    }
     setIsTyping(false)
-    setMessages((prev) => [
-      ...prev,
-      createMessage('bot', botText, {
-        topic: faqAnswer ? 'Site Help' : 'Course Recommendation'
-      })
-    ])
-    setQuickSuggestions([
-      'Recommend another course',
-      'How do I apply?',
-      'Is there a deadline?',
-      'Tell me about admissions'
-    ])
+    setIsStreaming(false)
+    setRecommendationCards(answer.recommendations || [])
+    setQuickSuggestions(answer.followUps?.length ? answer.followUps : DEFAULT_FOLLOW_UPS)
+  }
+
+  const handleSuggestion = (label) => {
+    if (quizQuestion) {
+      if (label === CANCEL_QUIZ) {
+        cancelQuiz()
+        return
+      }
+      const option = quizQuestion.options.find((item) => item.label === label)
+      if (option) {
+        answerQuiz(option)
+        return
+      }
+    }
+    sendQuestion(label)
   }
 
   const handleSubmit = async (event) => {
     event.preventDefault()
-    await addBotResponse(input)
+    await sendQuestion(input)
   }
 
   const handleRecommendationClick = (course) => {
@@ -334,6 +350,47 @@ function FloatingAssistant() {
       navigate(`/programs/${course.shortCode}`)
       setIsOpen(false)
     }
+  }
+
+  const handleApply = (course) => {
+    // The form sends people home when state.program is missing, so always pass it.
+    navigate('/apply', { state: { program: course.shortCode, programName: course.title } })
+    setIsOpen(false)
+  }
+
+  const handleDownloadDetails = async (course) => {
+    // The programs list leaves out deadlines and the detailed description, so load the full program.
+    try {
+      const response = await fetch(`${API_BASE_URL}/programs/${course.shortCode}`)
+      const data = await response.json()
+      if (!data.success) {
+        throw new Error(data.message)
+      }
+      generateCourseDetailsPDF(data.data)
+    } catch {
+      addMessages(createMessage('bot', 'Sorry, I couldn\'t load that programme\'s details.'))
+    }
+  }
+
+  const handleFeedback = (messageId, helpful) => {
+    const index = messages.findIndex((message) => message.id === messageId)
+    if (index < 0) {
+      return
+    }
+
+    const message = messages[index]
+    const question = message.source === 'quiz'
+      ? FIND_PROGRAMME
+      : messages.slice(0, index).reverse().find((item) => item.role === 'user')?.text || ''
+
+    setMessages((prev) => prev.map((item) => (item.id === messageId ? { ...item, helpful } : item)))
+
+    // Saved for admins to review in Settings; the chat works the same if this fails.
+    fetch(`${API_BASE_URL}/assistant/feedback`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messageId, question, reply: message.text, helpful, source: message.source, path: location.pathname })
+    }).catch(() => {})
   }
 
   return (
@@ -359,10 +416,28 @@ function FloatingAssistant() {
             <div className="floating-assistant-messages">
               {messages.map((message) => (
                 <article key={message.id} className={`assistant-message ${message.role}`}>
-                  <p>{message.text}</p>
+                  {message.role === 'bot' ? <FormattedText text={message.text} /> : <p>{message.text}</p>}
                   <div className="assistant-message-meta">
                     <span>{message.timestamp}</span>
                     {message.topic && message.role === 'bot' && <span>{message.topic}</span>}
+                    {message.source && (
+                      <span className="assistant-feedback">
+                        <button
+                          type="button"
+                          aria-pressed={message.helpful === true}
+                          onClick={() => handleFeedback(message.id, true)}
+                        >
+                          Helpful
+                        </button>
+                        <button
+                          type="button"
+                          aria-pressed={message.helpful === false}
+                          onClick={() => handleFeedback(message.id, false)}
+                        >
+                          Not helpful
+                        </button>
+                      </span>
+                    )}
                   </div>
                 </article>
               ))}
@@ -371,23 +446,35 @@ function FloatingAssistant() {
                 <div className="assistant-recommendations">
                   <h4>Top program suggestions</h4>
                   {recommendationCards.map((course) => (
-                    <button
-                      key={`${course.title}-${course.shortCode || course.description}`}
-                      type="button"
-                      className="recommendation-card"
-                      onClick={() => handleRecommendationClick(course)}
-                    >
-                      <div>
-                        <strong>{course.title}</strong>
-                        <p>{course.description}</p>
-                      </div>
-                      {course.shortCode && <span>View</span>}
-                    </button>
+                    <div key={`${course.title}-${course.shortCode || course.description}`} className="recommendation-item">
+                      <button
+                        type="button"
+                        className="recommendation-card"
+                        onClick={() => handleRecommendationClick(course)}
+                      >
+                        <div>
+                          <strong>{course.title}</strong>
+                          <p>{course.description}</p>
+                          {course.reason && <p className="recommendation-reason">{course.reason}</p>}
+                        </div>
+                        {course.shortCode && <span>View</span>}
+                      </button>
+                      {course.shortCode && (
+                        <div className="recommendation-actions">
+                          <button type="button" className="assistant-quick-btn" onClick={() => handleApply(course)}>
+                            Apply
+                          </button>
+                          <button type="button" className="assistant-quick-btn" onClick={() => handleDownloadDetails(course)}>
+                            Course details PDF
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
               )}
 
-              {isTyping && (
+              {isTyping && !isStreaming && (
                 <div className="assistant-message bot typing-indicator" aria-label="Assistant typing">
                   <span></span>
                   <span></span>
@@ -399,12 +486,13 @@ function FloatingAssistant() {
           </div>
 
           <div className="assistant-quick-actions">
-            {quickSuggestions.map((question) => (
+            {suggestions.map((question) => (
               <button
                 key={question}
                 type="button"
                 className="assistant-quick-btn"
-                onClick={() => addBotResponse(question)}
+                onClick={() => handleSuggestion(question)}
+                disabled={isTyping}
               >
                 {question}
               </button>

@@ -5,6 +5,18 @@ import axios from 'axios';
 import '../styles/SettingsPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 
+const FEEDBACK_FILTERS = [
+  { value: '', label: 'All' },
+  { value: 'not-helpful', label: 'Not helpful' },
+  { value: 'unanswered', label: 'Unanswered' },
+  { value: 'helpful', label: 'Helpful' }
+];
+
+const getFeedbackLabel = (item) => {
+  if (item.unanswered) return 'Unanswered';
+  return item.helpful ? 'Helpful' : 'Not helpful';
+};
+
 function SettingsPage() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -22,6 +34,13 @@ function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passwordFeedback, setPasswordFeedback] = useState({ type: '', message: '' });
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [assistantFacts, setAssistantFacts] = useState('');
+  const [factsStatus, setFactsStatus] = useState({ isDefault: true, updatedAt: null });
+  const [factsFeedback, setFactsFeedback] = useState({ type: '', message: '' });
+  const [isSavingFacts, setIsSavingFacts] = useState(false);
+  const [assistantFeedback, setAssistantFeedback] = useState([]);
+  const [feedbackFilter, setFeedbackFilter] = useState('');
+  const [feedbackError, setFeedbackError] = useState('');
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -31,6 +50,67 @@ function SettingsPage() {
       navigate('/login');
     }
   }, [navigate]);
+
+  const applyFacts = (data) => {
+    setAssistantFacts(data.value || '');
+    setFactsStatus({ isDefault: data.isDefault, updatedAt: data.updatedAt });
+  };
+
+  useEffect(() => {
+    axios.get(`${API_BASE_URL}/settings/assistant-facts`)
+      .then(({ data }) => applyFacts(data))
+      .catch(() => setFactsFeedback({ type: 'error', message: 'Could not load the Course Advisor facts.' }));
+  }, []);
+
+  useEffect(() => {
+    axios.get(`${API_BASE_URL}/assistant/feedback`, { params: feedbackFilter ? { type: feedbackFilter } : {} })
+      .then(({ data }) => {
+        setAssistantFeedback(data.data || []);
+        setFeedbackError('');
+      })
+      .catch(() => setFeedbackError('Could not load Course Advisor feedback.'));
+  }, [feedbackFilter]);
+
+  const handleSaveFacts = async (e) => {
+    e.preventDefault();
+
+    if (!assistantFacts.trim()) {
+      setFactsFeedback({ type: 'error', message: 'The facts cannot be empty.' });
+      return;
+    }
+
+    setIsSavingFacts(true);
+    setFactsFeedback({ type: '', message: '' });
+
+    try {
+      const { data } = await axios.put(`${API_BASE_URL}/settings/assistant-facts`, { value: assistantFacts });
+      applyFacts(data);
+      setFactsFeedback({ type: 'success', message: 'Saved. The Course Advisor now answers with these facts.' });
+    } catch (error) {
+      setFactsFeedback({ type: 'error', message: error.response?.data?.message || 'Could not save the facts.' });
+    } finally {
+      setIsSavingFacts(false);
+    }
+  };
+
+  const handleResetFacts = async () => {
+    if (!confirm('Replace the facts with the default text?')) {
+      return;
+    }
+
+    setIsSavingFacts(true);
+    setFactsFeedback({ type: '', message: '' });
+
+    try {
+      const { data } = await axios.delete(`${API_BASE_URL}/settings/assistant-facts`);
+      applyFacts(data);
+      setFactsFeedback({ type: 'success', message: 'The default facts are back.' });
+    } catch (error) {
+      setFactsFeedback({ type: 'error', message: error.response?.data?.message || 'Could not reset the facts.' });
+    } finally {
+      setIsSavingFacts(false);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -330,6 +410,96 @@ function SettingsPage() {
                 {isChangingPassword ? 'Updating Password...' : 'Change Password'}
               </button>
             </form>
+          </div>
+
+          <div className="settings-section">
+            <h2 className="settings-title">Course Advisor Facts</h2>
+            <p className="current-deadline">
+              The chatbot answers from the programme data and these facts (contact, application fee, documents, how to apply).{' '}
+              {factsStatus.isDefault
+                ? 'This is the default text.'
+                : <>Last saved: <strong>{new Date(factsStatus.updatedAt).toLocaleString()}</strong></>}
+            </p>
+
+            <form onSubmit={handleSaveFacts}>
+              <textarea
+                className="deadline-input assistant-facts-input"
+                rows={10}
+                maxLength={5000}
+                value={assistantFacts}
+                onChange={(e) => setAssistantFacts(e.target.value)}
+                aria-label="Course Advisor facts"
+              />
+
+              {factsFeedback.message && (
+                <p className={`password-feedback ${factsFeedback.type}`}>
+                  {factsFeedback.message}
+                </p>
+              )}
+
+              <div className="assistant-facts-actions">
+                <button type="submit" className="set-deadline-btn" disabled={isSavingFacts}>
+                  {isSavingFacts ? 'Saving...' : 'Save Facts'}
+                </button>
+                {!factsStatus.isDefault && (
+                  <button type="button" className="reset-facts-btn" onClick={handleResetFacts} disabled={isSavingFacts}>
+                    Reset to Default
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+
+          <div className="settings-section">
+            <h2 className="settings-title">Course Advisor Feedback</h2>
+            <p className="current-deadline">
+              The latest 100 chatbot replies people rated, and questions it could not answer from the data.
+            </p>
+
+            <select
+              className="deadline-input assistant-feedback-filter"
+              value={feedbackFilter}
+              onChange={(e) => setFeedbackFilter(e.target.value)}
+              aria-label="Show feedback"
+            >
+              {FEEDBACK_FILTERS.map((filter) => (
+                <option key={filter.value} value={filter.value}>{filter.label}</option>
+              ))}
+            </select>
+
+            {feedbackError && <p className="password-feedback error">{feedbackError}</p>}
+
+            {!feedbackError && assistantFeedback.length === 0 && (
+              <p className="current-deadline">Nothing here yet.</p>
+            )}
+
+            {assistantFeedback.length > 0 && (
+              <div className="assistant-feedback-table-wrap">
+                <table className="assistant-feedback-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Type</th>
+                      <th>Question</th>
+                      <th>Reply</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {assistantFeedback.map((item) => (
+                      <tr key={item._id}>
+                        <td>{new Date(item.updatedAt).toLocaleString()}</td>
+                        <td>
+                          {getFeedbackLabel(item)}
+                          {item.source === 'fallback' && <span className="feedback-source"> (offline)</span>}
+                        </td>
+                        <td>{item.question || '-'}</td>
+                        <td>{item.reply.length > 200 ? `${item.reply.slice(0, 200)}…` : item.reply}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </main>
       </div>
