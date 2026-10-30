@@ -23,28 +23,32 @@ function HomePage() {
   const [openingProgram, setOpeningProgram] = useState(null);
 
   useEffect(() => {
-    // Only fetch if we don't have cached data
-    if (!cachedPrograms) {
-      fetchPrograms();
-    }
+    // Show cached programs straight away, but always refresh them so programs
+    // added or changed in the admin panel appear without opening a new tab.
+    fetchPrograms();
   }, []);
 
   const fetchPrograms = async () => {
     try {
-      setLoading(true);
+      // Only show the spinner when there is nothing cached to show yet
+      if (!cachedPrograms) {
+        setLoading(true);
+      }
       const response = await fetch(`${API_BASE_URL}/programs`);
       const data = await response.json();
-      
+
       if (data.success) {
         setPrograms(data.data);
         // Cache programs in sessionStorage
         sessionStorage.setItem('programs', JSON.stringify(data.data));
-      } else {
+      } else if (!cachedPrograms) {
         setError('Failed to load programs');
       }
     } catch (err) {
       console.error('Error fetching programs:', err);
-      setError('Failed to connect to server');
+      if (!cachedPrograms) {
+        setError('Failed to connect to server');
+      }
     } finally {
       setLoading(false);
     }
@@ -110,7 +114,7 @@ function HomePage() {
             </svg>
           </div>
           <div className="header-text">
-            <h1 className="university-name">University of Moratuwa1</h1>
+            <h1 className="university-name">University of Moratuwa</h1>
             <p className="portal-subtitle">Postgraduate Management Information System</p>
           </div>
           <button type="button" className="admin-login-btn" onClick={handleAdminLogin}>

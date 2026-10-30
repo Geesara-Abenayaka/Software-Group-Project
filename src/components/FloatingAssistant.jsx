@@ -6,21 +6,20 @@ import '../styles/FloatingAssistant.css'
 const PROGRAMS_KEY = 'floating_assistant_programs_v1'
 
 const QUICK_QUESTIONS = [
-  'Recommend a course for business analytics',
+  'Recommend a course for software architecture',
   'What documents do I need?',
   'How do I apply?',
   'Show me programs with data or AI focus'
 ]
 
+// Topics covered by the Department of Computer Science & Engineering programmes.
 const COURSE_INTENT_MATCHERS = [
-  { label: 'Business Analytics', keywords: ['business analytics', 'analytics', 'data analytics', 'analysis'] },
-  { label: 'Data Science', keywords: ['data science', 'machine learning', 'ml', 'ai', 'artificial intelligence', 'big data'] },
-  { label: 'Information Systems', keywords: ['information systems', 'it management', 'systems management', 'technology leadership'] },
-  { label: 'Project Management', keywords: ['project management', 'project lead', 'pmp', 'projects'] },
-  { label: 'Human Resources', keywords: ['human resources', 'hr', 'talent', 'people management'] },
-  { label: 'Marketing', keywords: ['marketing', 'digital marketing', 'brand', 'sales'] },
-  { label: 'Finance', keywords: ['finance', 'financial', 'accounting', 'investment'] },
-  { label: 'Cyber Security', keywords: ['cyber', 'security', 'information security', 'cybersecurity'] }
+  { label: 'Data Science & AI', keywords: ['data science', 'machine learning', 'deep learning', 'ml', 'ai', 'artificial intelligence', 'big data', 'analytics'] },
+  { label: 'Software Architecture', keywords: ['software architecture', 'software engineering', 'software', 'architecture', 'programming'] },
+  { label: 'Security', keywords: ['cyber', 'security', 'information security', 'cybersecurity'] },
+  { label: 'Cloud Computing', keywords: ['cloud', 'cloud computing', 'distributed systems', 'devops'] },
+  { label: 'eGovernance', keywords: ['egovernance', 'e-governance', 'governance', 'government', 'public sector'] },
+  { label: 'IT Management', keywords: ['it management', 'mba', 'management', 'business', 'information systems', 'technology leadership'] }
 ]
 
 const FAQ_KNOWLEDGE = [
@@ -56,24 +55,34 @@ const FAQ_KNOWLEDGE = [
 
 const FALLBACK_COURSES = [
   {
-    title: 'MSc in Business Analytics',
-    description: 'Ideal for students who want business insight from data and analytics.',
-    tags: ['analytics', 'business', 'data']
-  },
-  {
-    title: 'MSc in Data Science',
-    description: 'Best for careers in machine learning, AI, and data engineering.',
+    title: 'Data Science & AI',
+    description: 'The MSc in Data Science & AI, or the Data Science specialisation of the MSc in Computer Science.',
     tags: ['data', 'science', 'ai']
   },
   {
-    title: 'MSc in Information Systems',
-    description: 'Designed for leaders in enterprise IT, systems strategy and governance.',
-    tags: ['systems', 'information', 'it']
+    title: 'Software Architecture',
+    description: 'A specialisation of the MSc in Computer Science, for designing large software systems.',
+    tags: ['software', 'architecture']
   },
   {
-    title: 'MSc in Project Management',
-    description: 'Recommended for professionals managing projects, teams and delivery.',
-    tags: ['project', 'management', 'leadership']
+    title: 'IT Management',
+    description: 'The MBA in IT combines a general MBA with applying IT in management.',
+    tags: ['it', 'management']
+  },
+  {
+    title: 'Security Engineering',
+    description: 'A specialisation of the MSc in Computer Science, covering secure systems and networks.',
+    tags: ['security']
+  },
+  {
+    title: 'Cloud Computing',
+    description: 'A specialisation of the MSc in Computer Science, covering cloud platforms and distributed systems.',
+    tags: ['cloud']
+  },
+  {
+    title: 'eGovernance',
+    description: 'The MBA in eGovernance covers IT in government and public-sector management.',
+    tags: ['egovernance']
   }
 ]
 
@@ -123,7 +132,7 @@ const findFAQAnswer = (query) => {
 
 const isCourseRelatedQuery = (query) => {
   const normalized = normalize(query)
-  return /\b(recommend\w*|suggest\w*|programs?|programmes?|courses?|degrees?|speciali[sz]ations?|study|data science|business analytics|information systems|project management|finance|marketing|cyber ?security|machine learning|ai|artificial intelligence)\b/.test(normalized)
+  return /\b(recommend\w*|suggest\w*|programs?|programmes?|courses?|degrees?|speciali[sz]ations?|study|data science|software architecture|software engineering|cloud|cyber ?security|security|machine learning|ai|artificial intelligence|mba|it management|e-?governance)\b/.test(normalized)
 }
 
 const matchCourseIntent = (query) => {
@@ -196,7 +205,7 @@ const getCourseSuggestions = (query, programs = []) => {
   }
 
   return {
-    message: 'I can recommend programs based on your interests or answer general site questions. Try asking about business analytics, data science, or application help.',
+    message: 'I can recommend programs based on your interests or answer general site questions. Try asking about software architecture, data science, or application help.',
     list: FALLBACK_COURSES.slice(0, 3).map((course) => ({
       title: course.title,
       description: course.description,

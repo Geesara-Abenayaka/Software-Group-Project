@@ -6,7 +6,9 @@
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon server.js",
+    "programs:check": "node upsertPrograms.js --dry-run",
+    "programs:upsert": "node upsertPrograms.js"
   },
   "keywords": [],
   "author": "",

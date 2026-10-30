@@ -31,7 +31,31 @@ const createEmptyProgram = () => ({
   deadlines: {
     application: '',
     selectionExams: ''
-  }
+  },
+  level: 'MSc',
+  duration: '',
+  mode: '',
+  slqfLevel: '',
+  fee: '',
+  eligibilityText: '',
+  applicationDeadline: '',
+  isProposed: false
+});
+
+// The form keeps eligibility as one requirement per line and the deadline as yyyy-mm-dd.
+const toProgramForm = (program) => ({
+  ...program,
+  slqfLevel: program.slqfLevel ?? '',
+  eligibilityText: (program.eligibility || []).join('\n'),
+  applicationDeadline: program.applicationDeadline ? program.applicationDeadline.slice(0, 10) : ''
+});
+
+// Converts the form values back to what the API stores.
+const fromProgramForm = ({ eligibilityText, ...program }) => ({
+  ...program,
+  slqfLevel: program.slqfLevel === '' ? null : Number(program.slqfLevel),
+  eligibility: (eligibilityText || '').split('\n').map((line) => line.trim()).filter(Boolean),
+  applicationDeadline: program.applicationDeadline || null
 });
 
 function AdminDashboard() {
@@ -123,7 +147,7 @@ function AdminDashboard() {
       }
 
       setEditingProgram({
-        ...data.data,
+        ...toProgramForm(data.data),
         selectionExams: data.data.deadlines?.selectionExams || ''
       });
       setShowEditModal(true);
@@ -182,7 +206,7 @@ function AdminDashboard() {
   const handleSaveProgram = async () => {
     try {
       // Filter out empty specializations before saving
-      const { selectionExams, ...programFields } = editingProgram;
+      const { selectionExams, ...programFields } = fromProgramForm(editingProgram);
       const programToSave = {
         ...programFields,
         specializations: editingProgram.specializations?.filter(spec => spec.name.trim() !== '') || [],
@@ -229,7 +253,7 @@ function AdminDashboard() {
   const handleAddProgram = async () => {
     try {
       // Filter out empty specializations before saving
-      const { selectionExams, ...programFields } = newProgram;
+      const { selectionExams, ...programFields } = fromProgramForm(newProgram);
       const programToSave = {
         ...programFields,
         specializations: newProgram.specializations?.filter(spec => spec.name.trim() !== '') || [],

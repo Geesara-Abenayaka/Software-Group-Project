@@ -54,7 +54,52 @@ export const generateCourseDetailsPDF = (program) => {
   const descriptionLines = doc.splitTextToSize(description, contentWidth);
   doc.text(descriptionLines, leftMargin, yPosition);
   yPosition += descriptionLines.length * 7 + 10;
-  
+
+  // Key facts (only the ones this program has)
+  const keyFacts = [
+    ['Level', program.level],
+    ['Duration', program.duration],
+    ['Mode', program.mode],
+    ['SLQF Level', program.slqfLevel]
+  ].filter(([, value]) => value !== undefined && value !== null && value !== '');
+
+  if (keyFacts.length > 0) {
+    keyFacts.forEach(([label, value]) => {
+      doc.setFont('helvetica', 'bold');
+      doc.text(`${label}:`, leftMargin, yPosition);
+      doc.setFont('helvetica', 'normal');
+      const valueLines = doc.splitTextToSize(String(value), contentWidth - 30);
+      doc.text(valueLines, leftMargin + 30, yPosition);
+      yPosition += valueLines.length * 7;
+    });
+    yPosition += 5;
+  }
+
+  // Eligibility Section
+  if (program.eligibility && program.eligibility.length > 0) {
+    if (yPosition > 250) {
+      doc.addPage();
+      yPosition = 20;
+    }
+
+    doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Eligibility', leftMargin, yPosition);
+    yPosition += 8;
+
+    doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+
+    program.eligibility.forEach((requirement) => {
+      const requirementLines = doc.splitTextToSize(`• ${requirement}`, contentWidth - 5);
+      doc.text(requirementLines, leftMargin + 5, yPosition);
+      yPosition += requirementLines.length * 7;
+    });
+    yPosition += 5;
+  }
+
   // Specializations Section
   if (program.specializations && program.specializations.length > 0) {
     doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
