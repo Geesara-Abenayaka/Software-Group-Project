@@ -1,5 +1,6 @@
 // Programme data for the Department of Computer Science & Engineering.
-// Used by upsertPrograms.js. Confirm every detail on postgrad.cse.mrt.ac.lk before running it.
+// Used by upsertPrograms.js. Source: the department's 2027 course information and adverts
+// (postgrad.cse.uom.lk, checked on 30 October 2026). Check it again before each intake.
 
 // ProgramDetailPage.jsx matches these exact resource names to decide what each card does.
 const resourcesFor = (title, shortCode) => [
@@ -10,81 +11,166 @@ const resourcesFor = (title, shortCode) => [
 
 const TBA = 'To be announced';
 
-// Fields to correct on programmes that already exist. Only these fields are changed.
+// The 2027 intake is closed for these programmes; the department opens the next one in July 2027.
+const NEXT_INTAKE = 'To be announced (next intake opens July 2027)';
+const closedIntake = {
+  deadline: NEXT_INTAKE,
+  deadlines: { application: NEXT_INTAKE, selectionExams: TBA },
+  applicationDeadline: null
+};
+
+// MBA 2027 intake (2nd round).
+const MBA_DEADLINE = '05th November 2026';
+const mbaIntake = {
+  deadline: MBA_DEADLINE,
+  deadlines: {
+    application: MBA_DEADLINE,
+    selectionExams: 'Selection test 07th November 2026, interviews 07th and 08th November 2026'
+  },
+  applicationDeadline: new Date('2026-11-05')
+};
+
+const MBA_ELIGIBILITY = [
+  'An honours bachelor’s degree of the University of Moratuwa, plus at least one year of work experience',
+  'Any other four-year degree from a recognised university, plus at least one year of work experience',
+  'Any other three-year degree from a recognised university, plus at least two years of work experience',
+  'Membership of a recognised professional institute obtained through an academic route, plus at least two years of work experience'
+];
+
+// Fields to keep in line with the department's data. Only these fields are changed.
 export const UPDATES = {
   'msc-cs': {
     level: 'MSc',
     description: 'A two-year, part-time MSc that deepens technical knowledge for practising computing professionals.',
     detailedDescription:
-      'The MSc in Computer Science is a two-year, part-time programme (SLQF level 10) for practising professionals. ' +
-      'Students can follow a broad programme or specialise in one area. Students who finish the coursework with a shorter project can exit with a PG Diploma.',
+      'The MSc in Computer Science is a two-year, part-time programme (SLQF level 10) that gives practising professionals a greater depth of technical knowledge and exposure to emerging and niche areas of computing. ' +
+      'It runs over six 12-week trimesters: taught modules first, then a research project in the chosen specialisation.',
     specializations: [
-      { name: 'Software Architecture' },
-      { name: 'Security Engineering' },
       { name: 'Cloud Computing' },
-      { name: 'Data Science, Engineering & Analytics' }
+      { name: 'Computer Networks' },
+      { name: 'Data Science, Engineering and Analytics' },
+      { name: 'Information Systems Management' },
+      { name: 'Mobile Computing' },
+      { name: 'Parallel Computing' },
+      { name: 'Security Engineering' },
+      { name: 'Software Architecture' }
     ],
     duration: '2 years',
-    mode: 'Part-time — Saturdays and weekday evenings',
-    slqfLevel: 10
+    mode: 'Part-time — Saturdays at the university (hybrid), some weekday evenings',
+    slqfLevel: 10,
+    fee: 'Rs. 700,000 (2027 intake): Rs. 100,000 registration + Rs. 600,000 course fee, payable in full or in instalments',
+    eligibility: [
+      'BSc Engineering (Hons) of the University of Moratuwa',
+      'Any other four-year bachelor’s degree in Engineering, Science or Technology in a field relevant to Computer Science',
+      'A three-year bachelor’s degree in Engineering, Science or Technology in a relevant field, plus at least one year of relevant work experience',
+      'Membership of a recognised professional institute obtained through an academic route, plus at least one year of relevant work experience'
+    ],
+    ...closedIntake
   },
   'msc-ds-ai': {
     level: 'MSc',
-    description: 'An advanced MSc in machine learning, deep learning, artificial intelligence and data science.'
+    description: 'An advanced MSc in machine learning, deep learning, artificial intelligence and data science.',
+    detailedDescription:
+      'The MSc in Data Science and Artificial Intelligence is a two-year, part-time programme (SLQF level 10) for practising professionals with an engineering or science background. ' +
+      'Compared with the data science specialisation of the MSc in Computer Science, it goes deeper into machine learning, deep learning, artificial intelligence and data science, alongside core computer science topics.',
+    duration: '2 years',
+    mode: 'Part-time — Saturdays at the university (hybrid), some weekday evenings',
+    slqfLevel: 10,
+    fee: 'Rs. 700,000 (2027 intake): Rs. 100,000 registration + Rs. 600,000 course fee, payable in full or in instalments',
+    eligibility: [
+      'BSc Engineering (Hons) of the University of Moratuwa',
+      'Any other four-year bachelor’s degree in Engineering, Science or Technology in a field relevant to data science or AI',
+      'A three-year bachelor’s degree in Engineering, Science or Technology in a relevant field, plus at least one year of relevant work experience',
+      'Membership of a recognised professional institute obtained through an academic route, plus at least one year of relevant work experience'
+    ],
+    ...closedIntake
   },
-  'mba-it': {
-    level: 'MBA',
-    description: 'Combines a general MBA with specialist knowledge of applying IT in management.'
-  },
-  'mba-egov': {
-    level: 'MBA',
-    description: 'Combines a general MBA with specialist knowledge of IT in government and public-sector management.'
+  mcs: {
+    level: 'Master',
+    description: 'A one-year, part-time, coursework-only master’s for working professionals.',
+    detailedDescription:
+      'The Master of Computer Science is a one-year, part-time programme (SLQF level 9) made up entirely of coursework, with no research component. ' +
+      'It runs over two 12-week semesters, mostly online, and ends with a capstone project.',
+    specializations: [],
+    duration: '1 year',
+    mode: 'Part-time — online, mainly asynchronous',
+    slqfLevel: 9,
+    fee: 'Rs. 550,000 (2027 intake): Rs. 100,000 registration + Rs. 450,000 course fee, payable in full or in instalments',
+    eligibility: [
+      'BSc Engineering (Hons) of the University of Moratuwa',
+      'Any other four-year bachelor’s degree in Engineering, Science or Technology in a field relevant to Computer Science',
+      'A three-year bachelor’s degree in Engineering, Science or Technology in a relevant field, subject to passing the aptitude test',
+      'Membership of a recognised professional institute obtained through an academic route, subject to passing the aptitude test'
+    ],
+    ...closedIntake
   },
   'master-ds-ai': {
     level: 'Master',
-    description: 'A professional master’s for working professionals, focused on applying data science and AI in industry.'
+    description: 'A one-year, part-time, coursework-only master’s in data science and AI, taught online.',
+    detailedDescription:
+      'The Master of Data Science & AI is a one-year, part-time programme (SLQF level 9) made up entirely of coursework. ' +
+      'It runs over three 12-week semesters, online, and ends with a capstone project.',
+    specializations: [],
+    duration: '1 year',
+    mode: 'Part-time — online and asynchronous',
+    slqfLevel: 9,
+    fee: 'Rs. 550,000 (2027 intake): Rs. 100,000 registration + Rs. 450,000 course fee, payable in full or in instalments',
+    eligibility: [
+      'BSc Engineering of the University of Moratuwa in a relevant field',
+      'Any other four-year degree in Engineering, Science or Technology in a relevant field',
+      'A three-year degree in Engineering, Science or Technology in a relevant field, subject to passing the aptitude test',
+      'Membership of a recognised professional institute obtained through an academic route'
+    ],
+    ...closedIntake
+  },
+  'mba-it': {
+    level: 'MBA',
+    description: 'Combines a general MBA with specialist knowledge of applying IT in management.',
+    detailedDescription:
+      'The MBA in Information Technology is a two-year, part-time programme (SLQF level 10) that combines a general MBA with specialist knowledge of applying IT in management. ' +
+      'Students can specialise in Business Analytics, AI for Business or Project Management, or choose their own electives.',
+    specializations: [
+      { name: 'Business Analytics' },
+      { name: 'AI for Business' },
+      { name: 'Project Management' }
+    ],
+    duration: '2 years',
+    mode: 'Part-time — Saturdays at the university',
+    slqfLevel: 10,
+    fee: 'Rs. 650,000 (2027 intake): Rs. 100,000 registration + Rs. 550,000 course fee, payable in full or in instalments',
+    eligibility: MBA_ELIGIBILITY,
+    ...mbaIntake
+  },
+  'mba-egov': {
+    level: 'MBA',
+    description: 'Combines a general MBA with specialist knowledge of IT in government and public-sector management.',
+    detailedDescription:
+      'The MBA in eGovernance is a two-year, part-time programme (SLQF level 10) that combines a general MBA with specialist knowledge of IT-enabled public-sector service design, delivery and management. ' +
+      'It is aimed at professionals who will lead eGovernance work in public-sector organisations.',
+    specializations: [
+      { name: 'Public Sector Management' },
+      { name: 'e-Government Concepts' },
+      { name: 'Interoperability and Integration in e-Government' },
+      { name: 'Legal Frameworks for e-Governance' }
+    ],
+    duration: '2 years',
+    mode: 'Part-time — Saturdays at the university',
+    slqfLevel: 10,
+    fee: 'Rs. 650,000 (2027 intake): Rs. 100,000 registration + Rs. 550,000 course fee, payable in full or in instalments',
+    eligibility: MBA_ELIGIBILITY,
+    ...mbaIntake
   }
 };
 
-// Real CSE programmes that are missing from the app.
+// CSE programmes that are missing from the app. They take the same fields as UPDATES.
+// The department does not list a separate PG Diploma or MPhil / PhD, so they are not added.
 export const NEW_PROGRAMS = [
   {
     title: 'Master of Computer Science',
     shortCode: 'mcs',
-    level: 'Master',
-    description: 'A one-year, part-time, coursework-only master’s for working professionals.',
-    detailedDescription:
-      'The Master of Computer Science is a one-year, part-time programme (SLQF level 9) made up of coursework only. ' +
-      'It suits working professionals who want advanced computer science knowledge in a shorter time than the two-year MSc.',
-    specializations: [],
-    duration: '1 year',
-    mode: 'Part-time',
-    slqfLevel: 9,
-    deadline: TBA,
-    deadlines: { application: TBA, selectionExams: TBA },
+    ...UPDATES.mcs,
     resources: resourcesFor('Master of Computer Science', 'mcs')
-  },
-  {
-    title: 'PG Diploma in Computer Science',
-    shortCode: 'pgd-cs',
-    level: 'PG Diploma',
-    description: 'A one-year postgraduate diploma: MSc coursework with a shorter project.',
-    detailedDescription:
-      'The PG Diploma in Computer Science covers the coursework of the MSc in Computer Science with a shorter project, and takes one year. ' +
-      'It is also the exit award for MSc students who do not continue to the full degree.',
-    specializations: [
-      { name: 'Software Architecture' },
-      { name: 'Security Engineering' },
-      { name: 'Cloud Computing' },
-      { name: 'Data Science, Engineering & Analytics' }
-    ],
-    duration: '1 year',
-    mode: 'Part-time — Saturdays and weekday evenings',
-    deadline: TBA,
-    deadlines: { application: TBA, selectionExams: TBA },
-    resources: resourcesFor('PG Diploma in Computer Science', 'pgd-cs')
   }
-  // Add MPhil / PhD here only after the department confirms it (level: 'Research').
 ];
 
 // Demo programmes built from CSE's own specialisation areas. NOT offered by the department.
