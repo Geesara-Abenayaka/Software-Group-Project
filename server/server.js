@@ -8,6 +8,7 @@ import programRoutes from './routes/programs.js';
 import applicationRoutes from './routes/applications.js';
 import documentVerificationRoutes from './routes/documentVerification.js';
 import assistantRoutes from './routes/assistant.js';
+import settingsRoutes from './routes/settings.js';
 import { initializeGridFS } from './utils/gridfsService.js';
 
 dotenv.config();
@@ -42,6 +43,7 @@ app.use('/api/programs', programRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/verify', documentVerificationRoutes); // Changed from /api/applications
 app.use('/api/assistant', assistantRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // 3. ENHANCED HEALTH CHECK
 // This helps Nginx verify if the backend is truly ready

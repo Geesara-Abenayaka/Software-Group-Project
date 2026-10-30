@@ -1,6 +1,9 @@
+import Setting from '../models/Setting.js';
+
 // Facts the Course Advisor can use besides the programme data.
 // The application fee and selection steps match the department's 2027 adverts;
 // the document list matches the uploads on the application form.
+// Admins can replace this text in Settings; this is the default.
 export const ASSISTANT_FACTS = `
 Department: Department of Computer Science & Engineering, University of Moratuwa.
 Contact: postgrad@cse.mrt.ac.lk
@@ -11,3 +14,31 @@ Selection: eligible applicants are invited to a selection test and an interview 
 Course fees, durations, study modes and entry requirements for each programme are in PROGRAMMES.
 Admin login is for university staff only.
 `.trim();
+
+export const ASSISTANT_FACTS_KEY = 'assistant-facts';
+
+const CACHE_MS = 5 * 60 * 1000;
+let factsCache = { at: 0, facts: ASSISTANT_FACTS };
+
+// The saved facts, or the default text. Cached so every chat message doesn't hit the database.
+export const getAssistantFacts = async () => {
+  if (Date.now() - factsCache.at < CACHE_MS) {
+    return factsCache.facts;
+  }
+
+  try {
+    const setting = await Setting.findOne({ key: ASSISTANT_FACTS_KEY }).lean();
+    const saved = typeof setting?.value === 'string' ? setting.value.trim() : '';
+    factsCache = { at: Date.now(), facts: saved || ASSISTANT_FACTS };
+  } catch (error) {
+    // Keep answering with the last known facts; try the database again next time.
+    console.error('Could not load assistant facts:', error.message);
+  }
+
+  return factsCache.facts;
+};
+
+// Called after the facts are changed, so the next chat message uses the new text.
+export const clearAssistantFactsCache = () => {
+  factsCache = { at: 0, facts: ASSISTANT_FACTS };
+};
