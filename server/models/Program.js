@@ -53,6 +53,25 @@ const programSchema = new mongoose.Schema({
     selectionExams: String
   },
   resources: [resourceSchema],
+  level: {
+    type: String,
+    enum: ['MSc', 'MBA', 'Master', 'PG Diploma', 'Research'],
+    default: 'MSc'
+  },
+  department: {
+    type: String,
+    default: 'Computer Science & Engineering'
+  },
+  duration: String,          // e.g. '2 years'
+  mode: String,              // e.g. 'Part-time — Saturdays and weekday evenings'
+  slqfLevel: Number,         // e.g. 10
+  fee: String,               // free text, e.g. 'Rs. 450,000 (in 4 instalments)'
+  eligibility: [String],     // one requirement per item
+  applicationDeadline: Date, // real date, used for "Closing soon" badges and sorting
+  isProposed: {
+    type: Boolean,
+    default: false           // true = demo programme, not offered by the department
+  },
   icon: {
     type: String,
     default: 'graduation-cap'
