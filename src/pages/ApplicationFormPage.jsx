@@ -119,6 +119,7 @@ function ApplicationFormPage() {
   const declarationSectionRef = useRef(null);
   const captchaInputRef = useRef(null);
   const [submittedApplicationId, setSubmittedApplicationId] = useState('');
+  const [applicationWindow, setApplicationWindow] = useState({ open: true, message: '' });
 
   // Answers typed earlier for this programme come back after a refresh; files have to be chosen again.
   // eslint-disable-next-line no-unused-vars -- shown by the "draft restored" banner (UI step 06)
@@ -177,6 +178,22 @@ function ApplicationFormPage() {
       navigate('/');
     }
   }, [location.state, navigate]);
+
+  // The date range and deadline from Settings can close applications; the server checks again on submit.
+  useEffect(() => {
+    if (!location.state?.program) {
+      return;
+    }
+
+    fetch(`${API_BASE_URL}/programs/${encodeURIComponent(location.state.program)}/application-window`)
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.success) {
+          setApplicationWindow(result.data);
+        }
+      })
+      .catch(() => {}); // the form stays open; the server still refuses a closed submission
+  }, [location.state]);
 
   const resetDocumentVerification = (documentType) => {
     setDocumentVerification((prev) => ({
@@ -1671,6 +1688,13 @@ function ApplicationFormPage() {
         )}
       </div>
 
+      {!applicationWindow.open && (
+        <div className="error-box applications-closed" role="alert">
+          <span className="error-icon">⚠</span>
+          <span className="error-text">{applicationWindow.message}</span>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="application-form">
         {/* Personal Particulars */}
         <div className="form-section">
@@ -2749,8 +2773,8 @@ function ApplicationFormPage() {
           </p>
         </div>
 
-        <button type="submit" className="submit-button">
-          Submit Application
+        <button type="submit" className="submit-button" disabled={!applicationWindow.open}>
+          {applicationWindow.open ? 'Submit Application' : 'Applications Closed'}
         </button>
       </form>
     </div>
