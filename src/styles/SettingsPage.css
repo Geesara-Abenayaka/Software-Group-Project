@@ -378,13 +378,15 @@ body.admin-dark-mode .mode-switch-icon-moon {
   resize: vertical;
 }
 
-.assistant-facts-actions {
+.assistant-facts-actions,
+.settings-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
 }
 
-.reset-facts-btn {
+.reset-facts-btn,
+.clear-setting-btn {
   padding: 0.75rem 1.5rem;
   background: white;
   color: #374151;
@@ -395,7 +397,8 @@ body.admin-dark-mode .mode-switch-icon-moon {
   cursor: pointer;
 }
 
-.reset-facts-btn:hover {
+.reset-facts-btn:hover,
+.clear-setting-btn:hover {
   border-color: #8b0000;
   color: #8b0000;
 }
@@ -444,7 +447,8 @@ body.admin-dark-mode .mode-switch-icon-moon {
   color: #6b7280;
 }
 
-body.admin-dark-mode .reset-facts-btn {
+body.admin-dark-mode .reset-facts-btn,
+body.admin-dark-mode .clear-setting-btn {
   background: #0f172a;
   border-color: #334155;
   color: #e5e7eb;

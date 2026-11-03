@@ -17,18 +17,21 @@ const getFeedbackLabel = (item) => {
   return item.helpful ? 'Helpful' : 'Not helpful';
 };
 
+// First day of the month `offset` months after the given date.
+const monthStart = (date, offset = 0) => new Date(date.getFullYear(), date.getMonth() + offset, 1);
+
 function SettingsPage() {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [currentDateRange, setCurrentDateRange] = useState({
-    start: '2025-09-07',
-    end: '2025-11-06'
-  });
+  // null means not set: no date range keeps applications open all year.
+  const [currentDateRange, setCurrentDateRange] = useState(null);
   const [selectedDates, setSelectedDates] = useState([]);
-  const [currentDeadline, setCurrentDeadline] = useState('2024-11-11');
-  const [newDeadline, setNewDeadline] = useState('2024-11-11');
-  const [currentMonth1, setCurrentMonth1] = useState(new Date(2025, 8, 1)); // September 2025
-  const [currentMonth2, setCurrentMonth2] = useState(new Date(2025, 10, 1)); // November 2025
+  const [dateRangeFeedback, setDateRangeFeedback] = useState({ type: '', message: '' });
+  const [currentDeadline, setCurrentDeadline] = useState(null);
+  const [newDeadline, setNewDeadline] = useState('');
+  const [deadlineFeedback, setDeadlineFeedback] = useState({ type: '', message: '' });
+  const [currentMonth1, setCurrentMonth1] = useState(() => monthStart(new Date()));
+  const [currentMonth2, setCurrentMonth2] = useState(() => monthStart(new Date(), 1));
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -60,6 +63,34 @@ function SettingsPage() {
     axios.get(`${API_BASE_URL}/settings/assistant-facts`)
       .then(({ data }) => applyFacts(data))
       .catch(() => setFactsFeedback({ type: 'error', message: 'Could not load the Course Advisor facts.' }));
+  }, []);
+
+  const applyDateRange = (value) => {
+    setCurrentDateRange(value);
+    setSelectedDates(value ? [value.start, value.end] : []);
+  };
+
+  const applyDeadline = (value) => {
+    setCurrentDeadline(value);
+    setNewDeadline(value || '');
+  };
+
+  useEffect(() => {
+    axios.get(`${API_BASE_URL}/settings/application-period`)
+      .then(({ data }) => {
+        applyDateRange(data.value);
+        // Open the calendars on the saved range.
+        if (data.value) {
+          const start = new Date(`${data.value.start}T00:00:00`);
+          setCurrentMonth1(monthStart(start));
+          setCurrentMonth2(monthStart(start, 1));
+        }
+      })
+      .catch(() => setDateRangeFeedback({ type: 'error', message: 'Could not load the date range.' }));
+
+    axios.get(`${API_BASE_URL}/settings/application-deadline`)
+      .then(({ data }) => applyDeadline(data.value))
+      .catch(() => setDeadlineFeedback({ type: 'error', message: 'Could not load the application deadline.' }));
   }, []);
 
   useEffect(() => {
@@ -128,21 +159,56 @@ function SettingsPage() {
     }
   };
 
-  const handleSetDateRange = () => {
-    if (selectedDates.length === 2) {
-      setCurrentDateRange({
-        start: selectedDates[0],
-        end: selectedDates[1]
+  const handleSetDateRange = async () => {
+    if (selectedDates.length !== 2) {
+      setDateRangeFeedback({ type: 'error', message: 'Please select start and end dates.' });
+      return;
+    }
+
+    try {
+      const { data } = await axios.put(`${API_BASE_URL}/settings/application-period`, {
+        value: { start: selectedDates[0], end: selectedDates[1] }
       });
-      alert('Date range updated successfully!');
-    } else {
-      alert('Please select start and end dates');
+      applyDateRange(data.value);
+      setDateRangeFeedback({ type: 'success', message: 'Saved. Applications are accepted only within this range.' });
+    } catch (error) {
+      setDateRangeFeedback({ type: 'error', message: error.response?.data?.message || 'Could not save the date range.' });
     }
   };
 
-  const handleSetDeadline = () => {
-    setCurrentDeadline(newDeadline);
-    alert('Application deadline updated successfully!');
+  const handleClearDateRange = async () => {
+    try {
+      const { data } = await axios.delete(`${API_BASE_URL}/settings/application-period`);
+      applyDateRange(data.value);
+      setDateRangeFeedback({ type: 'success', message: 'Cleared. Applications are open all year.' });
+    } catch (error) {
+      setDateRangeFeedback({ type: 'error', message: error.response?.data?.message || 'Could not clear the date range.' });
+    }
+  };
+
+  const handleSetDeadline = async () => {
+    if (!newDeadline) {
+      setDeadlineFeedback({ type: 'error', message: 'Please choose a deadline date.' });
+      return;
+    }
+
+    try {
+      const { data } = await axios.put(`${API_BASE_URL}/settings/application-deadline`, { value: newDeadline });
+      applyDeadline(data.value);
+      setDeadlineFeedback({ type: 'success', message: 'Saved. Programs without their own deadline close after this date.' });
+    } catch (error) {
+      setDeadlineFeedback({ type: 'error', message: error.response?.data?.message || 'Could not save the deadline.' });
+    }
+  };
+
+  const handleClearDeadline = async () => {
+    try {
+      const { data } = await axios.delete(`${API_BASE_URL}/settings/application-deadline`);
+      applyDeadline(data.value);
+      setDeadlineFeedback({ type: 'success', message: 'Cleared. Only programs with their own deadline close.' });
+    } catch (error) {
+      setDeadlineFeedback({ type: 'error', message: error.response?.data?.message || 'Could not clear the deadline.' });
+    }
   };
 
   const handleChangePassword = async (e) => {
@@ -317,7 +383,10 @@ function SettingsPage() {
           <div className="settings-section">
             <h2 className="settings-title">Set Date Range</h2>
             <p className="current-range">
-              Current Range: <strong>{currentDateRange.start}</strong> to <strong>{currentDateRange.end}</strong>
+              Applications are accepted only between these dates, for every program.{' '}
+              {currentDateRange
+                ? <>Current Range: <strong>{currentDateRange.start}</strong> to <strong>{currentDateRange.end}</strong></>
+                : <>Current Range: <strong>Not set</strong> (open all year)</>}
             </p>
 
             <div className="calendars-wrapper">
@@ -325,15 +394,29 @@ function SettingsPage() {
               {renderCalendar(currentMonth2, 1)}
             </div>
 
-            <button className="set-range-btn" onClick={handleSetDateRange}>
-              Set Date Range
-            </button>
+            {dateRangeFeedback.message && (
+              <p className={`password-feedback ${dateRangeFeedback.type}`}>
+                {dateRangeFeedback.message}
+              </p>
+            )}
+
+            <div className="settings-actions">
+              <button className="set-range-btn" onClick={handleSetDateRange}>
+                Set Date Range
+              </button>
+              {currentDateRange && (
+                <button type="button" className="clear-setting-btn" onClick={handleClearDateRange}>
+                  Clear
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="settings-section">
             <h2 className="settings-title">Application Deadline</h2>
             <p className="current-deadline">
-              Current Deadline: <strong>{currentDeadline}</strong>
+              Used for programs that don&apos;t have their own deadline.{' '}
+              Current Deadline: <strong>{currentDeadline || 'Not set'}</strong>
             </p>
 
             <input
@@ -343,9 +426,22 @@ function SettingsPage() {
               onChange={(e) => setNewDeadline(e.target.value)}
             />
 
-            <button className="set-deadline-btn" onClick={handleSetDeadline}>
-              Set Application Deadline
-            </button>
+            {deadlineFeedback.message && (
+              <p className={`password-feedback ${deadlineFeedback.type}`}>
+                {deadlineFeedback.message}
+              </p>
+            )}
+
+            <div className="settings-actions">
+              <button className="set-deadline-btn" onClick={handleSetDeadline}>
+                Set Application Deadline
+              </button>
+              {currentDeadline && (
+                <button type="button" className="clear-setting-btn" onClick={handleClearDeadline}>
+                  Clear
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="settings-section">
