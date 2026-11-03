@@ -10,6 +10,7 @@ import {
   getFileMetadata
 } from '../utils/gridfsService.js';
 import { parseGpa, isValidGpa, withGpaCategory, MAX_GPA } from '../utils/gpaCategory.js';
+import { getApplicationWindow } from '../utils/applicationWindow.js';
 
 const router = express.Router();
 
@@ -65,6 +66,13 @@ router.post('/', async (req, res) => {
     // Normalize key fields so duplicate checks are reliable.
     applicationData.program = String(applicationData.program || '').trim();
     applicationData.nicNo = String(applicationData.nicNo || '').trim().toUpperCase();
+
+    // Refuse applications outside the period set in Settings or after the program's deadline.
+    const program = await Program.findOne({ shortCode: applicationData.program }).select('applicationDeadline').lean();
+    const applicationWindow = await getApplicationWindow(program);
+    if (!applicationWindow.open) {
+      return res.status(403).json({ success: false, message: applicationWindow.message });
+    }
 
     // Check GPAs before any files are written, so a rejected application leaves no orphaned uploads.
     if (Array.isArray(applicationData.qualifications)) {
