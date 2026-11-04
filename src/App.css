@@ -72,7 +72,7 @@
 }
 
 .admin-login-btn:hover {
-  background-color: #f8f8f8;
+  background-color: var(--surface-muted);
   transform: translateY(-1px);
 }
 
@@ -97,13 +97,13 @@
 .programs-title {
   font-size: 28px;
   font-weight: 700;
-  color: #2d2d2d;
+  color: var(--ink);
   margin-bottom: 8px;
 }
 
 .programs-subtitle {
   font-size: 14px;
-  color: #666;
+  color: var(--muted);
   font-weight: 400;
 }
 
@@ -166,7 +166,7 @@
 .card-description {
   padding: 20px 20px 15px 20px;
   font-size: 13px;
-  color: #555;
+  color: var(--ink-muted);
   line-height: 1.6;
   margin: 0;
   min-height: 65px;
@@ -179,7 +179,7 @@
 .specializations-label {
   font-size: 13px;
   font-weight: 600;
-  color: #333;
+  color: var(--ink);
   margin-bottom: 8px;
 }
 
@@ -199,7 +199,7 @@
 
 .card-info {
   padding: 15px 20px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -211,7 +211,7 @@
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: #666;
+  color: var(--muted);
 }
 
 .info-icon {
@@ -219,7 +219,7 @@
 }
 
 .info-text {
-  color: #555;
+  color: var(--ink-muted);
 }
 
 .view-details-btn {
@@ -247,7 +247,7 @@
   gap: 8px;
   background: none;
   border: none;
-  color: #666;
+  color: var(--muted);
   font-size: 14px;
   cursor: pointer;
   padding: 0;
@@ -257,7 +257,7 @@
 }
 
 .back-button:hover {
-  color: #333;
+  color: var(--ink);
 }
 
 .back-arrow {
@@ -296,14 +296,14 @@
 .login-title {
   font-size: 28px;
   font-weight: 600;
-  color: #333;
+  color: var(--ink);
   margin-bottom: 10px;
   text-align: center;
 }
 
 .login-subtitle {
   font-size: 14px;
-  color: #666;
+  color: var(--muted);
   margin-bottom: 35px;
   text-align: center;
 }
@@ -319,7 +319,7 @@
 .form-label {
   display: block;
   font-size: 14px;
-  color: #333;
+  color: var(--ink);
   margin-bottom: 8px;
   font-weight: 500;
 }
@@ -327,11 +327,11 @@
 .form-input {
   width: 100%;
   padding: 12px 15px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-strong);
   border-radius: 4px;
   font-size: 14px;
   transition: border-color 0.2s;
-  background-color: #fafafa;
+  background-color: var(--surface-muted);
 }
 
 .form-input:focus {
@@ -341,7 +341,7 @@
 }
 
 .form-input::placeholder {
-  color: #bbb;
+  color: var(--subtle);
 }
 
 .sign-in-button {
@@ -379,7 +379,7 @@
 
 .footer {
   text-align: center;
-  color: #666;
+  color: var(--muted);
   font-size: 13px;
   margin-top: auto;
   padding-top: 30px;

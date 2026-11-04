@@ -20,7 +20,7 @@
 }
 
 .back-to-home-btn:hover {
-  color: #4b5563;
+  color: var(--ink-muted);
 }
 
 .back-arrow {
@@ -38,7 +38,7 @@
 .detail-title {
   font-size: 32px;
   font-weight: 700;
-  color: #111827;
+  color: var(--ink-strong);
   margin: 0 0 6px 0;
   letter-spacing: -0.5px;
 }
@@ -53,7 +53,7 @@
 
 .detail-description {
   font-size: 15px;
-  color: #4b5563;
+  color: var(--ink-muted);
   line-height: 1.75;
   margin: 0 0 40px 0;
   padding-left: 16px;
@@ -63,7 +63,7 @@
 .detail-section {
   margin-bottom: 36px;
   padding-bottom: 36px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .detail-section:last-child {
@@ -73,7 +73,7 @@
 
 .section-title {
   font-weight: 700;
-  color: #111827;
+  color: var(--ink-strong);
   margin: 0 0 18px 0;
   font-size: 16px;
   letter-spacing: 0;

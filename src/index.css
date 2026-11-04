@@ -17,10 +17,13 @@
   --page: #f5f5f5;
   --surface: #ffffff;
   --surface-muted: #f9fafb;
+  --border-subtle: #f3f4f6;     /* dividers inside cards */
   --border: #e5e7eb;
   --border-strong: #d1d5db;
+  --ink-strong: #111827;        /* page and section titles */
   --ink: #1f2937;               /* headings, main text */
   --ink-soft: #374151;
+  --ink-muted: #4b5563;         /* descriptions, long text */
   --muted: #6b7280;             /* secondary text */
   --subtle: #9ca3af;            /* placeholders, disabled */
 
