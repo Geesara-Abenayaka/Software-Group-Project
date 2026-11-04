@@ -8,12 +8,12 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #e8e8e8;
+  background-color: var(--page);
 }
 
 .header {
   background-color: var(--brand);
-  padding: 18px 40px;
+  padding: 20px 30px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
@@ -22,7 +22,7 @@
   align-items: center;
   justify-content: center;
   gap: 15px;
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
   position: relative;
 }
@@ -40,16 +40,16 @@
 }
 
 .university-name {
-  color: rgb(244, 243, 243);
-  font-size: 20px;
-  font-weight: 700;
+  color: var(--on-brand);
+  font-size: 22px;
+  font-weight: 600;
   margin: 0;
   letter-spacing: 0.3px;
 }
 
 .portal-subtitle {
-  color: rgba(255, 255, 255, 0.95);
-  font-size: 12px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
   margin: 0;
   font-weight: 300;
 }
@@ -82,8 +82,10 @@
 
 .content-area {
   flex: 1;
-  padding: 40px;
-  max-width: 1400px;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  max-width: 1200px;
   width: 100%;
   margin: 0 auto;
 }
@@ -237,66 +239,6 @@
 .view-details-btn:hover {
   background: linear-gradient(135deg, #4a5c6d 0%, #5b6c7d 100%);
   transform: translateY(-1px);
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-.app {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background-color: #f5f5f5;
-}
-
-.header {
-  background-color: var(--brand);
-  padding: 20px 30px;
-}
-
-.header-content {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  max-width: 1200px;
-  /* margin: 0 auto; */
-}
-
-.graduation-cap-icon {
-  font-size: 32px;
-  filter: brightness(0) invert(1);
-}
-
-.header-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.university-name {
-  color: white;
-  font-size: 22px;
-  font-weight: 600;
-  margin: 0;
-}
-
-.portal-subtitle {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 13px;
-  margin: 0;
-}
-
-.content-area {
-  flex: 1;
-  padding: 30px;
-  display: flex;
-  flex-direction: column;
-  max-width: 1200px;
-  width: 100%;
-  margin: 0 auto;
 }
 
 .back-button {
