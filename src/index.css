@@ -62,7 +62,22 @@
   --space-10: 40px;
 }
 
-/* Admin dark-mode overrides for these tokens go here once the admin stylesheets use them. */
+/* Admin dark mode: the colours the admin stylesheets already use in dark mode. Maroon stays the same. */
+body.admin-dark-mode {
+  --page: #0f172a;
+  --surface: #1f2937;
+  --surface-muted: #111827;
+  --border-subtle: #374151;
+  --border: #475569;
+  --border-strong: #64748b;
+  --ink-strong: #e5e7eb;
+  --ink: #e5e7eb;
+  --ink-soft: #e5e7eb;
+  --ink-muted: #cbd5e1;
+  --muted: #cbd5e1;
+  --subtle: #94a3b8;
+  --brand-tint: #3f1d1d;
+}
 
 html {
   overflow-y: scroll;
