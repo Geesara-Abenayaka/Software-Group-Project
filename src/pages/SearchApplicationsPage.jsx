@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User, FileText, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import '../styles/SearchApplicationsPage.css';
 import API_BASE_URL from '../utils/apiConfig';
+import { formatReference } from '../utils/applicationReference';
 
 const fetchWithTimeout = async (url, timeoutMs = 8000) => {
   const controller = new AbortController();
@@ -69,6 +70,7 @@ function SearchApplicationsPage() {
         const matchInitials = app.nameWithInitials && app.nameWithInitials.toLowerCase().includes(searchLower);
         const matchNic = app.nicNo && app.nicNo.toLowerCase().includes(searchLower);
         const matchId = app._id && app._id.toLowerCase().includes(searchLower);
+        const matchReference = app._id && formatReference(app._id).toLowerCase().includes(searchLower);
         const matchTelephone = app.telephone && app.telephone.includes(activeSearchText.trim());
         const matchMobile = app.mobile && app.mobile.includes(activeSearchText.trim());
         const matchEmail = app.email && app.email.toLowerCase().includes(searchLower);
@@ -78,7 +80,7 @@ function SearchApplicationsPage() {
         const matchProgramName = program && program.title.toLowerCase().includes(searchLower);
         const matchProgramCode = app.program && app.program.toLowerCase().includes(searchLower);
         
-        return matchFullName || matchInitials || matchNic || matchId || matchTelephone || matchMobile || matchEmail || matchProgramName || matchProgramCode;
+        return matchFullName || matchInitials || matchNic || matchId || matchReference || matchTelephone || matchMobile || matchEmail || matchProgramName || matchProgramCode;
       });
     }
 

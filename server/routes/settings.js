@@ -1,6 +1,7 @@
 import express from 'express';
 import Setting from '../models/Setting.js';
 import { ASSISTANT_FACTS, ASSISTANT_FACTS_KEY, clearAssistantFactsCache } from '../utils/assistantKnowledge.js';
+import { APPLICATION_DEADLINE_KEY, APPLICATION_PERIOD_KEY, isDateString } from '../utils/applicationWindow.js';
 
 const router = express.Router();
 
@@ -14,6 +15,20 @@ const SETTINGS = {
     isValid: (value) => value.length > 0 && value.length <= MAX_FACTS_CHARS,
     invalidMessage: `The facts must be between 1 and ${MAX_FACTS_CHARS} characters.`,
     onChange: clearAssistantFactsCache
+  },
+  [APPLICATION_PERIOD_KEY]: {
+    defaultValue: null, // no period: applications are open all year
+    toStored: (value) => (
+      isDateString(value?.start) && isDateString(value?.end) ? { start: value.start, end: value.end } : null
+    ),
+    isValid: (value) => value !== null && value.start <= value.end,
+    invalidMessage: 'Choose a start date and an end date. The start must be on or before the end.'
+  },
+  [APPLICATION_DEADLINE_KEY]: {
+    defaultValue: null, // no default: only programs with their own deadline close
+    toStored: (value) => (isDateString(value) ? value : null),
+    isValid: (value) => value !== null,
+    invalidMessage: 'Choose a valid deadline date.'
   }
 };
 

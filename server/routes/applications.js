@@ -10,6 +10,7 @@ import {
   getFileMetadata
 } from '../utils/gridfsService.js';
 import { parseGpa, isValidGpa, withGpaCategory, MAX_GPA } from '../utils/gpaCategory.js';
+import { getApplicationWindow } from '../utils/applicationWindow.js';
 
 const router = express.Router();
 
@@ -65,6 +66,13 @@ router.post('/', async (req, res) => {
     // Normalize key fields so duplicate checks are reliable.
     applicationData.program = String(applicationData.program || '').trim();
     applicationData.nicNo = String(applicationData.nicNo || '').trim().toUpperCase();
+
+    // Refuse applications outside the period set in Settings or after the program's deadline.
+    const program = await Program.findOne({ shortCode: applicationData.program }).select('applicationDeadline').lean();
+    const applicationWindow = await getApplicationWindow(program);
+    if (!applicationWindow.open) {
+      return res.status(403).json({ success: false, message: applicationWindow.message });
+    }
 
     // Check GPAs before any files are written, so a rejected application leaves no orphaned uploads.
     if (Array.isArray(applicationData.qualifications)) {
@@ -334,6 +342,10 @@ router.get('/program/:program', async (req, res) => {
 // Lightweight summary endpoint for admin dashboards
 router.get('/summary/by-program', async (req, res) => {
   try {
+    // Statuses are stored in more than one spelling ('approved' and 'Approved', 'Rejected', 'Application Rejected'),
+    // so compare them in lower case.
+    const status = { $toLower: '$status' };
+
     const summary = await Application.aggregate([
       {
         $group: {
@@ -341,7 +353,17 @@ router.get('/summary/by-program', async (req, res) => {
           total: { $sum: 1 },
           pending: {
             $sum: {
-              $cond: [{ $eq: ['$status', 'pending'] }, 1, 0]
+              $cond: [{ $eq: [status, 'pending'] }, 1, 0]
+            }
+          },
+          approved: {
+            $sum: {
+              $cond: [{ $eq: [status, 'approved'] }, 1, 0]
+            }
+          },
+          rejected: {
+            $sum: {
+              $cond: [{ $in: [status, ['rejected', 'application rejected']] }, 1, 0]
             }
           }
         }
@@ -351,7 +373,9 @@ router.get('/summary/by-program', async (req, res) => {
           _id: 0,
           program: '$_id',
           total: 1,
-          pending: 1
+          pending: 1,
+          approved: 1,
+          rejected: 1
         }
       }
     ]);

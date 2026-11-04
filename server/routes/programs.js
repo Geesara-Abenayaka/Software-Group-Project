@@ -1,5 +1,6 @@
 import express from 'express';
 import Program from '../models/Program.js';
+import { getApplicationWindow } from '../utils/applicationWindow.js';
 
 const router = express.Router();
 
@@ -34,6 +35,22 @@ router.get('/:identifier', async (req, res) => {
   } catch (error) {
     console.error('Error fetching program:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch program', error: error.message });
+  }
+});
+
+// Whether a program takes applications today (period and deadlines from Settings and the program)
+router.get('/:shortCode/application-window', async (req, res) => {
+  try {
+    const program = await Program.findOne({ shortCode: req.params.shortCode }).select('applicationDeadline').lean();
+
+    if (!program) {
+      return res.status(404).json({ success: false, message: 'Program not found' });
+    }
+
+    res.json({ success: true, data: await getApplicationWindow(program) });
+  } catch (error) {
+    console.error('Error checking application window:', error);
+    res.status(500).json({ success: false, message: 'Failed to check the application window', error: error.message });
   }
 });
 

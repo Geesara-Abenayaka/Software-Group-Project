@@ -379,6 +379,12 @@ label.required::before {
   transform: translateY(1px);
 }
 
+.submit-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+}
+
 /* Error styling */
 .input-error {
   border-color: #f59e0b !important;
@@ -409,6 +415,11 @@ label.required::before {
   font-size: 13px;
   font-weight: 500;
   line-height: 1.4;
+}
+
+/* Shown above the form when the date range or deadline in Settings has closed applications */
+.applications-closed {
+  margin: 20px 60px 0;
 }
 
 .error-message {
@@ -474,6 +485,10 @@ label.required::before {
 @media (max-width: 768px) {
   .application-form {
     padding: 20px;
+  }
+
+  .applications-closed {
+    margin: 20px 20px 0;
   }
 
   .form-row {
