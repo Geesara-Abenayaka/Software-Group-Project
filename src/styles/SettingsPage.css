@@ -220,7 +220,7 @@
 }
 
 .mode-switch:focus-visible {
-  outline: 2px solid #8b0000;
+  outline: 2px solid var(--brand);
   outline-offset: 2px;
 }
 
@@ -242,7 +242,7 @@
 }
 
 .deadline-input:focus {
-  border-color: #8b0000;
+  border-color: var(--brand);
 }
 
 .password-form {
@@ -275,7 +275,7 @@
 }
 
 .password-feedback.error {
-  color: #991b1b;
+  color: var(--danger);
 }
 
 .set-deadline-btn:disabled {
@@ -399,8 +399,8 @@ body.admin-dark-mode .mode-switch-icon-moon {
 
 .reset-facts-btn:hover,
 .clear-setting-btn:hover {
-  border-color: #8b0000;
-  color: #8b0000;
+  border-color: var(--brand);
+  color: var(--brand);
 }
 
 .set-deadline-btn:disabled,

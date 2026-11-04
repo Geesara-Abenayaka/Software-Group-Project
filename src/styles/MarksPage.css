@@ -29,7 +29,7 @@
 }
 
 .marks-search:focus {
-  border-color: #8b0000;
+  border-color: var(--brand);
 }
 
 .course-selector {
@@ -60,7 +60,7 @@
 }
 
 .course-dropdown:focus {
-  border-color: #8b0000;
+  border-color: var(--brand);
 }
 
 .marks-table-container {
@@ -99,8 +99,8 @@
 }
 
 .marks-table tbody tr.selected-row {
-  background-color: #fef2f2;
-  border-left: 3px solid #8b0000;
+  background-color: var(--brand-tint);
+  border-left: 3px solid var(--brand);
 }
 
 .marks-table td {
@@ -209,7 +209,7 @@
 
 .form-field input[type="text"]:focus,
 .form-field input[type="date"]:focus {
-  border-color: #8b0000;
+  border-color: var(--brand);
 }
 
 .form-field input.readonly-field {
@@ -242,9 +242,9 @@
 
 .status-btn {
   padding: 0.625rem 1.25rem;
-  border: 2px solid #8b0000;
+  border: 2px solid var(--brand);
   background: white;
-  color: #8b0000;
+  color: var(--brand);
   border-radius: 20px;
   font-size: 0.85rem;
   font-weight: 600;
@@ -260,7 +260,7 @@
 }
 
 .status-btn.active {
-  background: #8b0000;
+  background: var(--brand);
   color: white;
 }
 
@@ -293,7 +293,7 @@
 }
 
 .update-btn {
-  background: #8b0000;
+  background: var(--brand);
   color: white;
 }
 

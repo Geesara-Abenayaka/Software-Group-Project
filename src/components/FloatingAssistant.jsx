@@ -523,9 +523,9 @@ function FloatingAssistant() {
         <span className="assistant-icon" aria-hidden="true">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M12 3C7.03 3 3 6.69 3 11.12c0 2.75 1.69 5.16 4.18 6.6L6 21l4.6-1.86c.86.2 1.78.31 2.73.31 4.97 0 9-3.69 9-8.12S16.97 3 12 3Z" fill="#ffffff" opacity="0.95" />
-            <path d="M8.5 9.5H15.5" stroke="#8b1a1a" strokeWidth="1.8" strokeLinecap="round" />
-            <path d="M8.5 12.5H15.5" stroke="#8b1a1a" strokeWidth="1.8" strokeLinecap="round" />
-            <path d="M8.5 15.5H12.5" stroke="#8b1a1a" strokeWidth="1.8" strokeLinecap="round" />
+            <path d="M8.5 9.5H15.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            <path d="M8.5 12.5H15.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            <path d="M8.5 15.5H12.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
           </svg>
         </span>
         <span className="assistant-label">Advisor</span>

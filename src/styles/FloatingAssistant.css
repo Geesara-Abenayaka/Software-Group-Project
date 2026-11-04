@@ -20,7 +20,7 @@
   padding: 0;
   border-radius: 50%;
   border: none;
-  background: linear-gradient(135deg, #8b1a1a, #b91c1c);
+  background: linear-gradient(135deg, var(--brand), #b91c1c);
   color: #ffffff;
   box-shadow: 0 16px 30px rgba(139, 26, 26, 0.22);
   cursor: pointer;
@@ -46,6 +46,7 @@
   height: 34px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.14);
+  color: var(--brand);
 }
 
 .assistant-label {
@@ -112,7 +113,7 @@
   align-items: flex-start;
   gap: 12px;
   padding: 16px 16px 12px;
-  background: linear-gradient(135deg, #8b1a1a, #b91c1c);
+  background: linear-gradient(135deg, var(--brand), #b91c1c);
   color: #ffffff;
 }
 
@@ -165,7 +166,7 @@
 
 .assistant-message.user {
   align-self: flex-end;
-  background: #8b0000;
+  background: var(--brand);
   color: white;
 }
 
@@ -216,7 +217,7 @@
 
 .assistant-feedback button:hover,
 .assistant-feedback button[aria-pressed='true'] {
-  color: #8b1a1a;
+  color: var(--brand);
   font-weight: 700;
 }
 
@@ -273,7 +274,7 @@
 }
 
 .recommendation-card:hover {
-  border-color: #8b1a1a;
+  border-color: var(--brand);
   transform: translateY(-1px);
 }
 
@@ -290,7 +291,7 @@
 }
 
 .recommendation-card span {
-  color: #8b1a1a;
+  color: var(--brand);
   font-size: 12px;
   font-weight: 700;
   align-self: center;
@@ -298,7 +299,7 @@
 
 .recommendation-card .recommendation-reason {
   margin-top: 4px;
-  color: #8b1a1a;
+  color: var(--brand);
   font-weight: 600;
 }
 
@@ -332,8 +333,8 @@
 }
 
 .assistant-quick-btn:hover {
-  border-color: #8b1a1a;
-  color: #8b1a1a;
+  border-color: var(--brand);
+  color: var(--brand);
 }
 
 .assistant-input-row {
@@ -354,13 +355,13 @@
 
 .assistant-input-row input:focus {
   outline: none;
-  border-color: #8b1a1a;
+  border-color: var(--brand);
   box-shadow: 0 0 0 3px rgba(139, 26, 26, 0.12);
 }
 
 .assistant-input-row button {
   border: none;
-  background: #8b1a1a;
+  background: var(--brand);
   color: #ffffff;
   border-radius: 999px;
   padding: 10px 16px;

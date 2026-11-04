@@ -486,7 +486,7 @@ function ApplicationDetailPage() {
               <p className="detail-topbar-sub">Application Management</p>
             </div>
             <div className="detail-topbar-avatar">
-              <User size={20} color="#8b0000" />
+              <User size={20} />
             </div>
           </div>
 
@@ -633,7 +633,7 @@ function ApplicationDetailPage() {
                     </div>
                   </div>
                   <div className="bulk-email-header-icon">
-                    <User size={18} color="#8b0000" />
+                    <User size={18} />
                   </div>
                 </div>
 

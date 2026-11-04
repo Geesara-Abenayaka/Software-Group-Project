@@ -48,7 +48,7 @@
 }
 
 .search-input:focus {
-  border-color: #8b0000;
+  border-color: var(--brand);
 }
 
 .search-btn {
@@ -103,7 +103,7 @@
 
 .filter-group select:focus,
 .filter-group input[type="date"]:focus {
-  border-color: #8b0000;
+  border-color: var(--brand);
 }
 
 .export-btn {
@@ -176,7 +176,7 @@
 }
 
 .stat-icon-total {
-  background: #fee2e2;
+  background: var(--danger-bg);
   color: #dc2626;
 }
 
@@ -191,7 +191,7 @@
 }
 
 .stat-icon-rejected {
-  background: #fee2e2;
+  background: var(--danger-bg);
   color: #dc2626;
 }
 
@@ -260,8 +260,8 @@
 }
 
 .app-id-link:hover {
-  color: #8b0000;
-  border-bottom-color: #8b0000;
+  color: var(--brand);
+  border-bottom-color: var(--brand);
 }
 
 .status-badge {
@@ -288,8 +288,8 @@
 }
 
 .status-rejected {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--danger-bg);
+  color: var(--danger);
 }
 
 .table-footer {
@@ -352,9 +352,9 @@
 }
 
 .page-btn.active {
-  background: #8b0000;
+  background: var(--brand);
   color: white;
-  border-color: #8b0000;
+  border-color: var(--brand);
 }
 
 .pagination-ellipsis {

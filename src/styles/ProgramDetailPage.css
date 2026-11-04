@@ -46,7 +46,7 @@
 .detail-title-divider {
   width: 48px;
   height: 3px;
-  background: #8b0000;
+  background: var(--brand);
   border-radius: 2px;
   margin: 10px 0 24px 0;
 }
@@ -95,7 +95,7 @@
   position: relative;
   color: #374151;
   font-size: 15px;
-  border-left: 3px solid #8b0000;
+  border-left: 3px solid var(--brand);
   line-height: 1.4;
 }
 
@@ -219,7 +219,7 @@
 
 .online-application-btn {
   padding: 15px 40px;
-  background: linear-gradient(135deg, #8b0000 0%, #a00000 100%);
+  background: linear-gradient(135deg, var(--brand) 0%, #a00000 100%);
   color: white;
   border: none;
   border-radius: 6px;
@@ -227,13 +227,13 @@
   font-size: 16px;
   font-weight: 600;
   transition: all 0.3s;
-  box-shadow: 0 4px 6px rgba(139, 0, 0, 0.2);
+  box-shadow: 0 4px 6px rgba(139, 26, 26, 0.2);
 }
 
 .online-application-btn:hover {
-  background: linear-gradient(135deg, #a00000 0%, #8b0000 100%);
+  background: linear-gradient(135deg, #a00000 0%, var(--brand) 100%);
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(139, 0, 0, 0.3);
+  box-shadow: 0 6px 12px rgba(139, 26, 26, 0.3);
 }
 
 .online-application-btn:active {
