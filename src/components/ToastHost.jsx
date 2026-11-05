@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AlertCircle, CheckCircle2, Info, X } from 'lucide-react';
 import { TOAST_EVENT } from '../utils/toast';
 import '../styles/toast.css';
@@ -52,9 +52,17 @@ function ToastHost() {
     setToasts((list) => list.filter((item) => item.id !== id));
   }, []);
 
-  useEffect(() => {
+  // A layout effect, so the listener is ready before any page's own effects run on first load
+  // (the form sends a toast from an effect when it is opened without a programme).
+  useLayoutEffect(() => {
     const handleToast = (event) => {
-      setToasts((list) => [...list, event.detail].slice(-MAX_TOASTS));
+      const { type, message } = event.detail;
+      setToasts((list) => (
+        // The same message twice (a double click, or React's development double effects) shows once
+        list.some((item) => item.type === type && item.message === message)
+          ? list
+          : [...list, event.detail].slice(-MAX_TOASTS)
+      ));
     };
     window.addEventListener(TOAST_EVENT, handleToast);
     return () => window.removeEventListener(TOAST_EVENT, handleToast);
