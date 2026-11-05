@@ -506,7 +506,7 @@ function ApplicationDetailPage() {
               </thead>
               <tbody className={loading && !showSkeletons ? 'skeleton-wait' : undefined} aria-busy={loading}>
                 {loading ? (
-                  <TableSkeleton rows={8} columns={6} />
+                  <TableSkeleton rows={8} columns={6} rowHeight={57} />
                 ) : filteredApplications.length === 0 ? (
                   <tr>
                     <td colSpan="6" className="no-apps-msg">No applications found</td>

@@ -72,8 +72,14 @@
   overflow: hidden;
 }
 
-.program-card-skeleton__header { height: 82px; border-radius: 0; }
+.program-card-skeleton__header { height: 87px; border-radius: 0; }
 .program-card-skeleton__body { padding: 20px; }
+.program-card-skeleton__footer { padding: 20px; border-top: 1px solid var(--border-subtle); }
+
+/* On the grey page (no white card behind) the placeholders need darker greys to show */
+.skeleton-on-page .skeleton {
+  background-image: linear-gradient(90deg, var(--border) 0px, var(--border-subtle) 160px, var(--border) 320px);
+}
 
 /* Full-page brand loader */
 .page-loader {

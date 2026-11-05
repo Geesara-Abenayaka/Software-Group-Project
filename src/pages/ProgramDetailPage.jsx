@@ -95,15 +95,28 @@ function ProgramDetailPage() {
         <SiteHeader showAdminLogin />
 
         <main className="content-area" id="main" tabIndex={-1} aria-busy="true">
-          <div className={`detail-container${showSkeleton ? '' : ' skeleton-wait'}`} aria-hidden="true">
+          <div
+            className={`detail-container skeleton-on-page${showSkeleton ? '' : ' skeleton-wait'}`}
+            style={{ width: '100%' }}
+            aria-hidden="true"
+          >
             <Skeleton className="skeleton-text" style={{ width: '110px', marginBottom: '24px' }} />
-            <Skeleton className="skeleton-title" style={{ height: '36px' }} />
+            <Skeleton className="skeleton-title" style={{ width: '40%', height: '36px', marginBottom: '6px' }} />
             <div className="detail-title-divider"></div>
-            {['96%', '100%', '88%', '62%'].map((width) => (
-              <Skeleton key={width} className="skeleton-text" style={{ width }} />
-            ))}
+            <div className="detail-description">
+              {['96%', '100%', '62%'].map((width) => (
+                <Skeleton key={width} className="skeleton-text" style={{ width, height: '14px' }} />
+              ))}
+            </div>
 
-            <div className="detail-section" style={{ marginTop: '40px' }}>
+            <div className="detail-section">
+              <Skeleton className="skeleton-title" style={{ width: '300px' }} />
+              {['38%', '30%', '44%', '35%'].map((width) => (
+                <Skeleton key={width} className="skeleton-text" style={{ width, height: '16px', margin: '0 0 30px' }} />
+              ))}
+            </div>
+
+            <div className="detail-section">
               <Skeleton className="skeleton-title" style={{ width: '120px' }} />
               <div className="resources-grid">
                 {[0, 1, 2].map((index) => (

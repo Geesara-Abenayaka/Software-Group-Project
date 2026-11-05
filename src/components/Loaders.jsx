@@ -7,7 +7,8 @@ export function Skeleton({ as = 'div', className = '', style }) {
   return <Tag className={`skeleton ${className}`} style={style} aria-hidden="true" />;
 }
 
-// Placeholder in the shape of a programme card on the home page.
+// Placeholder in the shape of a programme card on the home page: header, description,
+// specializations, then the deadline lines and the button below a divider.
 export function ProgramCardSkeleton() {
   return (
     <div className="program-card-skeleton" aria-hidden="true">
@@ -15,12 +16,16 @@ export function ProgramCardSkeleton() {
       <div className="program-card-skeleton__body">
         <Skeleton className="skeleton-text" style={{ width: '92%' }} />
         <Skeleton className="skeleton-text" style={{ width: '74%' }} />
-        <div style={{ margin: '18px 0 6px' }}>
-          <Skeleton className="skeleton-chip" />
-          <Skeleton className="skeleton-chip" />
+        <div style={{ marginTop: '22px' }}>
+          {['30%', '55%', '45%', '60%', '40%', '50%'].map((width) => (
+            <Skeleton key={width} className="skeleton-text" style={{ width }} />
+          ))}
         </div>
+      </div>
+      <div className="program-card-skeleton__footer">
+        <Skeleton className="skeleton-text" style={{ width: '65%' }} />
         <Skeleton className="skeleton-text" style={{ width: '45%' }} />
-        <Skeleton className="skeleton-button" />
+        <Skeleton className="skeleton-button" style={{ height: '40px', marginTop: '16px' }} />
       </div>
     </div>
   );
@@ -36,24 +41,23 @@ export function AdminProgramCardSkeleton() {
       </div>
       <Skeleton className="skeleton-title" style={{ width: '70%', marginBottom: 0 }} />
       <div>
-        <Skeleton className="skeleton-text" style={{ width: '95%' }} />
-        <Skeleton className="skeleton-text" style={{ width: '80%' }} />
-        <Skeleton className="skeleton-text" style={{ width: '55%', marginBottom: 0 }} />
+        <Skeleton className="skeleton-text" style={{ width: '95%', height: '16px', marginBottom: '11px' }} />
+        <Skeleton className="skeleton-text" style={{ width: '70%', height: '16px', marginBottom: 0 }} />
       </div>
-      <Skeleton className="skeleton-text" style={{ width: '130px', marginBottom: 0 }} />
+      <Skeleton className="skeleton-text" style={{ width: '130px', height: '20px', marginBottom: 0 }} />
     </div>
   );
 }
 
-// Placeholder rows; render inside a <tbody>.
-export function TableSkeleton({ rows = 6, columns = 5 }) {
+// Placeholder rows; render inside a <tbody>. Pass the real rows' height so the table doesn't jump.
+export function TableSkeleton({ rows = 6, columns = 5, rowHeight }) {
   return (
     <>
       {Array.from({ length: rows }, (_, row) => (
-        <tr key={row} aria-hidden="true">
+        <tr key={row} aria-hidden="true" style={rowHeight ? { height: `${rowHeight}px` } : undefined}>
           {Array.from({ length: columns }, (_, col) => (
             <td key={col}>
-              <Skeleton className="skeleton-text" style={{ width: `${55 + ((row + col) % 3) * 15}%` }} />
+              <Skeleton className="skeleton-text" style={{ width: `${55 + ((row + col) % 3) * 15}%`, marginBottom: 0 }} />
             </td>
           ))}
         </tr>
