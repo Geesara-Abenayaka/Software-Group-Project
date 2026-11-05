@@ -5,6 +5,7 @@ import '../styles/SearchApplicationsPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import { formatReference } from '../utils/applicationReference';
 import AdminLayout from '../components/AdminLayout';
+import { toast } from '../utils/toast';
 import { Skeleton, TableSkeleton } from '../components/Loaders';
 import useDelayedFlag from '../utils/useDelayedFlag';
 
@@ -227,15 +228,15 @@ function SearchApplicationsPage() {
       const result = await response.json();
 
       if (result.success) {
-        alert('Application deleted successfully!');
+        toast.success('Application deleted');
         // Refresh the applications list
         fetchApplications();
       } else {
-        alert('Failed to delete application: ' + result.message);
+        toast.error(`Couldn't delete the application: ${result.message}`);
       }
     } catch (error) {
       console.error('Error deleting application:', error);
-      alert('Error deleting application');
+      toast.error("Couldn't delete the application. Please try again.");
     }
   };
 
