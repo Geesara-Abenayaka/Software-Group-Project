@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Inbox } from 'lucide-react';
+import { Check, Inbox, Trash2 } from 'lucide-react';
 import '../styles/MarksPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import AdminLayout from '../components/AdminLayout';
@@ -548,8 +548,9 @@ function MarksPage() {
                             className="delete-icon-btn"
                             onClick={(e) => handleDelete(app._id, e)}
                             title="Delete application"
+                            aria-label="Delete application"
                           >
-                            🗑️
+                            <Trash2 size={16} aria-hidden="true" />
                           </button>
                         </td>
                       </tr>
@@ -655,20 +656,26 @@ function MarksPage() {
                   <button
                     className={`status-btn ${formData.applicationStatus === 'Pending' ? 'active' : ''}`}
                     onClick={() => handleStatusChange('Pending')}
+                    aria-pressed={formData.applicationStatus === 'Pending'}
                   >
-                    ✓ Pending
+                    {formData.applicationStatus === 'Pending' && <Check size={14} aria-hidden="true" />}
+                    Pending
                   </button>
                   <button
                     className={`status-btn ${formData.applicationStatus === 'Approved' ? 'active' : ''}`}
                     onClick={() => handleStatusChange('Approved')}
+                    aria-pressed={formData.applicationStatus === 'Approved'}
                   >
-                    ✓ Approved
+                    {formData.applicationStatus === 'Approved' && <Check size={14} aria-hidden="true" />}
+                    Approved
                   </button>
                   <button
                     className={`status-btn ${formData.applicationStatus === 'Rejected' ? 'active' : ''}`}
                     onClick={() => handleStatusChange('Rejected')}
+                    aria-pressed={formData.applicationStatus === 'Rejected'}
                   >
-                    ✓ Rejected
+                    {formData.applicationStatus === 'Rejected' && <Check size={14} aria-hidden="true" />}
+                    Rejected
                   </button>
                 </div>
               </div>

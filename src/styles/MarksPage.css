@@ -341,3 +341,17 @@
     width: 100%;
   }
 }
+
+/* lucide icons (they replaced the emoji): a check only on the chosen status */
+.status-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.delete-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

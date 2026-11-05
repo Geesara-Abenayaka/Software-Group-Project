@@ -324,3 +324,16 @@
     width: 100%;
   }
 }
+
+/* lucide icons next to the text (they replaced emoji) */
+.document-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.view-value svg {
+  margin-right: 4px;
+  vertical-align: -3px;
+  color: var(--success);
+}

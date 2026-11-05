@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Check, Eye, FileText, X } from 'lucide-react';
 import '../styles/ApplicationViewPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import { PageLoader } from '../components/Loaders';
@@ -366,7 +367,7 @@ function ApplicationViewPage() {
               <div className="file-list">
                 {application.documents.degreeCertificate.map((file, idx) => (
                   <div key={idx} className="file-item-with-actions">
-                    <span className="file-name">📄 {file.fileName}</span>
+                    <span className="file-name"><FileText size={16} aria-hidden="true" /> {file.fileName}</span>
                     <div className="file-actions">
                       <a 
                         href={`${API_BASE_URL}/applications/${applicationId}/file/${file.fileId}`} 
@@ -375,14 +376,14 @@ function ApplicationViewPage() {
                         className="file-action-btn view-btn"
                         title="Open in new tab"
                       >
-                        👁️ View
+                        <Eye size={16} aria-hidden="true" /> View
                       </a>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="document-status not-uploaded">✗ Not Uploaded</div>
+              <div className="document-status not-uploaded"><X size={16} aria-hidden="true" /> Not Uploaded</div>
             )}
           </div>
 
@@ -390,7 +391,7 @@ function ApplicationViewPage() {
             <label>NIC</label>
             {application.documents?.nic ? (
               <div className="file-item-with-actions">
-                <span className="file-name">📄 {application.documents.nic.fileName}</span>
+                <span className="file-name"><FileText size={16} aria-hidden="true" /> {application.documents.nic.fileName}</span>
                 <div className="file-actions">
                   <a 
                     href={`${API_BASE_URL}/applications/${applicationId}/file/${application.documents.nic.fileId}`} 
@@ -399,12 +400,12 @@ function ApplicationViewPage() {
                     className="file-action-btn view-btn"
                     title="Open in new tab"
                   >
-                    👁️ View
+                    <Eye size={16} aria-hidden="true" /> View
                   </a>
                 </div>
               </div>
             ) : (
-              <div className="document-status not-uploaded">✗ Not Uploaded</div>
+              <div className="document-status not-uploaded"><X size={16} aria-hidden="true" /> Not Uploaded</div>
             )}
           </div>
 
@@ -414,7 +415,7 @@ function ApplicationViewPage() {
               <div className="file-list">
                 {application.documents.employerLetter.map((file, idx) => (
                   <div key={idx} className="file-item-with-actions">
-                    <span className="file-name">📄 {file.fileName}</span>
+                    <span className="file-name"><FileText size={16} aria-hidden="true" /> {file.fileName}</span>
                     <div className="file-actions">
                       <a 
                         href={`${API_BASE_URL}/applications/${applicationId}/file/${file.fileId}`} 
@@ -423,14 +424,14 @@ function ApplicationViewPage() {
                         className="file-action-btn view-btn"
                         title="Open in new tab"
                       >
-                        👁️ View
+                        <Eye size={16} aria-hidden="true" /> View
                       </a>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="document-status not-uploaded">✗ Not Uploaded</div>
+              <div className="document-status not-uploaded"><X size={16} aria-hidden="true" /> Not Uploaded</div>
             )}
           </div>
 
@@ -438,7 +439,7 @@ function ApplicationViewPage() {
             <label>Transcript(s)</label>
             {application.documents?.transcript ? (
               <div className="file-item-with-actions">
-                <span className="file-name">📄 {application.documents.transcript.fileName}</span>
+                <span className="file-name"><FileText size={16} aria-hidden="true" /> {application.documents.transcript.fileName}</span>
                 <div className="file-actions">
                   <a 
                     href={`${API_BASE_URL}/applications/${applicationId}/file/${application.documents.transcript.fileId}`} 
@@ -447,12 +448,12 @@ function ApplicationViewPage() {
                     className="file-action-btn view-btn"
                     title="Open in new tab"
                   >
-                    👁️ View
+                    <Eye size={16} aria-hidden="true" /> View
                   </a>
                 </div>
               </div>
             ) : (
-              <div className="document-status not-uploaded">✗ Not Uploaded</div>
+              <div className="document-status not-uploaded"><X size={16} aria-hidden="true" /> Not Uploaded</div>
             )}
           </div>
 
@@ -460,7 +461,7 @@ function ApplicationViewPage() {
             <label>Payment Confirmation / Bank Receipt</label>
             {application.documents?.paymentConfirmation ? (
               <div className="file-item-with-actions">
-                <span className="file-name">📄 {application.documents.paymentConfirmation.fileName}</span>
+                <span className="file-name"><FileText size={16} aria-hidden="true" /> {application.documents.paymentConfirmation.fileName}</span>
                 <div className="file-actions">
                   <a 
                     href={`${API_BASE_URL}/applications/${applicationId}/file/${application.documents.paymentConfirmation.fileId}`} 
@@ -469,12 +470,12 @@ function ApplicationViewPage() {
                     className="file-action-btn view-btn"
                     title="Open in new tab"
                   >
-                    👁️ View
+                    <Eye size={16} aria-hidden="true" /> View
                   </a>
                 </div>
               </div>
             ) : (
-              <div className="document-status not-uploaded">✗ Not Uploaded</div>
+              <div className="document-status not-uploaded"><X size={16} aria-hidden="true" /> Not Uploaded</div>
             )}
           </div>
 
@@ -503,7 +504,7 @@ function ApplicationViewPage() {
           {application.captcha && (
             <div className="form-group view-only">
               <label>Captcha Verified</label>
-              <div className="view-value">✓ Verified</div>
+              <div className="view-value"><Check size={16} aria-hidden="true" /> Verified</div>
             </div>
           )}
         </div>

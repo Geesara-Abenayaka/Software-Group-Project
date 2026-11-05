@@ -398,10 +398,10 @@ function DownloadFormsPage() {
         doc.setFont(undefined, 'normal');
         if (docItem.status) {
           doc.setTextColor(34, 139, 34); // Green
-          doc.text('✓ Uploaded', margin + 50, y);
+          doc.text('Uploaded', margin + 50, y);
         } else {
           doc.setTextColor(220, 53, 69); // Red
-          doc.text('✗ Not Uploaded', margin + 50, y);
+          doc.text('Not uploaded', margin + 50, y);
         }
         doc.setTextColor(0, 0, 0);
         y += 6;
