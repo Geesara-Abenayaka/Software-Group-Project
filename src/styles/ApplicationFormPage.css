@@ -871,3 +871,73 @@ label.required::before {
   color: #166534;
   border: 1px solid #a7f3d0;
 }
+
+/* ------------------------------------------------------------------
+   Public application form (/apply). Scoped to .apply-page because the
+   admin application view imports this stylesheet and shares its classes.
+   ------------------------------------------------------------------ */
+.apply-page {
+  background-color: var(--page);
+}
+
+.apply-main {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: var(--space-6) var(--space-4) var(--space-10);
+}
+
+/* Title of the paper form, as a white card with the maroon accent on top */
+.apply-page .form-header {
+  background: var(--surface);
+  color: var(--ink);
+  border-top: 4px solid var(--brand);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-6) var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+.apply-page .form-header .form-header__org {
+  margin: 0 0 2px;
+  color: var(--ink-muted);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.apply-page .form-header__title {
+  margin: var(--space-3) 0 0;
+  color: var(--ink-strong);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.apply-page .form-header .program-chip {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  margin: var(--space-4) 0 0;
+  padding: 6px 14px;
+  border-radius: var(--radius-pill);
+  background: var(--brand-tint);
+  color: var(--brand-text);
+  font-size: var(--text-sm);
+}
+
+.apply-page .applications-closed {
+  margin: 0 0 var(--space-6);
+}
+
+@media (max-width: 768px) {
+  .apply-main {
+    padding: var(--space-4) var(--space-4) var(--space-8);
+  }
+
+  .apply-page .form-header__title {
+    font-size: 18px;
+  }
+}

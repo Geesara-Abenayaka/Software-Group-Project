@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import '../styles/ApplicationFormPage.css';
+import SiteHeader from '../components/SiteHeader';
+import SiteFooter from '../components/SiteFooter';
 import API_BASE_URL from '../utils/apiConfig';
 import { MAX_GPA, getErrorSummary, getSectionOfField, hasDocument, validateApplication, validateField } from '../utils/applicationValidation';
 import { loadDraft, mergeDraft, removeDraft, saveDraft } from '../utils/applicationDraft';
@@ -1667,7 +1669,8 @@ function ApplicationFormPage() {
   };
 
   return (
-    <div className="application-form-page">
+    // `apply-page` keeps the public form's styles off the admin view, which shares this stylesheet.
+    <div className="application-form-page apply-page">
       {isSubmitting && (
         <div className="submission-modal-overlay">
           <div className="submission-modal" role="dialog" aria-modal="true" aria-live="polite">
@@ -1720,14 +1723,18 @@ function ApplicationFormPage() {
         </div>
       )}
 
+      <SiteHeader />
+
+      <main className="apply-main" id="main" tabIndex={-1}>
+      {/* Mirrors the title of the paper form */}
       <div className="form-header">
-        <h1>UNIVERSITY OF MORATUWA</h1>
-        <h2>FACULTY OF ENGINEERING</h2>
-        <p>DEPARTMENT OF COMPUTER SCIENCE AND ENGINEERING</p>
-        <h3>APPLICATION FOR POSTGRADUATE STUDIES</h3>
+        <p className="form-header__org">University of Moratuwa</p>
+        <p className="form-header__org">Faculty of Engineering</p>
+        <p className="form-header__org">Department of Computer Science and Engineering</p>
+        <h1 className="form-header__title">Application for Postgraduate Studies</h1>
         {location.state?.programName && (
-          <p style={{ marginTop: '10px', fontSize: '16px', fontWeight: '600' }}>
-            Program: {location.state.programName}
+          <p className="program-chip">
+            Applying for: <strong>{location.state.programName}</strong>
           </p>
         )}
       </div>
@@ -2821,6 +2828,9 @@ function ApplicationFormPage() {
           {applicationWindow.open ? 'Submit Application' : 'Applications Closed'}
         </button>
       </form>
+      </main>
+
+      <SiteFooter />
     </div>
   );
 }
