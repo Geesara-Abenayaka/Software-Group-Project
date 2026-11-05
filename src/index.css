@@ -51,6 +51,16 @@
   --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.12);
   --focus-ring: 0 0 0 3px rgba(139, 26, 26, 0.35);
 
+  /* Stacking: the only z-index values (small local ones like 1 or 2 inside a component are fine) */
+  --z-sticky: 100;     /* sticky table headers, form progress bar, application view header, phone Apply bar */
+  --z-header: 200;
+  --z-dropdown: 300;   /* search suggestions */
+  --z-chat: 900;       /* chatbot button and panel */
+  --z-modal: 1000;     /* admin modals, confirm dialog, review screen, submission progress */
+  --z-toast: 1100;
+  --z-progress: 2000;  /* top progress bar */
+  --z-skip: 3000;      /* skip link */
+
   /* Admin tables */
   --table-head-bg: var(--surface-muted);
   --table-head-ink: var(--ink-soft);
@@ -317,7 +327,7 @@ body {
   position: absolute;
   left: var(--space-4);
   top: -100px;
-  z-index: 3000;
+  z-index: var(--z-skip);
   padding: var(--space-2) var(--space-4);
   background: var(--surface);
   color: var(--brand-text);

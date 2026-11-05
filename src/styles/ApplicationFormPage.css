@@ -520,7 +520,7 @@ label.required::before {
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 9999;
+  z-index: var(--z-modal);
 }
 
 .submission-modal {
@@ -699,7 +699,7 @@ label.required::before {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  z-index: 10000;
+  z-index: var(--z-modal);
 }
 
 .payment-gate-modal {
@@ -1214,7 +1214,7 @@ label.required::before {
 .form-progress {
   position: sticky;
   top: var(--space-2);
-  z-index: 100;
+  z-index: var(--z-sticky);
   margin: 0 0 var(--space-6);
   padding: var(--space-3) var(--space-4);
   background: var(--surface);
@@ -1684,7 +1684,7 @@ label.required::before {
 .review-overlay {
   position: fixed;
   inset: 0;
-  z-index: 1500;
+  z-index: var(--z-modal);
   display: flex;
   align-items: center;
   justify-content: center;
