@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { FileDown, GraduationCap, SendHorizontal, ThumbsDown, ThumbsUp, X } from 'lucide-react'
 import API_BASE_URL from '../utils/apiConfig'
 import { getFallbackResponse, normalize, toRecommendation } from '../utils/assistantFallback'
 import { generateCourseDetailsPDF } from '../utils/pdfGenerator'
@@ -130,16 +131,28 @@ function FloatingAssistant() {
   const [recommendationCards, setRecommendationCards] = useState([])
   const [quizStep, setQuizStep] = useState(null)
   const [quizAnswers, setQuizAnswers] = useState({})
+  // The reply being streamed is hidden from screen readers until it is complete, so it is read once.
+  const [streamingMessageId, setStreamingMessageId] = useState(null)
+  // Quiz answer just chosen: shown solid maroon for a moment before the next question
+  const [pickedOption, setPickedOption] = useState(null)
+  // "Thanks" next to the feedback buttons for 2 s
+  const [thanksFor, setThanksFor] = useState(null)
+  // Full screen and modal on phones; a non-modal panel elsewhere
+  const [isPhone, setIsPhone] = useState(() => window.matchMedia('(max-width: 480px)').matches)
   const endRef = useRef(null)
+  const inputRef = useRef(null)
+  const toggleRef = useRef(null)
+  const panelRef = useRef(null)
 
   const currentProgramCode = getProgramCode(location.pathname)
   const currentProgram = programs.find((program) => program.shortCode === currentProgramCode)
   const quizQuestion = quizStep === null ? null : QUIZ_QUESTIONS[quizStep]
   const hasConversation = messages.some((message) => message.role === 'user')
 
-  // Quiz options while in the quiz; page-based suggestions until the first question; then the reply's follow-ups.
+  // During the quiz its options sit under the question instead; page-based suggestions until the first
+  // question; then the reply's follow-ups.
   const suggestions = quizQuestion
-    ? [...quizQuestion.options.map((option) => option.label), CANCEL_QUIZ]
+    ? []
     : hasConversation
       ? quickSuggestions
       : getPageSuggestions(currentProgram)
@@ -151,6 +164,52 @@ function FloatingAssistant() {
   useEffect(() => {
     localStorage.removeItem('floating_assistant_history_v1')
   }, [])
+
+  useEffect(() => {
+    const query = window.matchMedia('(max-width: 480px)')
+    const update = () => setIsPhone(query.matches)
+    query.addEventListener('change', update)
+    return () => query.removeEventListener('change', update)
+  }, [])
+
+  // Opening the panel puts the cursor in the question box
+  useEffect(() => {
+    if (isOpen) {
+      inputRef.current?.focus()
+    }
+  }, [isOpen])
+
+  useEffect(() => {
+    if (!thanksFor) return undefined
+    const timer = setTimeout(() => setThanksFor(null), 2000)
+    return () => clearTimeout(timer)
+  }, [thanksFor])
+
+  // Closing hands focus back to the round button
+  const closePanel = () => {
+    setIsOpen(false)
+    toggleRef.current?.focus()
+  }
+
+  // Esc closes; on phones the full-screen panel is modal, so Tab stays inside it.
+  const handlePanelKeyDown = (event) => {
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      closePanel()
+      return
+    }
+    if (event.key !== 'Tab' || !isPhone || !panelRef.current) return
+    const focusable = [...panelRef.current.querySelectorAll('button:not([disabled]), input, a[href]')]
+    const first = focusable[0]
+    const last = focusable[focusable.length - 1]
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault()
+      last?.focus()
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault()
+      first?.focus()
+    }
+  }
 
   useEffect(() => {
     saveHistory(messages)
@@ -307,6 +366,7 @@ function FloatingAssistant() {
       const message = createMessage('bot', text)
       streamingId = message.id
       setIsStreaming(true)
+      setStreamingMessageId(message.id)
       addMessages(message)
     })
 
@@ -321,6 +381,7 @@ function FloatingAssistant() {
     }
     setIsTyping(false)
     setIsStreaming(false)
+    setStreamingMessageId(null)
     setRecommendationCards(answer.recommendations || [])
     setQuickSuggestions(answer.followUps?.length ? answer.followUps : DEFAULT_FOLLOW_UPS)
   }
@@ -343,6 +404,21 @@ function FloatingAssistant() {
   const handleSubmit = async (event) => {
     event.preventDefault()
     await sendQuestion(input)
+  }
+
+  // The chosen answer turns solid maroon for a moment, then the next question appears.
+  const pickQuizOption = (option) => {
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    setPickedOption(option.value)
+    setTimeout(() => {
+      setPickedOption(null)
+      answerQuiz(option)
+    }, reduceMotion ? 0 : 250)
+  }
+
+  const giveFeedback = (messageId, helpful) => {
+    handleFeedback(messageId, helpful)
+    setThanksFor(messageId)
   }
 
   const handleRecommendationClick = (course) => {
@@ -394,141 +470,237 @@ function FloatingAssistant() {
   }
 
   return (
-    <div className="floating-assistant-wrapper" aria-live="polite">
+    <div className={`floating-assistant-wrapper${isOpen ? ' is-open' : ''}`}>
       {isOpen && (
-        <section className="floating-assistant-panel" aria-label="Course recommendation assistant">
+        <section
+          id="course-advisor-panel"
+          className="floating-assistant-panel"
+          role="dialog"
+          aria-label="Course Advisor"
+          aria-modal={isPhone ? 'true' : undefined}
+          ref={panelRef}
+          onKeyDown={handlePanelKeyDown}
+        >
           <header className="floating-assistant-header">
-            <div>
-              <h3>Course Advisor</h3>
-              <p>Ask for program recommendations or site guidance.</p>
+            <span className="assistant-avatar assistant-avatar--header" aria-hidden="true">
+              <GraduationCap size={20} />
+            </span>
+            <div className="floating-assistant-heading">
+              <h2>Course Advisor</h2>
+              <p>CSE postgraduate admissions</p>
             </div>
             <button
               type="button"
               className="floating-assistant-close"
-              onClick={() => setIsOpen(false)}
+              onClick={closePanel}
               aria-label="Close assistant"
             >
-              ×
+              <X size={20} aria-hidden="true" />
             </button>
           </header>
 
           <div className="assistant-content">
-            <div className="floating-assistant-messages">
-              {messages.map((message) => (
-                <article key={message.id} className={`assistant-message ${message.role}`}>
-                  {message.role === 'bot' ? <FormattedText text={message.text} /> : <p>{message.text}</p>}
-                  <div className="assistant-message-meta">
-                    <span>{message.timestamp}</span>
-                    {message.topic && message.role === 'bot' && <span>{message.topic}</span>}
-                    {message.source && (
-                      <span className="assistant-feedback">
-                        <button
-                          type="button"
-                          aria-pressed={message.helpful === true}
-                          onClick={() => handleFeedback(message.id, true)}
-                        >
-                          Helpful
-                        </button>
-                        <button
-                          type="button"
-                          aria-pressed={message.helpful === false}
-                          onClick={() => handleFeedback(message.id, false)}
-                        >
-                          Not helpful
-                        </button>
+            {/* The one live region: only new messages are read out, not the buttons around them */}
+            <div className="floating-assistant-messages" role="log" aria-live="polite" aria-label="Conversation">
+              {messages.map((message, index) => {
+                const isBot = message.role === 'bot'
+                const isQuizQuestion = isBot && message.kind === 'quiz'
+                const isCurrentQuestion = isQuizQuestion && Boolean(quizQuestion) && index === messages.length - 1
+                const showAvatar = isBot && messages[index - 1]?.role !== 'bot'
+
+                return (
+                  <div
+                    key={message.id}
+                    className={`assistant-row ${message.role}`}
+                    aria-hidden={message.id === streamingMessageId ? 'true' : undefined}
+                  >
+                    {isBot && (
+                      <span className={`assistant-avatar${showAvatar ? '' : ' is-spacer'}`} aria-hidden="true">
+                        {showAvatar && <GraduationCap size={14} />}
                       </span>
                     )}
+                    <div className="assistant-bubble-column">
+                      {isQuizQuestion && message.topic && <p className="assistant-quiz-step">{message.topic}</p>}
+                      <article className={`assistant-message ${message.role}`}>
+                        {isBot ? <FormattedText text={message.text} /> : <p>{message.text}</p>}
+                      </article>
+                      <div className="assistant-message-meta">
+                        <span>{message.timestamp}</span>
+                        {message.source === 'fallback' && <span className="assistant-offline-tag">Offline mode</span>}
+                        {message.source && (
+                          <span className={`assistant-feedback${message.helpful === undefined ? '' : ' has-choice'}`}>
+                            <button
+                              type="button"
+                              className={message.helpful === true ? 'is-selected' : ''}
+                              aria-pressed={message.helpful === true}
+                              aria-label="Helpful"
+                              onClick={() => giveFeedback(message.id, true)}
+                            >
+                              <ThumbsUp size={15} fill={message.helpful === true ? 'currentColor' : 'none'} aria-hidden="true" />
+                            </button>
+                            <button
+                              type="button"
+                              className={message.helpful === false ? 'is-selected' : ''}
+                              aria-pressed={message.helpful === false}
+                              aria-label="Not helpful"
+                              onClick={() => giveFeedback(message.id, false)}
+                            >
+                              <ThumbsDown size={15} fill={message.helpful === false ? 'currentColor' : 'none'} aria-hidden="true" />
+                            </button>
+                            {thanksFor === message.id && <span className="assistant-thanks">Thanks</span>}
+                          </span>
+                        )}
+                      </div>
+
+                      {isCurrentQuestion && (
+                        <>
+                          <div className="assistant-quiz-options" role="group" aria-label={`Answers to question ${quizStep + 1}`}>
+                            {quizQuestion.options.map((option) => (
+                              <button
+                                key={option.value}
+                                type="button"
+                                className={`assistant-quiz-option${pickedOption === option.value ? ' is-picked' : ''}`}
+                                onClick={() => pickQuizOption(option)}
+                                disabled={pickedOption !== null}
+                              >
+                                {option.label}
+                              </button>
+                            ))}
+                          </div>
+                          <button type="button" className="assistant-quiz-cancel" onClick={cancelQuiz}>
+                            Cancel quiz
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
-                </article>
-              ))}
+                )
+              })}
 
               {recommendationCards.length > 0 && (
                 <div className="assistant-recommendations">
-                  <h4>Top program suggestions</h4>
+                  <h3 className="assistant-recommendations__title">Top program suggestions</h3>
                   {recommendationCards.map((course) => (
-                    <div key={`${course.title}-${course.shortCode || course.description}`} className="recommendation-item">
-                      <button
-                        type="button"
-                        className="recommendation-card"
-                        onClick={() => handleRecommendationClick(course)}
-                      >
-                        <div>
-                          <strong>{course.title}</strong>
-                          <p>{course.description}</p>
-                          {course.reason && <p className="recommendation-reason">{course.reason}</p>}
-                        </div>
-                        {course.shortCode && <span>View</span>}
-                      </button>
+                    <article key={`${course.title}-${course.shortCode || course.description}`} className="recommendation-card">
+                      <h4 className="recommendation-card__title">
+                        {course.title}
+                        {course.isProposed && <span className="badge badge--proposed">Proposed</span>}
+                      </h4>
+                      {(course.level || course.duration) && (
+                        <p className="recommendation-card__meta">{[course.level, course.duration].filter(Boolean).join(' · ')}</p>
+                      )}
+                      <p className="recommendation-card__description">{course.description}</p>
+                      {course.reason && <p className="recommendation-card__reason">{course.reason}</p>}
                       {course.shortCode && (
-                        <div className="recommendation-actions">
-                          <button type="button" className="assistant-quick-btn" onClick={() => handleApply(course)}>
+                        <div className="recommendation-card__actions">
+                          <button
+                            type="button"
+                            className="btn btn--secondary btn--sm"
+                            onClick={() => handleRecommendationClick(course)}
+                            aria-label={`View ${course.title}`}
+                          >
+                            View
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn--primary btn--sm"
+                            onClick={() => handleApply(course)}
+                            aria-label={`Apply for ${course.title}`}
+                          >
                             Apply
                           </button>
-                          <button type="button" className="assistant-quick-btn" onClick={() => handleDownloadDetails(course)}>
-                            Course details PDF
+                          <button
+                            type="button"
+                            className="recommendation-card__pdf"
+                            onClick={() => handleDownloadDetails(course)}
+                            aria-label={`Download course details for ${course.title}`}
+                          >
+                            <FileDown size={18} aria-hidden="true" />
                           </button>
                         </div>
                       )}
-                    </div>
+                    </article>
                   ))}
                 </div>
               )}
 
               {isTyping && !isStreaming && (
-                <div className="assistant-message bot typing-indicator" aria-label="Assistant typing">
-                  <span></span>
-                  <span></span>
-                  <span></span>
+                <div className="assistant-row bot">
+                  <span className="assistant-avatar" aria-hidden="true">
+                    <GraduationCap size={14} />
+                  </span>
+                  <div className="assistant-message bot typing-indicator">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span className="sr-only">Course Advisor is typing</span>
+                  </div>
                 </div>
               )}
               <div ref={endRef} />
             </div>
           </div>
 
-          <div className="assistant-quick-actions">
-            {suggestions.map((question) => (
-              <button
-                key={question}
-                type="button"
-                className="assistant-quick-btn"
-                onClick={() => handleSuggestion(question)}
-                disabled={isTyping}
-              >
-                {question}
-              </button>
-            ))}
-          </div>
+          {suggestions.length > 0 && (
+            <div className="assistant-quick-actions">
+              {suggestions.map((question) => (
+                <button
+                  key={question}
+                  type="button"
+                  className="assistant-quick-btn"
+                  onClick={() => handleSuggestion(question)}
+                  disabled={isTyping}
+                >
+                  {question}
+                </button>
+              ))}
+            </div>
+          )}
 
           <form className="assistant-input-row" onSubmit={handleSubmit}>
-            <input
-              type="text"
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              placeholder="Ask a course question"
-              aria-label="Assistant question"
-            />
-            <button type="submit" disabled={isTyping || !input.trim()}>
-              Send
-            </button>
+            <div className="assistant-input-line">
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                placeholder="Ask about programs, deadlines, documents…"
+                aria-label="Your question"
+                aria-describedby="assistant-privacy"
+              />
+              <button type="submit" className="assistant-send" disabled={isTyping || !input.trim()} aria-label="Send">
+                <SendHorizontal size={18} aria-hidden="true" />
+              </button>
+            </div>
+            <p id="assistant-privacy" className="assistant-privacy">
+              Please don&apos;t share your NIC or phone number here.
+            </p>
           </form>
         </section>
       )}
 
       <button
+        ref={toggleRef}
         type="button"
         className={`floating-assistant-toggle ${isOpen ? 'open' : ''}`}
-        onClick={() => setIsOpen((prev) => !prev)}
-        aria-label={isOpen ? 'Minimize assistant' : 'Open course advisor'}
+        onClick={() => (isOpen ? closePanel() : setIsOpen(true))}
+        aria-label={isOpen ? 'Close course advisor' : 'Open course advisor'}
+        aria-expanded={isOpen}
+        aria-controls={isOpen ? 'course-advisor-panel' : undefined}
       >
         <span className="assistant-icon" aria-hidden="true">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 3C7.03 3 3 6.69 3 11.12c0 2.75 1.69 5.16 4.18 6.6L6 21l4.6-1.86c.86.2 1.78.31 2.73.31 4.97 0 9-3.69 9-8.12S16.97 3 12 3Z" fill="#ffffff" opacity="0.95" />
-            <path d="M8.5 9.5H15.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-            <path d="M8.5 12.5H15.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-            <path d="M8.5 15.5H12.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-          </svg>
+          {isOpen ? (
+            <X size={22} />
+          ) : (
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 3C7.03 3 3 6.69 3 11.12c0 2.75 1.69 5.16 4.18 6.6L6 21l4.6-1.86c.86.2 1.78.31 2.73.31 4.97 0 9-3.69 9-8.12S16.97 3 12 3Z" fill="#ffffff" opacity="0.95" />
+              <path d="M8.5 9.5H15.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              <path d="M8.5 12.5H15.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+              <path d="M8.5 15.5H12.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+          )}
         </span>
-        <span className="assistant-label">Advisor</span>
+        <span className="assistant-label" aria-hidden="true">Advisor</span>
       </button>
     </div>
   )
