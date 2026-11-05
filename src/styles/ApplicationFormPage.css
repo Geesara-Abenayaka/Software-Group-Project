@@ -5,7 +5,7 @@
 }
 
 .form-header {
-  background: linear-gradient(135deg, var(--brand) 0%, #a00000 100%);
+  background: var(--brand);
   color: white;
   text-align: center;
   padding: 30px 20px;
@@ -715,7 +715,7 @@ label.required::before {
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
-  background: linear-gradient(135deg, var(--brand), #b91c1c);
+  background: var(--brand);
   color: #fff;
 }
 

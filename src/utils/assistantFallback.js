@@ -86,7 +86,7 @@ const FALLBACK_COURSES = [
   }
 ]
 
-const FALLBACK_FOLLOW_UPS = ['Find my programme', 'How do I apply?', 'What documents do I need?']
+const FALLBACK_FOLLOW_UPS = ['Find my program', 'How do I apply?', 'What documents do I need?']
 
 // Words that say nothing about a student's interest; ignored when ranking programs.
 const STOP_WORDS = new Set([

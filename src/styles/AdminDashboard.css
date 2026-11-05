@@ -211,7 +211,7 @@
 
 .add-program-btn {
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, var(--brand) 0%, #a30000 100%);
+  background: var(--brand);
   color: white;
   border: none;
   border-radius: 8px;
@@ -226,7 +226,7 @@
 }
 
 .add-program-btn:hover {
-  background: linear-gradient(135deg, #a30000 0%, var(--brand) 100%);
+  background: var(--brand-dark);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(139, 26, 26, 0.3);
 }
@@ -672,7 +672,7 @@
 
 .save-btn {
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, var(--brand) 0%, #a30000 100%);
+  background: var(--brand);
   color: white;
   border: none;
   border-radius: 6px;
@@ -683,7 +683,7 @@
 }
 
 .save-btn:hover {
-  background: linear-gradient(135deg, #a30000 0%, var(--brand) 100%);
+  background: var(--brand-dark);
   box-shadow: 0 4px 8px rgba(139, 26, 26, 0.3);
 }
 

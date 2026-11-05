@@ -498,7 +498,7 @@
 
 .online-application-btn {
   padding: 15px 40px;
-  background: linear-gradient(135deg, var(--brand) 0%, #a00000 100%);
+  background: var(--brand);
   color: var(--on-brand);
   border: none;
   border-radius: 6px;
@@ -510,7 +510,7 @@
 }
 
 .online-application-btn:hover {
-  background: linear-gradient(135deg, #a00000 0%, var(--brand) 100%);
+  background: var(--brand-dark);
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(139, 26, 26, 0.3);
 }

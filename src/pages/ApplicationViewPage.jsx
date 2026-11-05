@@ -8,6 +8,7 @@ import Breadcrumbs from '../components/Breadcrumbs';
 import { formatReference } from '../utils/applicationReference';
 import StatusPill from '../components/StatusPill';
 import { toast } from '../utils/toast';
+import { formatDateTime } from '../utils/formatDate';
 import usePageTitle from '../utils/usePageTitle';
 
 const fetchWithTimeout = async (url, timeoutMs = 8000) => {
@@ -177,7 +178,7 @@ function ApplicationViewPage() {
           Application ID: {application._id}
         </p>
         <p style={{ marginTop: '5px', fontSize: '13px' }}>
-          Submitted: {new Date(application.submittedAt).toLocaleString()}
+          Submitted: {formatDateTime(application.submittedAt)}
         </p>
       </div>
 

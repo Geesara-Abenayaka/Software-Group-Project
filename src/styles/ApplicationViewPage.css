@@ -21,7 +21,7 @@
 
 .back-btn-header {
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, var(--brand) 0%, #a00000 100%);
+  background: var(--brand);
   color: white;
   border: none;
   border-radius: 6px;

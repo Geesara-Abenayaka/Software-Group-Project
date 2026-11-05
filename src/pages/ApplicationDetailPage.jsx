@@ -5,6 +5,7 @@ import API_BASE_URL from '../utils/apiConfig';
 import '../styles/AdminDashboard.css';
 import '../styles/ApplicationDetailPage.css';
 import AdminLayout from '../components/AdminLayout';
+import { formatDate } from '../utils/formatDate';
 import useDialogFocus from '../utils/useDialogFocus';
 import Breadcrumbs from '../components/Breadcrumbs';
 import StatusPill from '../components/StatusPill';
@@ -114,7 +115,7 @@ function ApplicationDetailPage() {
           status: app.status.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
           email: app.email,
           mobile: app.mobile,
-          submittedAt: new Date(app.submittedAt).toLocaleDateString()
+          submittedAt: formatDate(app.submittedAt)
         }));
         
         setApplications(transformedApplications);

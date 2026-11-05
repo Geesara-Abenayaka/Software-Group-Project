@@ -9,7 +9,7 @@ import '../styles/FloatingAssistant.css'
 const PROGRAMS_KEY = 'floating_assistant_programs_v1'
 const HISTORY_KEY = 'floating_assistant_history_v2'
 
-const FIND_PROGRAMME = 'Find my programme'
+const FIND_PROGRAMME = 'Find my program'
 const CANCEL_QUIZ = 'Cancel quiz'
 
 const GENERAL_SUGGESTIONS = [FIND_PROGRAMME, 'What documents do I need?', 'How do I apply?', 'Compare MSc in CS and Master of CS']
@@ -292,7 +292,7 @@ function FloatingAssistant() {
   const cancelQuiz = () => {
     setQuizStep(null)
     setQuizAnswers({})
-    addMessages(createMessage('bot', 'Quiz cancelled. Ask me anything about the programmes.'))
+    addMessages(createMessage('bot', 'Quiz cancelled. Ask me anything about the programs.'))
   }
 
   const answerQuiz = (option) => {
@@ -313,15 +313,15 @@ function FloatingAssistant() {
 
     const results = scorePrograms(answers, programs)
     if (results.length > 0) {
-      addMessages(answer, createMessage('bot', 'Here are the programmes that fit you best:', { source: 'quiz' }))
+      addMessages(answer, createMessage('bot', 'Here are the programs that fit you best:', { source: 'quiz' }))
       setRecommendationCards(results.map(({ program, reason }) => ({ ...toRecommendation(program), reason })))
       return
     }
 
     const offered = programs.filter((program) => !program.isProposed)
     const reply = offered.length > 0
-      ? 'No programme matched all your answers. These are the programmes we offer; ask me a question about any of them.'
-      : 'I couldn\'t load the programmes just now. Please try again in a moment.'
+      ? 'No program matched all your answers. These are the programs we offer; ask me a question about any of them.'
+      : 'I couldn\'t load the programs just now. Please try again in a moment.'
     addMessages(answer, createMessage('bot', reply, { source: 'quiz' }))
     setRecommendationCards(offered.map(toRecommendation))
   }
@@ -341,7 +341,7 @@ function FloatingAssistant() {
       return
     }
 
-    if (normalize(trimmed) === normalize(FIND_PROGRAMME)) {
+    if (normalize(trimmed) === normalize(FIND_PROGRAMME) || normalize(trimmed) === normalize('Find my programme')) {
       startQuiz()
       return
     }
@@ -445,7 +445,7 @@ function FloatingAssistant() {
       const { generateCourseDetailsPDF } = await import('../utils/pdfGenerator')
       generateCourseDetailsPDF(data.data)
     } catch {
-      addMessages(createMessage('bot', 'Sorry, I couldn\'t load that programme\'s details.'))
+      addMessages(createMessage('bot', 'Sorry, I couldn\'t load that program\'s details.'))
     }
   }
 
