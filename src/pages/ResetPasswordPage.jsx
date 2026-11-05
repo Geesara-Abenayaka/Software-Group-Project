@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import '../App.css'
-import uomLogo from '../assets/uom-logo.png'
+import SiteHeader from '../components/SiteHeader'
 
 const ADMIN_RECOVERY_EMAIL = 'admin@uom.lk'
 
@@ -135,17 +135,9 @@ function ResetPasswordPage() {
 
   return (
     <div className="app">
-      <header className="header">
-        <div className="header-content">
-          <img src={uomLogo} alt="University of Moratuwa logo" className="uom-logo" />
-          <div className="header-text">
-            <h1 className="university-name">University of Moratuwa</h1>
-            <p className="portal-subtitle">Admin Portal</p>
-          </div>
-        </div>
-      </header>
+      <SiteHeader subtitle="Admin Portal" />
 
-      <div className="content-area">
+      <main className="content-area" id="main" tabIndex={-1}>
         <button className="back-button" onClick={() => navigate('/login')}>
           <span className="back-arrow">←</span>
           <span>Back to Login</span>
@@ -156,7 +148,7 @@ function ResetPasswordPage() {
             <div className="lock-icon">🔒</div>
           </div>
 
-          <h2 className="login-title">{isCodeSent ? 'Reset Password' : 'Forgot Password'}</h2>
+          <h1 className="login-title">{isCodeSent ? 'Reset Password' : 'Forgot Password'}</h1>
           <p className="login-subtitle">
             {isCodeSent
               ? 'Enter the verification code sent to your email and set a new password.'
@@ -255,7 +247,7 @@ function ResetPasswordPage() {
         <footer className="footer">
           © 2024 University of Moratuwa. All rights reserved.
         </footer>
-      </div>
+      </main>
     </div>
   )
 }

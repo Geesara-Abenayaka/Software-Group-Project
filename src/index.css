@@ -11,6 +11,7 @@
   --brand-light: #b91c1c;       /* gradients only */
   --brand-tint: #fef2f2;        /* soft backgrounds, chips */
   --brand-tint-strong: #fee2e2;
+  --brand-text: #8b1a1a;        /* links and maroon text */
   --on-brand: #ffffff;          /* text on maroon */
 
   /* Neutrals */
@@ -78,4 +79,27 @@ body {
 
 #root {
   min-height: 100vh;
+}
+
+/* Hidden until a keyboard user tabs to it, then shown over the maroon header */
+.skip-link {
+  position: absolute;
+  left: var(--space-4);
+  top: -100px;
+  z-index: 3000;
+  padding: var(--space-2) var(--space-4);
+  background: var(--surface);
+  color: var(--brand-text);
+  border-radius: var(--radius-pill);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.skip-link:focus {
+  top: var(--space-2);
+}
+
+/* The skip link focuses <main>; no outline around the whole page content */
+main[tabindex='-1']:focus {
+  outline: none;
 }

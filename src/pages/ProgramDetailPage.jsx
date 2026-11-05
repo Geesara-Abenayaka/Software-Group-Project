@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import '../styles/ProgramDetailPage.css';
 import { generateCourseDetailsPDF, generateCallForApplicationPDF } from '../utils/pdfGenerator';
 import API_BASE_URL from '../utils/apiConfig';
-import uomLogo from '../assets/uom-logo.png';
+import SiteHeader from '../components/SiteHeader';
 
 function ProgramDetailPage() {
   const { shortCode } = useParams();
@@ -112,24 +112,16 @@ function ProgramDetailPage() {
 
   return (
     <div className="app">
-      <header className="header">
-        <div className="header-content">
-          <img src={uomLogo} alt="University of Moratuwa logo" className="uom-logo" />
-          <div className="header-text">
-            <h1 className="university-name">University of Moratuwa</h1>
-            <p className="portal-subtitle">Postgraduate Management Information System</p>
-          </div>
-        </div>
-      </header>
+      <SiteHeader showAdminLogin />
 
-      <div className="content-area">
+      <main className="content-area" id="main" tabIndex={-1}>
         <div className="detail-container">
           <button type="button" onClick={handleBackToHome} className="back-to-home-btn">
             <span className="back-arrow">←</span> Back to Home
           </button>
 
           <div className="detail-content">
-            <h2 className="detail-title">{program.title}</h2>
+            <h1 className="detail-title">{program.title}</h1>
             <div className="detail-title-divider"></div>
             
             <p className="detail-description">{program.detailedDescription || program.description}</p>
@@ -202,7 +194,7 @@ function ProgramDetailPage() {
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

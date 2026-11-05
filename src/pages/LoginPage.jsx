@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import '../App.css'
 import API_BASE_URL from '../utils/apiConfig'
-import uomLogo from '../assets/uom-logo.png'
+import SiteHeader from '../components/SiteHeader'
 
 function LoginPage() {
   const [email, setEmail] = useState('')
@@ -34,17 +34,9 @@ function LoginPage() {
 
   return (
     <div className="app">
-      <header className="header">
-        <div className="header-content">
-          <img src={uomLogo} alt="University of Moratuwa logo" className="uom-logo" />
-          <div className="header-text">
-            <h1 className="university-name">University of Moratuwa</h1>
-            <p className="portal-subtitle">Admin Portal</p>
-          </div>
-        </div>
-      </header>
+      <SiteHeader subtitle="Admin Portal" />
 
-      <div className="content-area">
+      <main className="content-area" id="main" tabIndex={-1}>
         <button className="back-button" onClick={() => navigate('/')}>
           <span className="back-arrow">←</span>
           <span>Back to Home</span>
@@ -55,7 +47,7 @@ function LoginPage() {
             <div className="lock-icon">🔒</div>
           </div>
 
-          <h2 className="login-title">Admin Login</h2>
+          <h1 className="login-title">Admin Login</h1>
           <p className="login-subtitle">Enter your credentials to access the admin panel</p>
 
           <form className="login-form" onSubmit={handleSubmit}>
@@ -98,7 +90,7 @@ function LoginPage() {
         <footer className="footer">
           © 2024 University of Moratuwa. All rights reserved.
         </footer>
-      </div>
+      </main>
     </div>
   )
 }

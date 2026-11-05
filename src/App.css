@@ -42,6 +42,21 @@
   left: 0;
 }
 
+/* Crest and name together link home; on desktop the crest stays at the far left */
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: var(--on-brand);
+  text-decoration: none;
+}
+
+.header-brand:focus-visible {
+  outline: 2px solid var(--on-brand);
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
+}
+
 .header-text {
   display: flex;
   flex-direction: column;
