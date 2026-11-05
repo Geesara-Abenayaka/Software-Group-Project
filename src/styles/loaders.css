@@ -52,6 +52,10 @@
   border-radius: var(--radius-sm);
 }
 
+/* Placeholders take their space at once but stay invisible for the first 200 ms,
+   so a quick load doesn't flash them and a slow one doesn't make the page jump */
+.skeleton-wait { visibility: hidden; }
+
 .skeleton-text { height: 12px; margin-bottom: 10px; }
 .skeleton-title { height: 22px; width: 60%; margin-bottom: 16px; }
 .skeleton-chip { display: inline-block; height: 24px; width: 96px; border-radius: var(--radius-pill); margin-right: 8px; }

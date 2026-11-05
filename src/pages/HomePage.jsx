@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import API_BASE_URL from '../utils/apiConfig';
 import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
+import { ProgramCardSkeleton, TopProgressBar } from '../components/Loaders';
+import useDelayedFlag from '../utils/useDelayedFlag';
 
 function HomePage() {
   const navigate = useNavigate();
@@ -23,6 +25,7 @@ function HomePage() {
   const [loading, setLoading] = useState(!cachedPrograms);
   const [error, setError] = useState(null);
   const [openingProgram, setOpeningProgram] = useState(null);
+  const showSkeletons = useDelayedFlag(loading);
 
   useEffect(() => {
     // Show cached programs straight away, but always refresh them so programs
@@ -76,33 +79,9 @@ function HomePage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="app">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading programs...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="app">
-        <div className="error-container">
-          <h2>Error</h2>
-          <p>{error}</p>
-          <button onClick={fetchPrograms} className="retry-btn">
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="app">
+      <TopProgressBar active={Boolean(openingProgram)} />
       <SiteHeader showAdminLogin />
 
       <main className="content-area" id="main" tabIndex={-1}>
@@ -111,9 +90,25 @@ function HomePage() {
           <p className="programs-subtitle">Explore our range of postgraduate programs and apply today</p>
         </div>
 
-        <div className="programs-grid">
-          {programs.map((program) => (
-            <div key={program._id} className="program-card">
+        {error ? (
+          <div className="error-container">
+            <h2>Error</h2>
+            <p>{error}</p>
+            <button onClick={fetchPrograms} className="retry-btn">
+              Retry
+            </button>
+          </div>
+        ) : (
+        <div className={`programs-grid${loading && !showSkeletons ? ' skeleton-wait' : ''}`} aria-busy={loading}>
+          {loading ? (
+            Array.from({ length: 6 }, (_, index) => <ProgramCardSkeleton key={index} />)
+          ) : programs.map((program, index) => (
+            <div
+              key={program._id}
+              className="program-card stagger-in"
+              // 40 ms steps, capped so a long list doesn't keep the last cards waiting
+              style={{ animationDelay: `${Math.min(index, 8) * 40}ms` }}
+            >
               <div className="card-header">
                   <div className="card-icon">
                   <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -171,6 +166,7 @@ function HomePage() {
             </div>
           ))}
         </div>
+        )}
       </main>
       <SiteFooter />
     </div>
