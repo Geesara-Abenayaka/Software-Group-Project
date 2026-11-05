@@ -4,6 +4,7 @@ import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, Lo
 import '../styles/SearchApplicationsPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import { formatReference } from '../utils/applicationReference';
+import uomLogo from '../assets/uom-logo.png';
 
 const fetchWithTimeout = async (url, timeoutMs = 8000) => {
   const controller = new AbortController();
@@ -264,6 +265,7 @@ function SearchApplicationsPage() {
       <header className="admin-header">
         <div className="admin-header-content">
           <div className="header-left">
+            <img src={uomLogo} alt="University of Moratuwa logo" className="uom-logo" />
             <div className="header-text">
               <h1 className="university-name">University of Moratuwa</h1>
               <p className="portal-subtitle">Postgraduate Management Information System</p>

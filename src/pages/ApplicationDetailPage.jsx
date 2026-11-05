@@ -4,6 +4,7 @@ import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, Lo
 import API_BASE_URL from '../utils/apiConfig';
 import '../styles/AdminDashboard.css';
 import '../styles/ApplicationDetailPage.css';
+import uomLogo from '../assets/uom-logo.png';
 
 const NO_GPA_CATEGORY = 'No GPA';
 
@@ -419,6 +420,7 @@ function ApplicationDetailPage() {
       <header className="admin-header">
         <div className="admin-header-content">
           <div className="header-left">
+            <img src={uomLogo} alt="University of Moratuwa logo" className="uom-logo" />
             <div className="header-text">
               <h1 className="university-name">University of Moratuwa</h1>
               <p className="portal-subtitle">Postgraduate Management Information System</p>

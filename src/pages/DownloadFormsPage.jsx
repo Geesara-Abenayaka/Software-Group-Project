@@ -5,6 +5,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import '../styles/DownloadFormsPage.css';
 import API_BASE_URL from '../utils/apiConfig';
+import uomLogo from '../assets/uom-logo.png';
 
 function DownloadFormsPage() {
   const navigate = useNavigate();
@@ -561,6 +562,7 @@ function DownloadFormsPage() {
       <header className="admin-header">
         <div className="admin-header-content">
           <div className="header-left">
+            <img src={uomLogo} alt="University of Moratuwa logo" className="uom-logo" />
             <div className="header-text">
               <h1 className="university-name">University of Moratuwa</h1>
               <p className="portal-subtitle">Postgraduate Management Information System</p>

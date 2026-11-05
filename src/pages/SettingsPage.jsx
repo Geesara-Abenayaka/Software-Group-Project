@@ -4,6 +4,7 @@ import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, Lo
 import axios from 'axios';
 import '../styles/SettingsPage.css';
 import API_BASE_URL from '../utils/apiConfig';
+import uomLogo from '../assets/uom-logo.png';
 
 const FEEDBACK_FILTERS = [
   { value: '', label: 'All' },
@@ -328,6 +329,7 @@ function SettingsPage() {
       <header className="admin-header">
         <div className="admin-header-content">
           <div className="header-left">
+            <img src={uomLogo} alt="University of Moratuwa logo" className="uom-logo" />
             <div className="header-text">
               <h1 className="university-name">University of Moratuwa</h1>
               <p className="portal-subtitle">Postgraduate Management Information System</p>

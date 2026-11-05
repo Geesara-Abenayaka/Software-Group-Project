@@ -27,9 +27,19 @@
   position: relative;
 }
 
-.graduation-cap-icon {
-  font-size: 32px;
-  filter: brightness(0) invert(1);
+/* University crest, shared by the public and admin headers.
+   The white circle keeps the brown gear readable on the maroon bar. */
+.uom-logo {
+  width: 60px;
+  height: 60px;
+  background-color: var(--on-brand);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.header .uom-logo {
+  position: absolute;
+  left: 0;
 }
 
 .header-text {
