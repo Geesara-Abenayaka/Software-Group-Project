@@ -8,6 +8,7 @@ import {
 import '../styles/AdminDashboard.css';
 import API_BASE_URL from '../utils/apiConfig';
 import AdminLayout from '../components/AdminLayout';
+import { toast } from '../utils/toast';
 import { PageLoader } from '../components/Loaders';
 
 const createEmptyProgram = () => ({
@@ -122,7 +123,7 @@ function AdminDashboard() {
       const data = await response.json();
 
       if (!data.success) {
-        alert('Failed to load program details: ' + (data.message || 'Unknown error'));
+        toast.error(`Couldn't load the program details: ${data.message || 'unknown error'}`);
         return;
       }
 
@@ -133,7 +134,7 @@ function AdminDashboard() {
       setShowEditModal(true);
     } catch (err) {
       console.error('Error loading program details:', err);
-      alert('Failed to load program details: ' + err.message);
+      toast.error(`Couldn't load the program details: ${err.message}`);
     }
   };
 
@@ -220,13 +221,13 @@ function AdminDashboard() {
           p._id === editingProgram._id ? data.data : p
         ));
         handleCloseModal();
-        alert('Program updated successfully!');
+        toast.success('Program updated');
       } else {
-        alert('Failed to update program: ' + (data.message || 'Unknown error'));
+        toast.error(`Couldn't update the program: ${data.message || 'unknown error'}`);
       }
     } catch (err) {
       console.error('Error updating program:', err);
-      alert('Failed to update program: ' + err.message);
+      toast.error(`Couldn't update the program: ${err.message}`);
     }
   };
 
@@ -263,13 +264,13 @@ function AdminDashboard() {
         // Add the new program to the local programs list
         setPrograms([...programs, data.data]);
         handleCloseAddModal();
-        alert('Program added successfully!');
+        toast.success('Program added');
       } else {
-        alert('Failed to add program: ' + (data.message || 'Unknown error'));
+        toast.error(`Couldn't add the program: ${data.message || 'unknown error'}`);
       }
     } catch (err) {
       console.error('Error adding program:', err);
-      alert('Failed to add program: ' + err.message);
+      toast.error(`Couldn't add the program: ${err.message}`);
     }
   };
 
@@ -288,13 +289,13 @@ function AdminDashboard() {
       if (data.success) {
         // Remove the program from the local programs list
         setPrograms(programs.filter(p => p._id !== programId));
-        alert('Program deleted successfully!');
+        toast.success('Program deleted');
       } else {
-        alert('Failed to delete program: ' + (data.message || 'Unknown error'));
+        toast.error(`Couldn't delete the program: ${data.message || 'unknown error'}`);
       }
     } catch (err) {
       console.error('Error deleting program:', err);
-      alert('Failed to delete program: ' + err.message);
+      toast.error(`Couldn't delete the program: ${err.message}`);
     }
   };
 
