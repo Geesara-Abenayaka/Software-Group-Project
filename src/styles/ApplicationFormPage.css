@@ -542,21 +542,6 @@ label.required::before {
   animation: spin 0.8s linear infinite;
 }
 
-.submission-success-icon {
-  width: 56px;
-  height: 56px;
-  margin: 0 auto 20px;
-  border-radius: 50%;
-  background: #f3f4f6;
-  border: 2px solid var(--brand);
-  color: var(--brand);
-  font-size: 30px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .submission-error-icon {
   width: 56px;
   height: 56px;
@@ -577,6 +562,108 @@ label.required::before {
   color: #374151;
   margin: 0;
   font-weight: 500;
+}
+
+.submission-check {
+  display: block;
+  margin: 0 auto 16px;
+}
+
+.submission-steps {
+  list-style: none;
+  margin: 20px auto 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+  width: fit-content;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.submission-steps li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.submission-steps li.is-current {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.submission-steps li.is-done {
+  color: var(--success);
+}
+
+.submission-step-marker {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.submission-steps li.is-current .submission-step-marker {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.submission-steps li.is-done .submission-step-marker {
+  border-color: var(--success);
+  background: var(--success-bg);
+}
+
+.submission-reference {
+  margin: 20px 0 0;
+  padding: 16px 20px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.submission-reference-label {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.submission-reference-number {
+  font-size: 24px;
+  letter-spacing: 1px;
+  color: var(--brand-text);
+  user-select: all;
+}
+
+.submission-reference-note {
+  font-size: 13px;
+  color: var(--ink-muted);
+  max-width: 300px;
+  margin: 0 auto;
+}
+
+.submission-done-btn {
+  margin-top: 20px;
+  padding: 10px 24px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--brand);
+  color: var(--on-brand);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.submission-done-btn:hover {
+  background: var(--brand-dark);
 }
 
 .payment-gate-launch {
