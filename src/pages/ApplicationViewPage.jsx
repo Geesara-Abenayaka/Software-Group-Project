@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import '../styles/ApplicationViewPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import { PageLoader } from '../components/Loaders';
+import Breadcrumbs from '../components/Breadcrumbs';
+import { formatReference } from '../utils/applicationReference';
 import StatusPill from '../components/StatusPill';
 import { toast } from '../utils/toast';
 
@@ -133,9 +135,13 @@ function ApplicationViewPage() {
       <div className="admin-header-fixed">
         <div className="admin-header-content">
           <div className="header-left">
-            <button className="back-btn-header" onClick={() => navigate(-1)}>
-              ← Back
-            </button>
+            <Breadcrumbs
+              items={[
+                { label: 'Applications', to: '/admin/applications' },
+                { label: program?.title || application.program, to: `/admin/applications/${application.program}` },
+                { label: formatReference(application._id) }
+              ]}
+            />
           </div>
           <div className="header-right">
             <div className="status-update-bar">

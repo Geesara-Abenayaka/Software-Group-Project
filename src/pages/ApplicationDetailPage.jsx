@@ -5,6 +5,7 @@ import API_BASE_URL from '../utils/apiConfig';
 import '../styles/AdminDashboard.css';
 import '../styles/ApplicationDetailPage.css';
 import AdminLayout from '../components/AdminLayout';
+import Breadcrumbs from '../components/Breadcrumbs';
 import StatusPill from '../components/StatusPill';
 import useConfirm from '../utils/useConfirm';
 import { toast } from '../utils/toast';
@@ -410,10 +411,13 @@ function ApplicationDetailPage() {
 
           {/* Top bar: back + title + avatar */}
           <div className="detail-topbar">
-            <button className="detail-back-btn" onClick={() => navigate('/admin/applications')}>
-              ←
-            </button>
             <div className="detail-topbar-text">
+              <Breadcrumbs
+                items={[
+                  { label: 'Applications', to: '/admin/applications' },
+                  { label: program?.title || 'Program' }
+                ]}
+              />
               <h2 className="detail-topbar-title">{program?.title || 'Program'}</h2>
               <p className="detail-topbar-sub">Application Management</p>
             </div>

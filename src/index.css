@@ -183,6 +183,47 @@ body {
   box-shadow: var(--focus-ring);
 }
 
+/* Breadcrumbs (admin application pages) */
+.breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+.breadcrumbs li {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.breadcrumbs a {
+  border-radius: var(--radius-sm);
+  color: var(--brand-text);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.breadcrumbs a:hover {
+  text-decoration: underline;
+}
+
+.breadcrumbs a:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.breadcrumbs__separator {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
 /* Application status, the same on every admin page: soft background, dark text, a dot and the word */
 .status-pill {
   display: inline-flex;
