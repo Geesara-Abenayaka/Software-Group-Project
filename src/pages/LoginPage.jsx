@@ -1,13 +1,16 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
-import { ArrowLeft, Lock } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Lock } from 'lucide-react'
 import '../App.css'
 import API_BASE_URL from '../utils/apiConfig'
 import SiteHeader from '../components/SiteHeader'
 import SiteFooter from '../components/SiteFooter'
 import { ButtonSpinner } from '../components/Loaders'
 import PasswordInput from '../components/PasswordInput'
+
+// Wrong email or password: shown with a link to reset the password
+const WRONG_DETAILS = 'wrong-details'
 
 function LoginPage() {
   const [email, setEmail] = useState('')
@@ -34,7 +37,14 @@ function LoginPage() {
         navigate('/admin/dashboard')
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed')
+      // Say what went wrong and what to do next
+      if (!err.response) {
+        setError("We couldn't reach the server. Check your connection and try again.")
+      } else if (err.response.status === 401) {
+        setError(WRONG_DETAILS)
+      } else {
+        setError(err.response.data?.message || 'Sign in failed. Please try again.')
+      }
     } finally {
       setLoading(false)
     }
@@ -64,7 +74,10 @@ function LoginPage() {
                 autoComplete="username"
                 autoFocus
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value)
+                  setError('')
+                }}
                 required
               />
             </div>
@@ -76,15 +89,30 @@ function LoginPage() {
                 placeholder="••••••••"
                 autoComplete="current-password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                  setError('')
+                }}
                 required
               />
             </div>
 
-            {error && <p style={{color: 'red', fontSize: '14px', marginBottom: '10px'}}>{error}</p>}
+            {error && (
+              <div className="form-alert form-alert--error" role="alert">
+                <AlertCircle size={16} aria-hidden="true" />
+                <p className="form-alert__body">
+                  {error === WRONG_DETAILS ? (
+                    <>
+                      Incorrect email or password. Check them, or{' '}
+                      <Link to="/reset-password">reset your password</Link>.
+                    </>
+                  ) : error}
+                </p>
+              </div>
+            )}
 
             <button type="submit" className="sign-in-button" disabled={loading}>
-              {loading ? <><ButtonSpinner />Signing in…</> : 'Sign In'}
+              {loading ? <><ButtonSpinner />Signing in…</> : 'Sign in'}
             </button>
 
             <Link to="/reset-password" className="forgot-password">

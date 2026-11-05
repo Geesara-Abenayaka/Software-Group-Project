@@ -639,6 +639,10 @@
   margin-bottom: 20px;
 }
 
+.login-form .form-alert {
+  margin-bottom: var(--space-4);
+}
+
 .form-input {
   width: 100%;
   min-height: 44px;
