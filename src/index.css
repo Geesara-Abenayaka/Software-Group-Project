@@ -66,6 +66,13 @@
   --space-6: 24px;
   --space-8: 32px;
   --space-10: 40px;
+
+  /* Motion — one rhythm for the whole site */
+  --duration-fast: 150ms;       /* hover, press, small fades */
+  --duration: 250ms;            /* page fade, panels opening */
+  --duration-slow: 400ms;       /* success check */
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);   /* things arriving */
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);    /* things leaving: about 60% of the arrive time */
 }
 
 html {
