@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import '../styles/ApplicationViewPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import { PageLoader } from '../components/Loaders';
+import { toast } from '../utils/toast';
 
 const fetchWithTimeout = async (url, timeoutMs = 8000) => {
   const controller = new AbortController();
@@ -85,13 +86,13 @@ function ApplicationViewPage() {
         const statusMessage = newStatus === 'approved' ? 'approved' : 
                             newStatus === 'rejected' ? 'rejected' : 
                             newStatus === 'under-review' ? 'marked as under review' : 'updated';
-        alert(`Application ${statusMessage} successfully!`);
+        toast.success(`Application ${statusMessage}`);
       } else {
-        alert('Failed to update application status: ' + result.message);
+        toast.error(`Couldn't update the status: ${result.message}`);
       }
     } catch (error) {
       console.error('Error updating application status:', error);
-      alert('Error updating application status');
+      toast.error("Couldn't update the status. Please try again.");
     }
   };
 
