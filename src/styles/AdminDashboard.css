@@ -1179,3 +1179,44 @@ button.add-program-card {
 .add-program-card-subtitle {
   display: block;
 }
+
+/* Phones and tablets: the six tabs don't fit, so they scroll sideways inside the bar
+   instead of making the whole page scroll sideways */
+@media (max-width: 1024px) {
+  .navbar-content {
+    overflow-x: auto;
+    padding: 0 1rem;
+    scrollbar-width: none;
+  }
+
+  .navbar-content::-webkit-scrollbar {
+    display: none;
+  }
+
+  .navbar-btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .navbar-btn:focus-visible {
+    outline-offset: -3px;
+  }
+}
+
+/* The long subtitle wraps instead of pushing the header wider than the screen */
+@media (max-width: 768px) {
+  .admin-header-content {
+    padding: 0 1rem;
+  }
+
+  .header-left {
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  .admin-header .header-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: left;
+  }
+}

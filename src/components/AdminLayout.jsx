@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User } from 'lucide-react';
 import uomLogo from '../assets/uom-logo.png';
@@ -25,6 +25,11 @@ function AdminLayout({ children, onClick }) {
   // "Admin · Search · UoM CSE Postgraduate": the tab that is active for this address
   const activeItem = NAV_ITEMS.find((item) => pathname === item.to || pathname.startsWith(`${item.to}/`));
   usePageTitle(`Admin · ${activeItem?.label || 'Portal'}`);
+  // On narrow screens the tab bar scrolls sideways; bring the current tab into view
+  const activeTabRef = useRef(null);
+  useEffect(() => {
+    activeTabRef.current?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [pathname]);
 
   useEffect(() => {
     if (!localStorage.getItem('user')) {
@@ -90,6 +95,7 @@ function AdminLayout({ children, onClick }) {
             return (
               <button
                 key={item.to}
+                ref={isActive ? activeTabRef : undefined}
                 className={isActive ? 'navbar-btn active' : 'navbar-btn'}
                 aria-current={isActive ? 'page' : undefined}
                 onClick={pathname === item.to ? undefined : () => navigate(item.to)}
