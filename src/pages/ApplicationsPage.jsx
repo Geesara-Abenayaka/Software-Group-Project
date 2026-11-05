@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User } from 'lucide-react';
+import { User } from 'lucide-react';
 import '../styles/ApplicationsPage.css';
 import API_BASE_URL from '../utils/apiConfig';
-import uomLogo from '../assets/uom-logo.png';
+import AdminLayout from '../components/AdminLayout';
 
 const fetchWithTimeout = async (url, timeoutMs = 8000) => {
   const controller = new AbortController();
@@ -19,19 +19,12 @@ const fetchWithTimeout = async (url, timeoutMs = 8000) => {
 
 function ApplicationsPage() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
   const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-    } else {
-      navigate('/login');
-    }
     fetchPrograms();
-  }, []);  // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   const fetchPrograms = async () => {
     try {
@@ -80,76 +73,16 @@ function ApplicationsPage() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    navigate('/login');
-  };
-
   const handleViewApplications = (programShortCode) => {
     // Navigate to view applications for this program
     navigate(`/admin/applications/${programShortCode}`);
   };
 
   return (
-    <div className="admin-app">
-      <header className="admin-header">
-        <div className="admin-header-content">
-          <div className="header-left">
-            <img src={uomLogo} alt="University of Moratuwa logo" className="uom-logo" />
-            <div className="header-text">
-              <h1 className="university-name">University of Moratuwa</h1>
-              <p className="portal-subtitle">Postgraduate Management Information System</p>
-            </div>
-          </div>
-          <div className="header-right">
-            <div className="user-info">
-              <div className="user-avatar">
-                <User size={20} color="white" />
-              </div>
-              <div className="user-details">
-                <span className="user-role">Admin User</span>
-                <span className="user-email">{user?.email || 'admin@uom.lk'}</span>
-              </div>
-            </div>
-            <button className="logout-btn" onClick={handleLogout}>
-              <LogOut size={16} />
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <nav className="admin-navbar">
-        <div className="navbar-content">
-          <button className="navbar-btn" onClick={() => navigate('/admin/dashboard')}>
-            <GraduationCap size={18} className="nav-icon" />
-            Programs
-          </button>
-          <button className="navbar-btn active">
-            <ClipboardList size={18} className="nav-icon" />
-            Applications
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/search')}>
-            <Search size={18} className="nav-icon" />
-            Search
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/download')}>
-            <Download size={18} className="nav-icon" />
-            Download
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/marks')}>
-            <BarChart2 size={18} className="nav-icon" />
-            Marks
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/settings')}>
-            <Settings size={18} className="nav-icon" />
-            Settings
-          </button>
-        </div>
-      </nav>
+    <AdminLayout>
 
       <div className="admin-content-full">
-        <main className="admin-main-full applications-main">
+        <main id="main" tabIndex={-1} className="admin-main-full applications-main">
           <div className="page-title-row">
             <h2 className="page-heading">Applications</h2>
           </div>
@@ -187,7 +120,7 @@ function ApplicationsPage() {
           </div>
         </main>
       </div>
-    </div>
+    </AdminLayout>
   );
 }
 
