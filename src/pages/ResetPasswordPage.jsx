@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import { ArrowLeft, Lock } from 'lucide-react'
 import '../App.css'
 import SiteHeader from '../components/SiteHeader'
 import SiteFooter from '../components/SiteFooter'
@@ -138,15 +139,10 @@ function ResetPasswordPage() {
     <div className="app">
       <SiteHeader subtitle="Admin Portal" />
 
-      <main className="content-area" id="main" tabIndex={-1}>
-        <button className="back-button" onClick={() => navigate('/login')}>
-          <span className="back-arrow">←</span>
-          <span>Back to Login</span>
-        </button>
-
+      <main className="content-area auth-page" id="main" tabIndex={-1}>
         <div className="login-card">
           <div className="lock-icon-circle">
-            <div className="lock-icon">🔒</div>
+            <Lock size={28} className="lock-icon" aria-hidden="true" />
           </div>
 
           <h1 className="login-title">{isCodeSent ? 'Reset Password' : 'Forgot Password'}</h1>
@@ -244,6 +240,11 @@ function ResetPasswordPage() {
             </form>
           )}
         </div>
+
+        <Link to="/login" className="auth-back-link">
+          <ArrowLeft size={16} aria-hidden="true" />
+          Back to login
+        </Link>
       </main>
       <SiteFooter />
     </div>

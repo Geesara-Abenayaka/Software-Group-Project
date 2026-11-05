@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import { ArrowLeft, Lock } from 'lucide-react'
 import '../App.css'
 import API_BASE_URL from '../utils/apiConfig'
 import SiteHeader from '../components/SiteHeader'
@@ -42,19 +43,14 @@ function LoginPage() {
     <div className="app">
       <SiteHeader subtitle="Admin Portal" />
 
-      <main className="content-area" id="main" tabIndex={-1}>
-        <button className="back-button" onClick={() => navigate('/')}>
-          <span className="back-arrow">←</span>
-          <span>Back to Home</span>
-        </button>
-
+      <main className="content-area auth-page" id="main" tabIndex={-1}>
         <div className="login-card">
           <div className="lock-icon-circle">
-            <div className="lock-icon">🔒</div>
+            <Lock size={28} className="lock-icon" aria-hidden="true" />
           </div>
 
           <h1 className="login-title">Admin Login</h1>
-          <p className="login-subtitle">Enter your credentials to access the admin panel</p>
+          <p className="login-subtitle">Sign in to manage programs and applications</p>
 
           <form className="login-form" onSubmit={handleSubmit}>
             <div className="form-group">
@@ -92,6 +88,11 @@ function LoginPage() {
             </Link>
           </form>
         </div>
+
+        <Link to="/" className="auth-back-link">
+          <ArrowLeft size={16} aria-hidden="true" />
+          Back to programs
+        </Link>
       </main>
       <SiteFooter />
     </div>
