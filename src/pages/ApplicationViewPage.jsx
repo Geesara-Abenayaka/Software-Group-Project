@@ -7,6 +7,7 @@ import Breadcrumbs from '../components/Breadcrumbs';
 import { formatReference } from '../utils/applicationReference';
 import StatusPill from '../components/StatusPill';
 import { toast } from '../utils/toast';
+import usePageTitle from '../utils/usePageTitle';
 
 const fetchWithTimeout = async (url, timeoutMs = 8000) => {
   const controller = new AbortController();
@@ -25,6 +26,7 @@ function ApplicationViewPage() {
   const { applicationId } = useParams();
   const [user, setUser] = useState(null);
   const [application, setApplication] = useState(null);
+  usePageTitle(application ? `Admin · Application ${formatReference(application._id)}` : 'Admin · Application');
   const [program, setProgram] = useState(null);
   const [loading, setLoading] = useState(true);
 

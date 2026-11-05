@@ -4,6 +4,7 @@ import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, Lo
 import uomLogo from '../assets/uom-logo.png';
 import '../styles/AdminDashboard.css';
 import '../styles/admin-tables.css';
+import usePageTitle from '../utils/usePageTitle';
 
 const NAV_ITEMS = [
   { to: '/admin/dashboard', label: 'Programs', icon: GraduationCap },
@@ -21,6 +22,9 @@ function AdminLayout({ children, onClick }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [user] = useState(() => JSON.parse(localStorage.getItem('user') || 'null'));
+  // "Admin · Search · UoM CSE Postgraduate": the tab that is active for this address
+  const activeItem = NAV_ITEMS.find((item) => pathname === item.to || pathname.startsWith(`${item.to}/`));
+  usePageTitle(`Admin · ${activeItem?.label || 'Portal'}`);
 
   useEffect(() => {
     if (!localStorage.getItem('user')) {

@@ -8,11 +8,13 @@ import SiteHeader from '../components/SiteHeader'
 import SiteFooter from '../components/SiteFooter'
 import { ButtonSpinner } from '../components/Loaders'
 import PasswordInput from '../components/PasswordInput'
+import usePageTitle from '../utils/usePageTitle'
 
 // Wrong email or password: shown with a link to reset the password
 const WRONG_DETAILS = 'wrong-details'
 
 function LoginPage() {
+  usePageTitle('Admin login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')

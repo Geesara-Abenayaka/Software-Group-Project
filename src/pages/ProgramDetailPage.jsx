@@ -19,6 +19,7 @@ import SiteFooter from '../components/SiteFooter';
 import { Skeleton } from '../components/Loaders';
 import useDelayedFlag from '../utils/useDelayedFlag';
 import { getDaysLeft, getToday } from '../utils/deadline';
+import usePageTitle from '../utils/usePageTitle';
 
 const CONTACT_EMAIL = 'adeeshaw@cse.mrt.ac.lk';
 
@@ -62,6 +63,7 @@ function ProgramDetailPage() {
     ? location.state.program
     : null;
   const [program, setProgram] = useState(initialProgram);
+  usePageTitle(program?.title);
   const [loading, setLoading] = useState(!initialProgram);
   const [error, setError] = useState(null);
   const showSkeleton = useDelayedFlag(loading);

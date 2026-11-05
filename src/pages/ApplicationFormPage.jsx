@@ -11,6 +11,7 @@ import { DOCUMENT_LABELS, MAX_GPA, getFieldLabel, getSectionCompletion, getSecti
 import { loadDraft, mergeDraft, removeDraft, saveDraft } from '../utils/applicationDraft';
 import { formatReference } from '../utils/applicationReference';
 import { toast } from '../utils/toast';
+import usePageTitle from '../utils/usePageTitle';
 
 // Shown in the submission modal; handleSubmit moves through them with setSubmissionStep.
 const SUBMISSION_STEPS = ['Checking your details', 'Uploading documents', 'Submitting application'];
@@ -368,6 +369,7 @@ const removeIndexedError = (errors, index) => {
 function ApplicationFormPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  usePageTitle(location.state?.programName ? `Apply: ${location.state.programName}` : 'Apply');
   const [mobileError, setMobileError] = useState('');
   const [telephoneError, setTelephoneError] = useState('');
   const [nicError, setNicError] = useState('');
