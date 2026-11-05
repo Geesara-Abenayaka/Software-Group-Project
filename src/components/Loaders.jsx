@@ -7,25 +7,32 @@ export function Skeleton({ as = 'div', className = '', style }) {
   return <Tag className={`skeleton ${className}`} style={style} aria-hidden="true" />;
 }
 
-// Placeholder in the shape of a programme card on the home page: header, description,
-// specializations, then the deadline lines and the button below a divider.
+// Placeholder in the shape of a programme card on the home page (icon and title, description,
+// specialization chips, then the deadline and the button below a divider). Reuses the card's layout classes.
 export function ProgramCardSkeleton() {
   return (
     <div className="program-card-skeleton" aria-hidden="true">
-      <Skeleton className="program-card-skeleton__header" />
-      <div className="program-card-skeleton__body">
-        <Skeleton className="skeleton-text" style={{ width: '92%' }} />
-        <Skeleton className="skeleton-text" style={{ width: '74%' }} />
-        <div style={{ marginTop: '22px' }}>
-          {['30%', '55%', '45%', '60%', '40%', '50%'].map((width) => (
-            <Skeleton key={width} className="skeleton-text" style={{ width }} />
-          ))}
+      <div className="program-card__top">
+        <Skeleton style={{ width: '44px', height: '44px', borderRadius: '50%', flex: 'none' }} />
+        <div style={{ flex: 1 }}>
+          <Skeleton className="skeleton-text" style={{ width: '70%', height: '18px', marginBottom: '8px' }} />
+          <Skeleton className="skeleton-text" style={{ width: '40%', marginBottom: 0 }} />
         </div>
       </div>
-      <div className="program-card-skeleton__footer">
-        <Skeleton className="skeleton-text" style={{ width: '65%' }} />
-        <Skeleton className="skeleton-text" style={{ width: '45%' }} />
-        <Skeleton className="skeleton-button" style={{ height: '40px', marginTop: '16px' }} />
+      <div>
+        <Skeleton className="skeleton-text" style={{ width: '95%' }} />
+        <Skeleton className="skeleton-text" style={{ width: '100%' }} />
+        <Skeleton className="skeleton-text" style={{ width: '60%', marginBottom: 0 }} />
+      </div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+        <Skeleton className="skeleton-chip" style={{ marginRight: 0 }} />
+        <Skeleton className="skeleton-chip" style={{ marginRight: 0 }} />
+        <Skeleton className="skeleton-chip" style={{ width: '150px', marginRight: 0 }} />
+      </div>
+      <div className="program-card__footer">
+        <Skeleton className="skeleton-text" style={{ width: '90%' }} />
+        <Skeleton className="skeleton-text" style={{ width: '30%', marginBottom: 0 }} />
+        <Skeleton className="skeleton-button" style={{ height: '44px', marginTop: '12px' }} />
       </div>
     </div>
   );
