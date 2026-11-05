@@ -8,6 +8,7 @@ import {
 import '../styles/AdminDashboard.css';
 import API_BASE_URL from '../utils/apiConfig';
 import AdminLayout from '../components/AdminLayout';
+import useConfirm from '../utils/useConfirm';
 import { toast } from '../utils/toast';
 import { PageLoader } from '../components/Loaders';
 
@@ -54,6 +55,7 @@ const fromProgramForm = ({ eligibilityText, ...program }) => ({
 });
 
 function AdminDashboard() {
+  const { confirm, confirmDialog } = useConfirm();
   const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -275,7 +277,14 @@ function AdminDashboard() {
   };
 
   const handleDeleteProgram = async (programId) => {
-    if (!confirm('Are you sure you want to delete this program? This action cannot be undone.')) {
+    const program = programs.find((item) => item._id === programId);
+    const confirmed = await confirm({
+      title: `Delete ${program?.title || 'this program'}?`,
+      message: "Applications for it will no longer show a program title. This can't be undone.",
+      confirmLabel: 'Delete program',
+      danger: true
+    });
+    if (!confirmed) {
       return;
     }
 
@@ -699,6 +708,7 @@ function AdminDashboard() {
           </div>
         </div>
       )}
+      {confirmDialog}
     </AdminLayout>
   );
 }

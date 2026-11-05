@@ -5,6 +5,7 @@ import API_BASE_URL from '../utils/apiConfig';
 import '../styles/AdminDashboard.css';
 import '../styles/ApplicationDetailPage.css';
 import AdminLayout from '../components/AdminLayout';
+import useConfirm from '../utils/useConfirm';
 import { toast } from '../utils/toast';
 import { TableSkeleton } from '../components/Loaders';
 import useDelayedFlag from '../utils/useDelayedFlag';
@@ -37,6 +38,7 @@ const sortByCategoryPriority = (list) => {
 };
 
 function ApplicationDetailPage() {
+  const { confirm, confirmDialog } = useConfirm();
   const navigate = useNavigate();
   const { programId } = useParams();
   const [program, setProgram] = useState(null);
@@ -356,7 +358,12 @@ function ApplicationDetailPage() {
   };
 
   const handleDeleteApplication = async (applicationId, fullName) => {
-    const confirmed = window.confirm(`Are you sure you want to delete the application for ${fullName}? This action cannot be undone.`);
+    const confirmed = await confirm({
+      title: `Delete the application from ${fullName}?`,
+      message: "This can't be undone.",
+      confirmLabel: 'Delete application',
+      danger: true
+    });
     
     if (!confirmed) {
       return;
@@ -661,6 +668,7 @@ function ApplicationDetailPage() {
 
         </div>
       </div>
+      {confirmDialog}
     </AdminLayout>
   );
 }

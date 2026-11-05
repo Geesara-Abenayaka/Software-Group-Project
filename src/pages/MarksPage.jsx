@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import '../styles/MarksPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import AdminLayout from '../components/AdminLayout';
+import useConfirm from '../utils/useConfirm';
 import { toast } from '../utils/toast';
 
 function MarksPage() {
+  const { confirm, confirmDialog } = useConfirm();
   const [selectedCourse, setSelectedCourse] = useState(() => {
     // Restore selected course from localStorage or default to 'All'
     return localStorage.getItem('selectedCourse') || 'All';
@@ -308,7 +310,13 @@ function MarksPage() {
   const handleDelete = async (appId, event) => {
     event.stopPropagation(); // Prevent row selection when clicking delete
     
-    if (!window.confirm('Are you sure you want to delete this application?')) {
+    const confirmed = await confirm({
+      title: 'Delete this application?',
+      message: "This can't be undone.",
+      confirmLabel: 'Delete application',
+      danger: true
+    });
+    if (!confirmed) {
       return;
     }
 
@@ -709,6 +717,7 @@ function MarksPage() {
           </div>
         </main>
       </div>
+      {confirmDialog}
     </AdminLayout>
   );
 }

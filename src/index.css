@@ -37,6 +37,8 @@
   --success: #15803d;  --success-bg: #dcfce7;
   --warning: #b45309;  --warning-bg: #fef3c7;
   --danger: #991b1b;   --danger-bg: #fee2e2;
+  --danger-solid: #dc2626;      /* delete buttons: bright red, never mistaken for the maroon primary */
+  --danger-solid-dark: #b91c1c; /* hover */
   --info: #1e40af;     --info-bg: #dbeafe;
 
   /* Shape */
@@ -157,6 +159,9 @@ body {
 
 .btn--quiet { background: transparent; color: var(--ink-muted); }
 .btn--quiet:hover:not(:disabled) { background: var(--surface-muted); color: var(--ink); }
+
+.btn--danger { background: var(--danger-solid); color: var(--on-brand); }
+.btn--danger:hover:not(:disabled) { background: var(--danger-solid-dark); }
 
 .btn--sm { min-height: 36px; padding: 6px 12px; font-size: var(--text-sm); }
 

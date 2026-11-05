@@ -3,6 +3,7 @@ import axios from 'axios';
 import '../styles/SettingsPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import AdminLayout from '../components/AdminLayout';
+import useConfirm from '../utils/useConfirm';
 
 const FEEDBACK_FILTERS = [
   { value: '', label: 'All' },
@@ -20,6 +21,7 @@ const getFeedbackLabel = (item) => {
 const monthStart = (date, offset = 0) => new Date(date.getFullYear(), date.getMonth() + offset, 1);
 
 function SettingsPage() {
+  const { confirm, confirmDialog } = useConfirm();
   const [user] = useState(() => JSON.parse(localStorage.getItem('user') || 'null'));
   // null means not set: no date range keeps applications open all year.
   const [currentDateRange, setCurrentDateRange] = useState(null);
@@ -114,7 +116,12 @@ function SettingsPage() {
   };
 
   const handleResetFacts = async () => {
-    if (!confirm('Replace the facts with the default text?')) {
+    const confirmed = await confirm({
+      title: 'Replace the facts with the default text?',
+      message: 'The Course Advisor facts edited here are replaced by the default text.',
+      confirmLabel: 'Replace with default'
+    });
+    if (!confirmed) {
       return;
     }
 
@@ -530,6 +537,7 @@ function SettingsPage() {
           </div>
         </main>
       </div>
+      {confirmDialog}
     </AdminLayout>
   );
 }

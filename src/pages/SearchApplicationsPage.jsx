@@ -5,6 +5,7 @@ import '../styles/SearchApplicationsPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import { formatReference } from '../utils/applicationReference';
 import AdminLayout from '../components/AdminLayout';
+import useConfirm from '../utils/useConfirm';
 import { toast } from '../utils/toast';
 import { Skeleton, TableSkeleton } from '../components/Loaders';
 import useDelayedFlag from '../utils/useDelayedFlag';
@@ -25,6 +26,7 @@ const fetchWithTimeout = async (url, timeoutMs = 8000) => {
 };
 
 function SearchApplicationsPage() {
+  const { confirm, confirmDialog } = useConfirm();
   const navigate = useNavigate();
   const [applications, setApplications] = useState([]);
   const [filteredApplications, setFilteredApplications] = useState([]);
@@ -214,7 +216,12 @@ function SearchApplicationsPage() {
   };
 
   const handleDeleteApplication = async (applicationId, fullName) => {
-    const confirmed = window.confirm(`Are you sure you want to delete the application for ${fullName}? This action cannot be undone.`);
+    const confirmed = await confirm({
+      title: `Delete the application from ${fullName}?`,
+      message: "This can't be undone.",
+      confirmLabel: 'Delete application',
+      danger: true
+    });
     
     if (!confirmed) {
       return;
@@ -562,6 +569,7 @@ function SearchApplicationsPage() {
           </div>
         </main>
       </div>
+      {confirmDialog}
     </AdminLayout>
   );
 }
