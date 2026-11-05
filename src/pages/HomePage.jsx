@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import API_BASE_URL from '../utils/apiConfig';
+import SiteHeader from '../components/SiteHeader';
+import SiteFooter from '../components/SiteFooter';
 
 function HomePage() {
   const navigate = useNavigate();
@@ -74,10 +76,6 @@ function HomePage() {
     }
   };
 
-  const handleAdminLogin = () => {
-    navigate('/login');
-  };
-
   if (loading) {
     return (
       <div className="app">
@@ -105,32 +103,11 @@ function HomePage() {
 
   return (
     <div className="app">
-      <header className="header">
-        <div className="header-content">
-          <div className="graduation-cap-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="white" stroke="none">
-              <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/>
-              <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/>
-            </svg>
-          </div>
-          <div className="header-text">
-            <h1 className="university-name">University of Moratuwa</h1>
-            <p className="portal-subtitle">Postgraduate Management Information System</p>
-          </div>
-          <button type="button" className="admin-login-btn" onClick={handleAdminLogin}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b0000" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-              <polyline points="10 17 15 12 10 7"/>
-              <line x1="15" y1="12" x2="3" y2="12"/>
-            </svg>
-            Admin Login
-          </button>
-        </div>
-      </header>
+      <SiteHeader showAdminLogin />
 
-      <div className="content-area">
+      <main className="content-area" id="main" tabIndex={-1}>
         <div className="programs-header">
-          <h2 className="programs-title">Postgraduate Programs</h2>
+          <h1 className="programs-title">Postgraduate Programs</h1>
           <p className="programs-subtitle">Explore our range of postgraduate programs and apply today</p>
         </div>
 
@@ -194,7 +171,8 @@ function HomePage() {
             </div>
           ))}
         </div>
-      </div>
+      </main>
+      <SiteFooter />
     </div>
   );
 }

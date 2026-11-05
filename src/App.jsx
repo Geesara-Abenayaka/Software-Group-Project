@@ -1,5 +1,4 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
-import { useEffect, useState } from 'react'
 import LoginPage from './pages/LoginPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import HomePage from './pages/HomePage'
@@ -14,41 +13,15 @@ import DownloadFormsPage from './pages/DownloadFormsPage'
 import MarksPage from './pages/MarksPage'
 import SettingsPage from './pages/SettingsPage'
 import FloatingAssistant from './components/FloatingAssistant'
-import {
-  isAdminDarkModeEnabled,
-  subscribeToAdminThemeChange
-} from './utils/adminTheme'
 
 import './App.css'
 
 function AppRoutes() {
   const location = useLocation()
-  const [isDarkModeEnabled, setIsDarkModeEnabled] = useState(() => isAdminDarkModeEnabled())
   const hideChatbot =
     location.pathname.startsWith('/admin') ||
     location.pathname === '/login' ||
     location.pathname === '/reset-password'
-
-  useEffect(() => {
-    const unsubscribe = subscribeToAdminThemeChange((enabled) => {
-      setIsDarkModeEnabled(enabled)
-    })
-
-    return () => {
-      unsubscribe()
-    }
-  }, [])
-
-  useEffect(() => {
-    const isAdminRoute = location.pathname.startsWith('/admin')
-    const shouldEnableDarkMode = isAdminRoute && isDarkModeEnabled
-
-    document.body.classList.toggle('admin-dark-mode', shouldEnableDarkMode)
-
-    return () => {
-      document.body.classList.remove('admin-dark-mode')
-    }
-  }, [location.pathname, isDarkModeEnabled])
 
   return (
     <>

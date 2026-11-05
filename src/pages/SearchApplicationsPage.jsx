@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User, FileText, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { Download, FileText, Clock, CheckCircle2, XCircle } from 'lucide-react';
 import '../styles/SearchApplicationsPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import { formatReference } from '../utils/applicationReference';
+import AdminLayout from '../components/AdminLayout';
 
 const fetchWithTimeout = async (url, timeoutMs = 8000) => {
   const controller = new AbortController();
@@ -19,7 +20,6 @@ const fetchWithTimeout = async (url, timeoutMs = 8000) => {
 
 function SearchApplicationsPage() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
   const [applications, setApplications] = useState([]);
   const [filteredApplications, setFilteredApplications] = useState([]);
   const [programs, setPrograms] = useState([]);
@@ -38,12 +38,6 @@ function SearchApplicationsPage() {
   });
 
   useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-    } else {
-      navigate('/login');
-    }
     fetchPrograms();
     fetchApplications();
   }, [navigate]);
@@ -212,11 +206,6 @@ function SearchApplicationsPage() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    navigate('/login');
-  };
-
   const handleDeleteApplication = async (applicationId, fullName) => {
     const confirmed = window.confirm(`Are you sure you want to delete the application for ${fullName}? This action cannot be undone.`);
     
@@ -260,63 +249,10 @@ function SearchApplicationsPage() {
 
 
   return (
-    <div className="admin-app">
-      <header className="admin-header">
-        <div className="admin-header-content">
-          <div className="header-left">
-            <div className="header-text">
-              <h1 className="university-name">University of Moratuwa</h1>
-              <p className="portal-subtitle">Postgraduate Management Information System</p>
-            </div>
-          </div>
-          <div className="header-right">
-            <div className="user-info">
-              <div className="user-avatar">
-                <User size={20} color="white" />
-              </div>
-              <div className="user-details">
-                <span className="user-role">Admin User</span>
-                <span className="user-email">{user?.email || 'admin@uom.lk'}</span>
-              </div>
-            </div>
-            <button className="logout-btn" onClick={handleLogout}>
-              <LogOut size={16} />
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
-      <nav className="admin-navbar">
-        <div className="navbar-content">
-          <button className="navbar-btn" onClick={() => navigate('/admin/dashboard')}>
-            <GraduationCap size={18} className="nav-icon" />
-            Programs
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/applications')}>
-            <ClipboardList size={18} className="nav-icon" />
-            Applications
-          </button>
-          <button className="navbar-btn active">
-            <Search size={18} className="nav-icon" />
-            Search
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/download')}>
-            <Download size={18} className="nav-icon" />
-            Download
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/marks')}>
-            <BarChart2 size={18} className="nav-icon" />
-            Marks
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/settings')}>
-            <Settings size={18} className="nav-icon" />
-            Settings
-          </button>
-        </div>
-      </nav>
+    <AdminLayout>
 
       <div className="admin-content-full">
-        <main className="admin-main-full">
+        <main id="main" tabIndex={-1} className="admin-main-full">
           <div className="search-header">
             <h2 className="search-title">Search Applications</h2>
             <p className="search-subtitle">View and manage all postgraduate applications across programs</p>
@@ -622,7 +558,7 @@ function SearchApplicationsPage() {
           )}
         </main>
       </div>
-    </div>
+    </AdminLayout>
   );
 }
 

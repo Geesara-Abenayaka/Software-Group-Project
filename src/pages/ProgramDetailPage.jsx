@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import '../styles/ProgramDetailPage.css';
 import { generateCourseDetailsPDF, generateCallForApplicationPDF } from '../utils/pdfGenerator';
 import API_BASE_URL from '../utils/apiConfig';
+import SiteHeader from '../components/SiteHeader';
+import SiteFooter from '../components/SiteFooter';
 
 function ProgramDetailPage() {
   const { shortCode } = useParams();
@@ -111,29 +113,16 @@ function ProgramDetailPage() {
 
   return (
     <div className="app">
-      <header className="header">
-        <div className="header-content">
-          <div className="graduation-cap-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="white" stroke="none">
-              <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/>
-              <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/>
-            </svg>
-          </div>
-          <div className="header-text">
-            <h1 className="university-name">University of Moratuwa</h1>
-            <p className="portal-subtitle">Postgraduate Management Information System</p>
-          </div>
-        </div>
-      </header>
+      <SiteHeader showAdminLogin />
 
-      <div className="content-area">
+      <main className="content-area" id="main" tabIndex={-1}>
         <div className="detail-container">
           <button type="button" onClick={handleBackToHome} className="back-to-home-btn">
             <span className="back-arrow">←</span> Back to Home
           </button>
 
           <div className="detail-content">
-            <h2 className="detail-title">{program.title}</h2>
+            <h1 className="detail-title">{program.title}</h1>
             <div className="detail-title-divider"></div>
             
             <p className="detail-description">{program.detailedDescription || program.description}</p>
@@ -206,7 +195,8 @@ function ProgramDetailPage() {
             </div>
           </div>
         </div>
-      </div>
+      </main>
+      <SiteFooter />
     </div>
   );
 }

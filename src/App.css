@@ -8,12 +8,12 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: #e8e8e8;
+  background-color: var(--page);
 }
 
 .header {
-  background-color: #8b1a1a;
-  padding: 18px 40px;
+  background-color: var(--brand);
+  padding: 20px 30px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
@@ -22,14 +22,39 @@
   align-items: center;
   justify-content: center;
   gap: 15px;
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
   position: relative;
 }
 
-.graduation-cap-icon {
-  font-size: 32px;
-  filter: brightness(0) invert(1);
+/* University crest, shared by the public and admin headers.
+   The white circle keeps the brown gear readable on the maroon bar. */
+.uom-logo {
+  width: 60px;
+  height: 60px;
+  background-color: var(--on-brand);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.header .uom-logo {
+  position: absolute;
+  left: 0;
+}
+
+/* Crest and name together link home; on desktop the crest stays at the far left */
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: var(--on-brand);
+  text-decoration: none;
+}
+
+.header-brand:focus-visible {
+  outline: 2px solid var(--on-brand);
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
 }
 
 .header-text {
@@ -40,16 +65,16 @@
 }
 
 .university-name {
-  color: rgb(244, 243, 243);
-  font-size: 20px;
-  font-weight: 700;
+  color: var(--on-brand);
+  font-size: 22px;
+  font-weight: 600;
   margin: 0;
   letter-spacing: 0.3px;
 }
 
 .portal-subtitle {
-  color: rgba(255, 255, 255, 0.95);
-  font-size: 12px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
   margin: 0;
   font-weight: 300;
 }
@@ -58,8 +83,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background-color: white;
-  color: #8b1a1a;
+  background-color: var(--surface);
+  color: var(--brand);
   border: none;
   padding: 10px 20px;
   border-radius: 5px;
@@ -72,8 +97,48 @@
 }
 
 .admin-login-btn:hover {
-  background-color: #f8f8f8;
+  background-color: var(--surface-muted);
   transform: translateY(-1px);
+}
+
+/* Tablets and phones: crest, name and an icon-only login button in one row,
+   instead of the crest and button lying on top of the centred name */
+@media (max-width: 768px) {
+  .header {
+    padding: 14px 16px;
+  }
+
+  .header-content {
+    justify-content: space-between;
+  }
+
+  .header .uom-logo {
+    position: static;
+    width: 44px;
+    height: 44px;
+  }
+
+  .header .header-text {
+    text-align: left;
+  }
+
+  .header .university-name {
+    font-size: 17px;
+  }
+
+  .header .portal-subtitle {
+    font-size: 12px;
+  }
+
+  .admin-login-btn {
+    position: static;
+    flex-shrink: 0;
+    padding: 14px;
+  }
+
+  .admin-login-label {
+    display: none;
+  }
 }
 
 .login-icon {
@@ -82,8 +147,10 @@
 
 .content-area {
   flex: 1;
-  padding: 40px;
-  max-width: 1400px;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  max-width: 1200px;
   width: 100%;
   margin: 0 auto;
 }
@@ -95,13 +162,13 @@
 .programs-title {
   font-size: 28px;
   font-weight: 700;
-  color: #2d2d2d;
+  color: var(--ink);
   margin-bottom: 8px;
 }
 
 .programs-subtitle {
   font-size: 14px;
-  color: #666;
+  color: var(--ink-muted);
   font-weight: 400;
 }
 
@@ -125,7 +192,7 @@
 }
 
 .program-card {
-  background: white;
+  background: var(--surface);
   border-radius: 6px;
   padding: 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
@@ -164,7 +231,7 @@
 .card-description {
   padding: 20px 20px 15px 20px;
   font-size: 13px;
-  color: #555;
+  color: var(--ink-muted);
   line-height: 1.6;
   margin: 0;
   min-height: 65px;
@@ -177,7 +244,7 @@
 .specializations-label {
   font-size: 13px;
   font-weight: 600;
-  color: #333;
+  color: var(--ink);
   margin-bottom: 8px;
 }
 
@@ -197,7 +264,7 @@
 
 .card-info {
   padding: 15px 20px;
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border-subtle);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -209,7 +276,7 @@
   align-items: center;
   gap: 8px;
   font-size: 12px;
-  color: #666;
+  color: var(--muted);
 }
 
 .info-icon {
@@ -217,7 +284,7 @@
 }
 
 .info-text {
-  color: #555;
+  color: var(--ink-muted);
 }
 
 .view-details-btn {
@@ -239,73 +306,13 @@
   transform: translateY(-1px);
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-.app {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background-color: #f5f5f5;
-}
-
-.header {
-  background-color: #8b1a1a;
-  padding: 20px 30px;
-}
-
-.header-content {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  max-width: 1200px;
-  /* margin: 0 auto; */
-}
-
-.graduation-cap-icon {
-  font-size: 32px;
-  filter: brightness(0) invert(1);
-}
-
-.header-text {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.university-name {
-  color: white;
-  font-size: 22px;
-  font-weight: 600;
-  margin: 0;
-}
-
-.portal-subtitle {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 13px;
-  margin: 0;
-}
-
-.content-area {
-  flex: 1;
-  padding: 30px;
-  display: flex;
-  flex-direction: column;
-  max-width: 1200px;
-  width: 100%;
-  margin: 0 auto;
-}
-
 .back-button {
   display: flex;
   align-items: center;
   gap: 8px;
   background: none;
   border: none;
-  color: #666;
+  color: var(--ink-muted);
   font-size: 14px;
   cursor: pointer;
   padding: 0;
@@ -315,7 +322,7 @@
 }
 
 .back-button:hover {
-  color: #333;
+  color: var(--ink);
 }
 
 .back-arrow {
@@ -323,7 +330,7 @@
 }
 
 .login-card {
-  background: white;
+  background: var(--surface);
   border-radius: 8px;
   padding: 50px 60px;
   max-width: 450px;
@@ -339,7 +346,7 @@
   width: 80px;
   height: 80px;
   border-radius: 50%;
-  background-color: #8b1a1a;
+  background-color: var(--brand);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -354,14 +361,14 @@
 .login-title {
   font-size: 28px;
   font-weight: 600;
-  color: #333;
+  color: var(--ink);
   margin-bottom: 10px;
   text-align: center;
 }
 
 .login-subtitle {
   font-size: 14px;
-  color: #666;
+  color: var(--muted);
   margin-bottom: 35px;
   text-align: center;
 }
@@ -377,7 +384,7 @@
 .form-label {
   display: block;
   font-size: 14px;
-  color: #333;
+  color: var(--ink);
   margin-bottom: 8px;
   font-weight: 500;
 }
@@ -385,28 +392,28 @@
 .form-input {
   width: 100%;
   padding: 12px 15px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-strong);
   border-radius: 4px;
   font-size: 14px;
   transition: border-color 0.2s;
-  background-color: #fafafa;
+  background-color: var(--surface-muted);
 }
 
 .form-input:focus {
   outline: none;
-  border-color: #8b1a1a;
-  background-color: white;
+  border-color: var(--brand);
+  background-color: var(--surface);
 }
 
 .form-input::placeholder {
-  color: #bbb;
+  color: var(--subtle);
 }
 
 .sign-in-button {
   width: 100%;
   padding: 14px;
-  background-color: #8b1a1a;
-  color: white;
+  background-color: var(--brand);
+  color: var(--on-brand);
   border: none;
   border-radius: 4px;
   font-size: 16px;
@@ -418,29 +425,88 @@
 }
 
 .sign-in-button:hover {
-  background-color: #6d1414;
+  background-color: var(--brand-dark);
 }
 
 .forgot-password {
   display: block;
   text-align: center;
-  color: #8b1a1a;
+  color: var(--brand);
   font-size: 14px;
   text-decoration: none;
   transition: color 0.2s;
 }
 
 .forgot-password:hover {
-  color: #6d1414;
+  color: var(--brand-dark);
   text-decoration: underline;
 }
 
-.footer {
-  text-align: center;
-  color: #666;
+/* Footer shared by the public pages */
+.site-footer {
+  background: var(--brand);
+  color: var(--on-brand-muted);
+  font-size: 14px;
+}
+
+.site-footer__content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-8) 30px var(--space-6);
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: var(--space-6);
+  line-height: 1.5;
+}
+
+.site-footer__heading {
+  margin-bottom: var(--space-2);
+  color: var(--on-brand);
   font-size: 13px;
-  margin-top: auto;
-  padding-top: 30px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.site-footer__links {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.site-footer a {
+  color: var(--on-brand);
+  text-decoration: none;
+}
+
+.site-footer a:hover {
+  text-decoration: underline;
+}
+
+.site-footer a:focus-visible {
+  outline: 2px solid var(--on-brand);
+  outline-offset: 2px;
+}
+
+.site-footer__copy {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--space-4) 30px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 13px;
+}
+
+@media (max-width: 768px) {
+  .site-footer__content {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+    padding: var(--space-6) 16px;
+  }
+
+  .site-footer__copy {
+    padding: var(--space-4) 16px;
+  }
 }
 
 /* Loading and Error States */
@@ -458,8 +524,8 @@
 .loading-spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #e5e7eb;
-  border-top-color: #8b1a1a;
+  border: 4px solid var(--border);
+  border-top-color: var(--brand);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 20px;
@@ -473,7 +539,7 @@
 
 .loading-container p,
 .error-container p {
-  color: #6b7280;
+  color: var(--muted);
   font-size: 16px;
 }
 
@@ -486,8 +552,8 @@
 .retry-btn {
   margin-top: 20px;
   padding: 10px 24px;
-  background-color: #8b1a1a;
-  color: white;
+  background-color: var(--brand);
+  color: var(--on-brand);
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -497,5 +563,5 @@
 }
 
 .retry-btn:hover {
-  background-color: #6d1414;
+  background-color: var(--brand-dark);
 }

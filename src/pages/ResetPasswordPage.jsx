@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import '../App.css'
+import SiteHeader from '../components/SiteHeader'
+import SiteFooter from '../components/SiteFooter'
 
 const ADMIN_RECOVERY_EMAIL = 'admin@uom.lk'
 
@@ -134,22 +136,9 @@ function ResetPasswordPage() {
 
   return (
     <div className="app">
-      <header className="header">
-        <div className="header-content">
-          <div className="graduation-cap-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="white" stroke="none">
-              <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3z" />
-              <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z" />
-            </svg>
-          </div>
-          <div className="header-text">
-            <h1 className="university-name">University of Moratuwa</h1>
-            <p className="portal-subtitle">Admin Portal</p>
-          </div>
-        </div>
-      </header>
+      <SiteHeader subtitle="Admin Portal" />
 
-      <div className="content-area">
+      <main className="content-area" id="main" tabIndex={-1}>
         <button className="back-button" onClick={() => navigate('/login')}>
           <span className="back-arrow">←</span>
           <span>Back to Login</span>
@@ -160,7 +149,7 @@ function ResetPasswordPage() {
             <div className="lock-icon">🔒</div>
           </div>
 
-          <h2 className="login-title">{isCodeSent ? 'Reset Password' : 'Forgot Password'}</h2>
+          <h1 className="login-title">{isCodeSent ? 'Reset Password' : 'Forgot Password'}</h1>
           <p className="login-subtitle">
             {isCodeSent
               ? 'Enter the verification code sent to your email and set a new password.'
@@ -255,11 +244,8 @@ function ResetPasswordPage() {
             </form>
           )}
         </div>
-
-        <footer className="footer">
-          © 2024 University of Moratuwa. All rights reserved.
-        </footer>
-      </div>
+      </main>
+      <SiteFooter />
     </div>
   )
 }

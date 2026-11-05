@@ -22,7 +22,7 @@
   border: none;
   background: transparent;
   font-size: 1.25rem;
-  color: #8b0000;
+  color: var(--brand);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -43,7 +43,7 @@
 .detail-topbar-title {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #8b0000;
+  color: var(--brand);
   margin: 0;
   line-height: 1.25;
 }
@@ -57,7 +57,8 @@
 .detail-topbar-avatar {
   width: 40px;
   height: 40px;
-  border: 1.5px solid #8b0000;
+  border: 1.5px solid var(--brand);
+  color: var(--brand);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -186,9 +187,9 @@
 }
 
 .detail-sort-btn.active {
-  background: #8b0000;
+  background: var(--brand);
   color: #ffffff;
-  border-color: #8b0000;
+  border-color: var(--brand);
 }
 
 /* -- Table ------------------------------------------------- */
@@ -248,7 +249,7 @@
 }
 
 .detail-app-id-link:hover {
-  color: #8b0000;
+  color: var(--brand);
 }
 
 /* -- Category badges --------------------------------------- */
@@ -323,7 +324,7 @@
 }
 
 .detail-status-select:focus {
-  border-color: #8b0000;
+  border-color: var(--brand);
 }
 
 .detail-delete-btn {
@@ -433,7 +434,7 @@
 
 .bulk-email-title {
   margin: 0;
-  color: #8b0000;
+  color: var(--brand);
   font-size: 1rem;
 }
 
@@ -446,7 +447,8 @@
 .bulk-email-header-icon {
   width: 34px;
   height: 34px;
-  border: 1px solid #8b0000;
+  border: 1px solid var(--brand);
+  color: var(--brand);
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -500,7 +502,7 @@
 .bulk-email-link-btn {
   border: none;
   background: transparent;
-  color: #8b0000;
+  color: var(--brand);
   font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
@@ -594,7 +596,7 @@
 
 .bulk-email-remove:hover {
   color: #dc2626;
-  background: #fee2e2;
+  background: var(--danger-bg);
 }
 
 .bulk-email-editor-heading {
@@ -724,7 +726,7 @@
   width: 36px;
   height: 36px;
   border: 3px solid #e5e7eb;
-  border-top-color: #8b0000;
+  border-top-color: var(--brand);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }

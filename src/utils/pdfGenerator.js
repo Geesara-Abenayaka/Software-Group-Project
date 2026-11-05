@@ -9,7 +9,7 @@ export const generateCourseDetailsPDF = (program) => {
   const doc = new jsPDF();
   
   // Set up colors and fonts
-  const primaryColor = [0, 51, 102]; // Dark blue
+  const primaryColor = [139, 26, 26]; // UoM maroon, same as --brand
   const secondaryColor = [100, 100, 100]; // Gray
   
   let yPosition = 20;
@@ -179,7 +179,7 @@ export const generateCallForApplicationPDF = (program) => {
   // University Logo/Header area (placeholder with text)
   doc.setFontSize(16);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(0, 51, 102);
+  doc.setTextColor(139, 26, 26);
   doc.text('UNIVERSITY OF MORATUWA', pageWidth / 2, yPosition, { align: 'center' });
   yPosition += 7;
   
@@ -197,7 +197,7 @@ export const generateCallForApplicationPDF = (program) => {
   yPosition += 10;
   
   // Separator line
-  doc.setDrawColor(0, 51, 102);
+  doc.setDrawColor(139, 26, 26);
   doc.setLineWidth(0.5);
   doc.line(leftMargin, yPosition, pageWidth - rightMargin, yPosition);
   yPosition += 15;
@@ -217,7 +217,7 @@ export const generateCallForApplicationPDF = (program) => {
   // Subject line - bold and centered
   doc.setFontSize(12);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(0, 51, 102);
+  doc.setTextColor(139, 26, 26);
   const subjectText = `CALL FOR APPLICATIONS - ${program.title.toUpperCase()}`;
   const subjectLines = doc.splitTextToSize(subjectText, contentWidth);
   subjectLines.forEach(line => {
@@ -313,7 +313,7 @@ export const generateCallForApplicationPDF = (program) => {
   }
   
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(0, 51, 102);
+  doc.setTextColor(139, 26, 26);
   doc.text('How to Apply:', leftMargin, yPosition);
   yPosition += 7;
   

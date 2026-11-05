@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User } from 'lucide-react';
+import { Download } from 'lucide-react';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import '../styles/DownloadFormsPage.css';
 import API_BASE_URL from '../utils/apiConfig';
+import AdminLayout from '../components/AdminLayout';
 
 function DownloadFormsPage() {
-  const navigate = useNavigate();
-  const [user, setUser] = useState(null);
   const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -20,14 +18,8 @@ function DownloadFormsPage() {
   ]);
 
   useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-    } else {
-      navigate('/login');
-    }
     fetchPrograms();
-  }, [navigate]);
+  }, []);
 
   const fetchPrograms = async () => {
     try {
@@ -43,11 +35,6 @@ function DownloadFormsPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    navigate('/login');
   };
 
   const dataFields = [
@@ -557,62 +544,9 @@ function DownloadFormsPage() {
   };
 
   return (
-    <div className="admin-app">
-      <header className="admin-header">
-        <div className="admin-header-content">
-          <div className="header-left">
-            <div className="header-text">
-              <h1 className="university-name">University of Moratuwa</h1>
-              <p className="portal-subtitle">Postgraduate Management Information System</p>
-            </div>
-          </div>
-          <div className="header-right">
-            <div className="user-info">
-              <div className="user-avatar">
-                <User size={20} color="white" />
-              </div>
-              <div className="user-details">
-                <span className="user-role">Admin User</span>
-                <span className="user-email">{user?.email || 'admin@uom.lk'}</span>
-              </div>
-            </div>
-            <button className="logout-btn" onClick={handleLogout}>
-              <LogOut size={16} />
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
-      <nav className="admin-navbar">
-        <div className="navbar-content">
-          <button className="navbar-btn" onClick={() => navigate('/admin/dashboard')}>
-            <GraduationCap size={18} className="nav-icon" />
-            Programs
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/applications')}>
-            <ClipboardList size={18} className="nav-icon" />
-            Applications
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/search')}>
-            <Search size={18} className="nav-icon" />
-            Search
-          </button>
-          <button className="navbar-btn active">
-            <Download size={18} className="nav-icon" />
-            Download
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/marks')}>
-            <BarChart2 size={18} className="nav-icon" />
-            Marks
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/settings')}>
-            <Settings size={18} className="nav-icon" />
-            Settings
-          </button>
-        </div>
-      </nav>
+    <AdminLayout>
       <div className="admin-content-full">
-        <main className="admin-main-full">
+        <main id="main" tabIndex={-1} className="admin-main-full">
           <div className="download-header">
             <h2 className="download-title">Download Forms</h2>
             <p className="download-subtitle">Download application forms, templates, and applicant data</p>
@@ -737,7 +671,7 @@ function DownloadFormsPage() {
           </div>
         </main>
       </div>
-    </div>
+    </AdminLayout>
   );
 }
 

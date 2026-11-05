@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User, Mail, Send, X } from 'lucide-react';
+import { Download, User, Mail, Send, X } from 'lucide-react';
 import API_BASE_URL from '../utils/apiConfig';
 import '../styles/AdminDashboard.css';
 import '../styles/ApplicationDetailPage.css';
+import AdminLayout from '../components/AdminLayout';
 
 const NO_GPA_CATEGORY = 'No GPA';
 
@@ -35,7 +36,6 @@ const sortByCategoryPriority = (list) => {
 function ApplicationDetailPage() {
   const navigate = useNavigate();
   const { programId } = useParams();
-  const [user, setUser] = useState(null);
   const [program, setProgram] = useState(null);
   const [applications, setApplications] = useState([]);
   const [filteredApplications, setFilteredApplications] = useState([]);
@@ -55,12 +55,6 @@ function ApplicationDetailPage() {
   const [bulkEmailSuccess, setBulkEmailSuccess] = useState('');
 
   useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-    } else {
-      navigate('/login');
-    }
     fetchProgramAndApplications();
   }, [programId]);  // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -384,11 +378,6 @@ function ApplicationDetailPage() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    navigate('/login');
-  };
-
   const statusCounts = getStatusCounts();
   const selectedRecipients = getSelectableApplications(applications)
     .filter((application) => selectedRecipientIds.includes(application.id));
@@ -414,66 +403,10 @@ function ApplicationDetailPage() {
   };
 
   return (
-    <div className="admin-app">
-      {/* ── Header ── */}
-      <header className="admin-header">
-        <div className="admin-header-content">
-          <div className="header-left">
-            <div className="header-text">
-              <h1 className="university-name">University of Moratuwa</h1>
-              <p className="portal-subtitle">Postgraduate Management Information System</p>
-            </div>
-          </div>
-          <div className="header-right">
-            <div className="user-info">
-              <div className="user-avatar">
-                <User size={20} color="white" />
-              </div>
-              <div className="user-details">
-                <span className="user-role">Admin User</span>
-                <span className="user-email">{user?.email || 'admin@uom.lk'}</span>
-              </div>
-            </div>
-            <button className="logout-btn" onClick={handleLogout}>
-              <LogOut size={16} />
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
-
-      {/* ── Navbar ── */}
-      <nav className="admin-navbar">
-        <div className="navbar-content">
-          <button className="navbar-btn" onClick={() => navigate('/admin/dashboard')}>
-            <GraduationCap size={18} className="nav-icon" />
-            Programs
-          </button>
-          <button className="navbar-btn active" onClick={() => navigate('/admin/applications')}>
-            <ClipboardList size={18} className="nav-icon" />
-            Applications
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/search')}>
-            <Search size={18} className="nav-icon" />
-            Search
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/download')}>
-            <Download size={18} className="nav-icon" />
-            Download
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/marks')}>
-            <BarChart2 size={18} className="nav-icon" />
-            Marks
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/settings')}>
-            <Settings size={18} className="nav-icon" />
-            Settings
-          </button>
-        </div>
-      </nav>
+    <AdminLayout>
 
       {/* ── Page content ── */}
-      <div className="admin-content-full">
+      <div id="main" tabIndex={-1} role="main" className="admin-content-full">
         <div className="detail-page-wrap">
 
           {/* Top bar: back + title + avatar */}
@@ -486,7 +419,7 @@ function ApplicationDetailPage() {
               <p className="detail-topbar-sub">Application Management</p>
             </div>
             <div className="detail-topbar-avatar">
-              <User size={20} color="#8b0000" />
+              <User size={20} />
             </div>
           </div>
 
@@ -633,7 +566,7 @@ function ApplicationDetailPage() {
                     </div>
                   </div>
                   <div className="bulk-email-header-icon">
-                    <User size={18} color="#8b0000" />
+                    <User size={18} />
                   </div>
                 </div>
 
@@ -728,7 +661,7 @@ function ApplicationDetailPage() {
 
         </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 }
 
