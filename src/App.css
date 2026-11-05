@@ -101,6 +101,46 @@
   transform: translateY(-1px);
 }
 
+/* Tablets and phones: crest, name and an icon-only login button in one row,
+   instead of the crest and button lying on top of the centred name */
+@media (max-width: 768px) {
+  .header {
+    padding: 14px 16px;
+  }
+
+  .header-content {
+    justify-content: space-between;
+  }
+
+  .header .uom-logo {
+    position: static;
+    width: 44px;
+    height: 44px;
+  }
+
+  .header .header-text {
+    text-align: left;
+  }
+
+  .header .university-name {
+    font-size: 17px;
+  }
+
+  .header .portal-subtitle {
+    font-size: 12px;
+  }
+
+  .admin-login-btn {
+    position: static;
+    flex-shrink: 0;
+    padding: 14px;
+  }
+
+  .admin-login-label {
+    display: none;
+  }
+}
+
 .login-icon {
   font-size: 16px;
 }
