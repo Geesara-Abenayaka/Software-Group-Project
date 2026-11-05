@@ -277,16 +277,18 @@ function ProgramDetailPage() {
                   </div>
                 )}
 
-                <h2 className="facts-card__title">Key facts</h2>
                 {facts.length > 0 && (
-                  <dl className="facts-list">
-                    {facts.map(([label, value]) => (
-                      <div key={label}>
-                        <dt>{label}</dt>
-                        <dd>{value}</dd>
-                      </div>
-                    ))}
-                  </dl>
+                  <>
+                    <h2 className="facts-card__title">Key facts</h2>
+                    <dl className="facts-list">
+                      {facts.map(([label, value]) => (
+                        <div key={label}>
+                          <dt>{label}</dt>
+                          <dd>{value}</dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </>
                 )}
 
                 <div className="facts-card__deadline">

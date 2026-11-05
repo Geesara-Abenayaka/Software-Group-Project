@@ -348,6 +348,10 @@
 .facts-card__deadline {
   display: flex;
   gap: var(--space-3);
+}
+
+/* Divider only when there are facts above it */
+.facts-list + .facts-card__deadline {
   padding-top: var(--space-4);
   border-top: 1px solid var(--border);
 }
