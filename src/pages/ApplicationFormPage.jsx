@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { AlertTriangle, Info } from 'lucide-react';
+import { AlertTriangle, Calendar, Info, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import '../styles/ApplicationFormPage.css';
 import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
@@ -56,6 +56,55 @@ const createEmptyFormData = (program) => ({
   declaration: false,
   captcha: ''
 });
+
+// Options of the select fields; the labels are also shown on the review screen.
+const TITLE_OPTIONS = [
+  { value: 'mr', label: 'Mr' },
+  { value: 'mrs', label: 'Mrs' },
+  { value: 'ms', label: 'Ms' },
+  { value: 'dr', label: 'Dr' },
+  { value: 'prof', label: 'Prof' }
+];
+
+const UNIVERSITY_OPTIONS = [
+  { value: 'uom', label: 'University of Moratuwa' },
+  { value: 'uop', label: 'University of Peradeniya' },
+  { value: 'uor', label: 'University of Ruhuna' },
+  { value: 'usjp', label: 'University of Sri Jayewardenepura' },
+  { value: 'uoc', label: 'University of Colombo' },
+  { value: 'uok', label: 'University of Kelaniya' },
+  { value: 'rjt', label: 'Rajarata University' },
+  { value: 'wusl', label: 'Wayamba University' },
+  { value: 'susl', label: 'Sabaragamuwa University' },
+  { value: 'uwu', label: 'Uva Wellassa University' },
+  { value: 'uoj', label: 'University of Jaffna' },
+  { value: 'seu', label: 'South Eastern University' },
+  { value: 'ksdu', label: 'General Sir John Kotelawala Defence University' },
+  { value: 'ousl', label: 'Open University of Sri Lanka' }
+];
+
+const DEGREE_OPTIONS = [
+  { value: 'bsc', label: 'BSc (Hons)' },
+  { value: 'msc', label: 'MSc' },
+  { value: 'phd', label: 'PhD' }
+];
+
+const DURATION_OPTIONS = [1, 2, 3, 4, 5].map((years) => ({
+  value: String(years),
+  label: `${years} ${years === 1 ? 'Year' : 'Years'}`
+}));
+
+const MONTH_OPTIONS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+  .map((label, index) => ({ value: String(index + 1).padStart(2, '0'), label }));
+
+// Field ids follow the validator's keys: 'qualifications.0.gpa' -> 'field-qualifications-0-gpa'.
+const fieldId = (key) => `field-${key.replace(/\./g, '-')}`;
+
+// Every answer on this form is required. The inputs carry `required`, which screen readers announce,
+// so the star is only for the eye.
+function RequiredMark() {
+  return <span className="required-mark" aria-hidden="true">*</span>;
+}
 
 // "28 Oct, 3:15 pm" for the draft banner.
 const formatDraftTime = (timestamp) => {
@@ -1766,37 +1815,42 @@ function ApplicationFormPage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="application-form">
+      {/* noValidate: our own checks show the errors, not the browser's pop-ups */}
+      <form onSubmit={handleSubmit} className="application-form" noValidate>
+        <p className="required-note">Fields marked <span aria-hidden="true">*</span> are required.</p>
+
         {/* Personal Particulars */}
-        <div className="form-section">
-          <h3 className="section-title required">Personal Particulars</h3>
-          
+        <fieldset className="form-section">
+          <legend className="section-legend"><h2 className="section-title">Personal Particulars</h2></legend>
+
+          <div className="form-row form-row--title">
           <div className="form-group">
-            <label>Title</label>
+            <label htmlFor={fieldId('title')}>Title<RequiredMark /></label>
             <select
+              id={fieldId('title')}
               name="title"
               value={formData.title}
               onChange={handleInputChange}
-              style={{ width: '200px' }}
+              autoComplete="honorific-prefix"
               required
             >
               <option value="">Select</option>
-              <option value="mr">Mr</option>
-              <option value="mrs">Mrs</option>
-              <option value="ms">Ms</option>
-              <option value="dr">Dr</option>
-              <option value="prof">Prof</option>
+              {TITLE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>{option.label}</option>
+              ))}
             </select>
           </div>
 
           <div className="form-group">
-            <label>Full Name (as in NIC)</label>
+            <label htmlFor={fieldId('fullName')}>Full Name (as in NIC)<RequiredMark /></label>
             <input
+              id={fieldId('fullName')}
               type="text"
               name="fullName"
               value={formData.fullName}
               onChange={handleInputChange}
               placeholder="Tharindu Eranda Weerasinghe"
+              autoComplete="name"
               required
             />
             <div className={`verification-status ${documentVerification.name.status}`} style={{ marginTop: '8px' }}>
@@ -1812,11 +1866,13 @@ function ApplicationFormPage() {
               </span>
             </div>
           </div>
+          </div>
 
           <div className="form-row">
             <div className="form-group">
-              <label>Name with Initials</label>
+              <label htmlFor={fieldId('nameWithInitials')}>Name with Initials<RequiredMark /></label>
               <input
+                id={fieldId('nameWithInitials')}
                 type="text"
                 name="nameWithInitials"
                 value={formData.nameWithInitials}
@@ -1826,8 +1882,9 @@ function ApplicationFormPage() {
               />
             </div>
             <div className="form-group">
-              <label>NIC No</label>
+              <label htmlFor={fieldId('nicNo')}>NIC No<RequiredMark /></label>
               <input
+                id={fieldId('nicNo')}
                 type="text"
                 name="nicNo"
                 value={formData.nicNo}
@@ -1859,13 +1916,15 @@ function ApplicationFormPage() {
 
           <div className="form-row">
             <div className="form-group">
-              <label>Telephone</label>
+              <label htmlFor={fieldId('telephone')}>Telephone<RequiredMark /></label>
               <input
+                id={fieldId('telephone')}
                 type="tel"
                 name="telephone"
                 value={formData.telephone}
                 onChange={handleTelephoneChange}
                 placeholder="0112345678"
+                autoComplete="tel"
                 required
                 className={telephoneError ? 'input-error' : ''}
               />
@@ -1877,13 +1936,15 @@ function ApplicationFormPage() {
               )}
             </div>
             <div className="form-group">
-              <label>Mobile</label>
+              <label htmlFor={fieldId('mobile')}>Mobile<RequiredMark /></label>
               <input
+                id={fieldId('mobile')}
                 type="tel"
                 name="mobile"
                 value={formData.mobile}
                 onChange={handleMobileChange}
                 placeholder="0771234567"
+                autoComplete="tel"
                 required
                 className={mobileError ? 'input-error' : ''}
               />
@@ -1897,13 +1958,15 @@ function ApplicationFormPage() {
           </div>
 
           <div className="form-group">
-            <label>Email</label>
+            <label htmlFor={fieldId('email')}>Email<RequiredMark /></label>
             <input
+              id={fieldId('email')}
               type="email"
               name="email"
               value={formData.email}
               onChange={handleEmailChange}
               placeholder="name@gmail.com"
+              autoComplete="email"
               required
               className={emailError ? 'input-error' : ''}
             />
@@ -1916,110 +1979,113 @@ function ApplicationFormPage() {
           </div>
 
           <div className="form-group">
-            <label>Contact Address</label>
+            <label htmlFor={fieldId('contactAddress')}>Contact Address<RequiredMark /></label>
             <textarea
+              id={fieldId('contactAddress')}
               name="contactAddress"
               value={formData.contactAddress}
               onChange={handleInputChange}
               rows="3"
+              autoComplete="street-address"
               required
             />
           </div>
-        </div>
+        </fieldset>
 
         {/* Academic Qualifications */}
-        <div className="form-section" ref={qualificationsSectionRef}>
-          <h3 className="section-title">Academic Qualifications</h3>
-          
+        <fieldset className="form-section" ref={qualificationsSectionRef}>
+          <legend className="section-legend"><h2 className="section-title">Academic Qualifications</h2></legend>
+
           {formData.qualifications.map((qual, index) => (
             <div key={index} className="qualification-item">
-              {formData.qualifications.length > 1 && (
-                <button 
-                  type="button" 
-                  onClick={() => removeQualification(index)}
-                  className="delete-button"
-                  title="Remove this qualification"
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M5.5 2.5V3h5v-.5a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 0-.5.5zm-1 0V3H2v1h1v9a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4h1V3h-2.5v-.5A1.5 1.5 0 0 0 10 1H6a1.5 1.5 0 0 0-1.5 1.5zM4 4h8v9H4V4zm1.5 1.5v6h1v-6h-1zm3 0v6h1v-6h-1z"/>
-                  </svg>
-                </button>
-              )}
+              <div className="item-header">
+                <h3 className="item-title">Qualification {index + 1}</h3>
+                {formData.qualifications.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeQualification(index)}
+                    className="btn btn--quiet btn--sm"
+                    aria-label={`Remove qualification ${index + 1}`}
+                  >
+                    <Trash2 size={16} aria-hidden="true" />
+                    Remove
+                  </button>
+                )}
+              </div>
               <div className="form-row">
                 <div className="form-group">
-                  <label>University / Institute</label>
+                  <label htmlFor={fieldId(`qualifications.${index}.university`)}>University / Institute<RequiredMark /></label>
                   <select
+                    id={fieldId(`qualifications.${index}.university`)}
                     value={qual.university}
                     onChange={(e) => handleQualificationChange(index, 'university', e.target.value)}
+                    required
                   >
                     <option value="">Select University</option>
-                    <option value="uom">University of Moratuwa</option>
-                    <option value="uop">University of Peradeniya</option>
-                    <option value="uor">University of Ruhuna</option>
-                    <option value="usjp">University of Sri Jayewardenepura</option>
-                    <option value="uoc">University of Colombo</option>
-                    <option value="uok">University of Kelaniya</option>
-                    <option value="rjt">Rajarata University</option>
-                    <option value="wusl">Wayamba University</option>
-                    <option value="susl">Sabaragamuwa University</option>
-                    <option value="uwu">Uva Wellassa University</option>
-                    <option value="uoj">University of Jaffna</option>
-                    <option value="seu">South Eastern University</option>
-                    <option value="ksdu">General Sir John Kotelawala Defence University</option>
-                    <option value="ousl">Open University of Sri Lanka</option>
+                    {UNIVERSITY_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>Degree / Qualification</label>
+                  <label htmlFor={fieldId(`qualifications.${index}.degree`)}>Degree / Qualification<RequiredMark /></label>
                   <select
+                    id={fieldId(`qualifications.${index}.degree`)}
                     value={qual.degree}
                     onChange={(e) => handleQualificationChange(index, 'degree', e.target.value)}
+                    required
                   >
                     <option value="">Select Qualifications</option>
-                    <option value="bsc">BSc (Hons)</option>
-                    <option value="msc">MSc</option>
-                    <option value="phd">PhD</option>
+                    {DEGREE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
                   </select>
                 </div>
               </div>
 
               <div className="form-row-three">
                 <div className="form-group">
-                  <label>Specialization / Minor</label>
+                  <label htmlFor={fieldId(`qualifications.${index}.specialization`)}>Specialization / Minor<RequiredMark /></label>
                   <input
+                    id={fieldId(`qualifications.${index}.specialization`)}
                     type="text"
                     value={qual.specialization}
                     onChange={(e) => handleQualificationChange(index, 'specialization', e.target.value)}
+                    required
                   />
                 </div>
                 <div className="form-group">
-                  <label>Duration (Years)</label>
+                  <label htmlFor={fieldId(`qualifications.${index}.duration`)}>Duration (Years)<RequiredMark /></label>
                   <select
+                    id={fieldId(`qualifications.${index}.duration`)}
                     value={qual.duration}
                     onChange={(e) => handleQualificationChange(index, 'duration', e.target.value)}
+                    required
                   >
                     <option value="">Select Duration</option>
-                    <option value="1">1 Year</option>
-                    <option value="2">2 Years</option>
-                    <option value="3">3 Years</option>
-                    <option value="4">4 Years</option>
-                    <option value="5">5 Years</option>
+                    {DURATION_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>Graduation Date</label>
+                  <label htmlFor={fieldId(`qualifications.${index}.graduationDate`)}>Graduation Date<RequiredMark /></label>
                   <div className="date-input-wrapper">
                     <input
+                      id={fieldId(`qualifications.${index}.graduationDate`)}
                       type="text"
                       value={qual.graduationDate}
                       onChange={(e) => handleQualificationChange(index, 'graduationDate', e.target.value)}
                       placeholder="mm/dd/yyyy"
                       className={graduationDateErrors[index] ? 'input-error' : ''}
+                      required
                     />
                     <label className="calendar-icon-label">
+                      <Calendar size={18} className="calendar-icon" aria-hidden="true" />
                       <input
                         type="date"
                         className="date-picker-hidden"
+                        aria-label={`Pick the graduation date of qualification ${index + 1} from a calendar`}
                         onChange={(e) => {
                           if (e.target.value) {
                             const [year, month, day] = e.target.value.split('-');
@@ -2038,9 +2104,10 @@ function ApplicationFormPage() {
                   )}
                 </div>
                 <div className="form-group">
-                  <label htmlFor={`qualification-gpa-${index}`}>GPA (Max {MAX_GPA.toFixed(1)})</label>
+                  <label htmlFor={fieldId(`qualifications.${index}.gpa`)}>GPA (Max {MAX_GPA.toFixed(1)})<RequiredMark /></label>
                   <input
-                    id={`qualification-gpa-${index}`}
+                    id={fieldId(`qualifications.${index}.gpa`)}
+                    required
                     type="number"
                     inputMode="decimal"
                     step="0.01"
@@ -2062,8 +2129,9 @@ function ApplicationFormPage() {
             </div>
           ))}
 
-          <button type="button" onClick={addQualification} className="add-button">
-            + Add Another Qualification
+          <button type="button" onClick={addQualification} className="btn btn--secondary add-item-btn">
+            <Plus size={18} aria-hidden="true" />
+            Add another qualification
           </button>
 
           <div className={`verification-status ${documentVerification.degreeCertificate.status}`} style={{ marginTop: '12px' }}>
@@ -2079,57 +2147,67 @@ function ApplicationFormPage() {
             </span>
           </div>
 
-        </div>
+        </fieldset>
 
         {/* Membership of Professional Organizations */}
-        <div className="form-section" ref={membershipsSectionRef}>
-          <h3 className="section-title">Membership of Professional Organizations</h3>
-          
+        <fieldset className="form-section" ref={membershipsSectionRef}>
+          <legend className="section-legend"><h2 className="section-title">Membership of Professional Organizations</h2></legend>
+
           {formData.memberships.map((membership, index) => (
             <div key={index} className="membership-item">
-              {formData.memberships.length > 1 && (
-                <button 
-                  type="button" 
-                  onClick={() => removeMembership(index)}
-                  className="delete-button"
-                  title="Remove this membership"
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M5.5 2.5V3h5v-.5a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 0-.5.5zm-1 0V3H2v1h1v9a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4h1V3h-2.5v-.5A1.5 1.5 0 0 0 10 1H6a1.5 1.5 0 0 0-1.5 1.5zM4 4h8v9H4V4zm1.5 1.5v6h1v-6h-1zm3 0v6h1v-6h-1z"/>
-                  </svg>
-                </button>
-              )}
+              <div className="item-header">
+                <h3 className="item-title">Membership {index + 1}</h3>
+                {formData.memberships.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeMembership(index)}
+                    className="btn btn--quiet btn--sm"
+                    aria-label={`Remove membership ${index + 1}`}
+                  >
+                    <Trash2 size={16} aria-hidden="true" />
+                    Remove
+                  </button>
+                )}
+              </div>
               <div className="form-row-three">
                 <div className="form-group">
-                  <label>Professional Organization</label>
+                  <label htmlFor={fieldId(`memberships.${index}.organization`)}>Professional Organization<RequiredMark /></label>
                   <input
+                    id={fieldId(`memberships.${index}.organization`)}
                     type="text"
                     value={membership.organization}
                     onChange={(e) => handleMembershipChange(index, 'organization', e.target.value)}
+                    required
                   />
                 </div>
                 <div className="form-group">
-                  <label>Membership Category</label>
+                  <label htmlFor={fieldId(`memberships.${index}.category`)}>Membership Category<RequiredMark /></label>
                   <input
+                    id={fieldId(`memberships.${index}.category`)}
                     type="text"
                     value={membership.category}
                     onChange={(e) => handleMembershipChange(index, 'category', e.target.value)}
+                    required
                   />
                 </div>
                 <div className="form-group">
-                  <label>Date Joined</label>
+                  <label htmlFor={fieldId(`memberships.${index}.dateJoined`)}>Date Joined<RequiredMark /></label>
                   <div className="date-input-wrapper">
                     <input
+                      id={fieldId(`memberships.${index}.dateJoined`)}
                       type="text"
                       value={membership.dateJoined}
                       onChange={(e) => handleMembershipChange(index, 'dateJoined', e.target.value)}
                       placeholder="mm/dd/yyyy"
                       className={membershipDateErrors[index] ? 'input-error' : ''}
+                      required
                     />
                     <label className="calendar-icon-label">
+                      <Calendar size={18} className="calendar-icon" aria-hidden="true" />
                       <input
                         type="date"
                         className="date-picker-hidden"
+                        aria-label={`Pick the date you joined, membership ${index + 1}, from a calendar`}
                         onChange={(e) => {
                           if (e.target.value) {
                             const [year, month, day] = e.target.value.split('-');
@@ -2151,8 +2229,9 @@ function ApplicationFormPage() {
             </div>
           ))}
 
-          <button type="button" onClick={addMembership} className="add-button">
-            + Add Another Membership
+          <button type="button" onClick={addMembership} className="btn btn--secondary add-item-btn">
+            <Plus size={18} aria-hidden="true" />
+            Add another membership
           </button>
 
           <div className={`verification-status ${membershipExtraction.status === 'verified' ? 'verified' : membershipExtraction.status === 'failed' ? 'failed' : ''}`} style={{ marginTop: '12px' }}>
@@ -2170,109 +2249,110 @@ function ApplicationFormPage() {
             </span>
           </div>
 
-        </div>
+        </fieldset>
 
         {/* Work Experience */}
-        <div className="form-section" ref={experiencesSectionRef}>
-          <h3 className="section-title">Work Experience (most recent first)</h3>
-          
+        <fieldset className="form-section" ref={experiencesSectionRef}>
+          <legend className="section-legend"><h2 className="section-title">Work Experience (most recent first)</h2></legend>
+
           {formData.experiences.map((exp, index) => (
             <div key={index} className="experience-item">
-              {formData.experiences.length > 1 && (
-                <button 
-                  type="button" 
-                  onClick={() => removeExperience(index)}
-                  className="delete-button"
-                  title="Remove this experience"
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-                    <path d="M5.5 2.5V3h5v-.5a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 0-.5.5zm-1 0V3H2v1h1v9a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4h1V3h-2.5v-.5A1.5 1.5 0 0 0 10 1H6a1.5 1.5 0 0 0-1.5 1.5zM4 4h8v9H4V4zm1.5 1.5v6h1v-6h-1zm3 0v6h1v-6h-1z"/>
-                  </svg>
-                </button>
-              )}
+              <div className="item-header">
+                <h3 className="item-title">Experience {index + 1}</h3>
+                {formData.experiences.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeExperience(index)}
+                    className="btn btn--quiet btn--sm"
+                    aria-label={`Remove experience ${index + 1}`}
+                  >
+                    <Trash2 size={16} aria-hidden="true" />
+                    Remove
+                  </button>
+                )}
+              </div>
               <div className="form-row-six">
                 <div className="form-group">
-                  <label>From Month</label>
+                  <label htmlFor={fieldId(`experiences.${index}.fromMonth`)}>From Month<RequiredMark /></label>
                   <select
+                    id={fieldId(`experiences.${index}.fromMonth`)}
                     value={exp.fromMonth}
                     onChange={(e) => handleExperienceChange(index, 'fromMonth', e.target.value)}
+                    required
                   >
                     <option value="">Month</option>
-                    <option value="01">January</option>
-                    <option value="02">February</option>
-                    <option value="03">March</option>
-                    <option value="04">April</option>
-                    <option value="05">May</option>
-                    <option value="06">June</option>
-                    <option value="07">July</option>
-                    <option value="08">August</option>
-                    <option value="09">September</option>
-                    <option value="10">October</option>
-                    <option value="11">November</option>
-                    <option value="12">December</option>
+                    {MONTH_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>Year</label>
+                  <label htmlFor={fieldId(`experiences.${index}.fromYear`)}>Year<RequiredMark /></label>
                   <input
+                    id={fieldId(`experiences.${index}.fromYear`)}
                     type="text"
+                    inputMode="numeric"
                     value={exp.fromYear}
                     onChange={(e) => handleExperienceChange(index, 'fromYear', e.target.value)}
                     placeholder="Year"
+                    required
                   />
                 </div>
                 <div className="form-group">
-                  <label>To Month</label>
+                  <label htmlFor={fieldId(`experiences.${index}.toMonth`)}>To Month<RequiredMark /></label>
                   <select
+                    id={fieldId(`experiences.${index}.toMonth`)}
                     value={exp.toMonth}
                     onChange={(e) => handleExperienceChange(index, 'toMonth', e.target.value)}
+                    required
                   >
                     <option value="">Month</option>
-                    <option value="01">January</option>
-                    <option value="02">February</option>
-                    <option value="03">March</option>
-                    <option value="04">April</option>
-                    <option value="05">May</option>
-                    <option value="06">June</option>
-                    <option value="07">July</option>
-                    <option value="08">August</option>
-                    <option value="09">September</option>
-                    <option value="10">October</option>
-                    <option value="11">November</option>
-                    <option value="12">December</option>
+                    {MONTH_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="form-group">
-                  <label>Year</label>
+                  <label htmlFor={fieldId(`experiences.${index}.toYear`)}>Year<RequiredMark /></label>
                   <input
+                    id={fieldId(`experiences.${index}.toYear`)}
                     type="text"
+                    inputMode="numeric"
                     value={exp.toYear}
                     onChange={(e) => handleExperienceChange(index, 'toYear', e.target.value)}
                     placeholder="Year"
+                    required
                   />
                 </div>
                 <div className="form-group">
-                  <label>Company</label>
+                  <label htmlFor={fieldId(`experiences.${index}.company`)}>Company<RequiredMark /></label>
                   <input
+                    id={fieldId(`experiences.${index}.company`)}
                     type="text"
                     value={exp.company}
                     onChange={(e) => handleExperienceChange(index, 'company', e.target.value)}
+                    autoComplete="organization"
+                    required
                   />
                 </div>
                 <div className="form-group">
-                  <label>Position</label>
+                  <label htmlFor={fieldId(`experiences.${index}.position`)}>Position<RequiredMark /></label>
                   <input
+                    id={fieldId(`experiences.${index}.position`)}
                     type="text"
                     value={exp.position}
                     onChange={(e) => handleExperienceChange(index, 'position', e.target.value)}
+                    autoComplete="organization-title"
+                    required
                   />
                 </div>
               </div>
             </div>
           ))}
 
-          <button type="button" onClick={addExperience} className="add-button">
-            + Add Another Experience
+          <button type="button" onClick={addExperience} className="btn btn--secondary add-item-btn">
+            <Plus size={18} aria-hidden="true" />
+            Add another experience
           </button>
 
           <div className={`verification-status ${workExperienceVerification.status === 'verified' ? 'verified' : workExperienceVerification.status === 'failed' ? 'failed' : ''}`} style={{ marginTop: '12px' }}>
@@ -2314,11 +2394,11 @@ function ApplicationFormPage() {
               )}
             </div>
           )}
-        </div>
+        </fieldset>
 
         {/* Documents */}
-        <div className="form-section" ref={documentsSectionRef}>
-          <h3 className="section-title required">Documents</h3>
+        <fieldset className="form-section" ref={documentsSectionRef}>
+          <legend className="section-legend"><h2 className="section-title">Documents</h2></legend>
           <p className="document-note">
             * Please make sure each file is 4 MB or less (Please upload the files in PDF format). All documents are required.
           </p>
@@ -2789,11 +2869,11 @@ function ApplicationFormPage() {
             ** The application processing fee of Rs. 2,000/- (Per subject for LLB/University Repeat) will be paid either to University Receipt or as a bank or 
             Genie transfer in the credit of University of Moratuwa—Acc No. 0043618. You may also make an online transfer to the same account.
           </p>
-        </div>
+        </fieldset>
 
         {/* Declaration */}
-        <div className="form-section" ref={declarationSectionRef}>
-          <h3 className="section-title">Declaration</h3>
+        <fieldset className="form-section" ref={declarationSectionRef}>
+          <legend className="section-legend"><h2 className="section-title">Declaration</h2></legend>
           <div className="declaration-text">
             <p>
               I affirm that all statements made/entered by me on this form are correct. I understand that any inaccurate or false information for 
@@ -2808,43 +2888,45 @@ function ApplicationFormPage() {
           </div>
 
           <div className="captcha-group">
-            <label>Enter captcha</label>
+            <label htmlFor={fieldId('captcha')}>Enter captcha<RequiredMark /></label>
             <div
               className="captcha-display"
               onCopy={(e) => e.preventDefault()}
               onCut={(e) => e.preventDefault()}
               onContextMenu={(e) => e.preventDefault()}
-              style={{ userSelect: 'none' }}
             >
               {captchaValue}
             </div>
             <input
               ref={captchaInputRef}
+              id={fieldId('captcha')}
               type="text"
               name="captcha"
               value={formData.captcha}
               onChange={handleInputChange}
               placeholder="Enter captcha"
+              autoComplete="off"
               required
             />
             {captchaError && (
-              <div className="error-box" style={{ marginTop: '8px' }}>
+              <div className="error-box captcha-error">
                 <span className="error-icon">⚠</span>
                 <span className="error-text">{captchaError}</span>
               </div>
             )}
-            <button type="button" className="add-button" onClick={generateCaptcha} style={{ marginTop: '10px' }}>
-              Refresh Captcha
+            <button type="button" className="btn btn--quiet btn--sm captcha-refresh" onClick={generateCaptcha}>
+              <RefreshCw size={16} aria-hidden="true" />
+              Refresh captcha
             </button>
           </div>
 
           <p className="captcha-note">
-            Note: If your internet connection is slow, you may receive an error while submitting the form. If so, please try with a different internet 
+            Note: If your internet connection is slow, you may receive an error while submitting the form. If so, please try with a different internet
             connection with a faster speed.
           </p>
-        </div>
+        </fieldset>
 
-        <button type="submit" className="submit-button" disabled={!applicationWindow.open}>
+        <button type="submit" className="btn btn--primary submit-button" disabled={!applicationWindow.open}>
           {applicationWindow.open ? 'Submit Application' : 'Applications Closed'}
         </button>
       </form>

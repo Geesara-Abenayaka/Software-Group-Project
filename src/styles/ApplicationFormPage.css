@@ -971,3 +971,241 @@ label.required::before {
     margin-left: 28px;
   }
 }
+
+/* Sections as white cards on the grey page */
+.apply-page .application-form {
+  background: transparent;
+  padding: 0;
+}
+
+.apply-page .required-note {
+  margin: 0 0 var(--space-4);
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+}
+
+.apply-page .form-section {
+  min-width: 0;
+  margin: 0 0 var(--space-6);
+  padding: var(--space-6);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+/* A legend sits on the fieldset's border by default; floated, it behaves like a normal heading */
+.apply-page .section-legend {
+  float: left;
+  width: 100%;
+  padding: 0;
+  margin: 0 0 var(--space-6);
+}
+
+.apply-page .section-legend + * {
+  clear: both;
+}
+
+.apply-page .section-title {
+  position: relative;
+  margin: 0;
+  padding-bottom: 10px;
+  color: var(--ink-strong);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.apply-page .section-title::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 40px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--brand);
+}
+
+.apply-page .form-group label,
+.apply-page .captcha-group label {
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.apply-page .required-mark {
+  margin-left: 2px;
+  color: var(--danger);
+}
+
+.apply-page .form-group input,
+.apply-page .form-group select,
+.apply-page .form-group textarea,
+.apply-page .captcha-group input {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 15px;
+}
+
+.apply-page .form-group input:focus,
+.apply-page .form-group select:focus,
+.apply-page .form-group textarea:focus,
+.apply-page .captcha-group input:focus {
+  outline: none;
+  border-color: var(--input-focus-border);
+  box-shadow: var(--focus-ring);
+}
+
+.apply-page .form-group input::placeholder,
+.apply-page .form-group textarea::placeholder,
+.apply-page .captcha-group input::placeholder {
+  color: var(--muted);
+}
+
+/* Title next to the full name */
+.apply-page .form-row--title {
+  grid-template-columns: 180px 1fr;
+}
+
+/* Calendar button inside the date fields (replaces the emoji) */
+.apply-page .date-input-wrapper::after {
+  content: none;
+}
+
+/* It is a <label>, so undo the field-label rule that makes labels blocks */
+.apply-page .form-group .calendar-icon-label {
+  display: flex;
+  margin: 0;
+}
+
+.apply-page .calendar-icon {
+  color: var(--ink-muted);
+  pointer-events: none;
+}
+
+.apply-page .calendar-icon-label:hover .calendar-icon,
+.apply-page .calendar-icon-label:focus-within .calendar-icon {
+  color: var(--brand-text);
+}
+
+/* One block per qualification, membership and experience */
+.apply-page .qualification-item,
+.apply-page .membership-item,
+.apply-page .experience-item {
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  background: var(--surface-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+}
+
+.apply-page .item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 36px;
+  margin-bottom: var(--space-3);
+}
+
+.apply-page .item-title {
+  margin: 0;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.apply-page .add-item-btn {
+  margin-top: var(--space-1);
+}
+
+.apply-page .declaration-text {
+  background: var(--surface-muted);
+  border-radius: var(--radius);
+}
+
+.apply-page .declaration-text p,
+.apply-page .document-note,
+.apply-page .document-info,
+.apply-page .captcha-note {
+  color: var(--ink-muted);
+}
+
+.apply-page .captcha-display {
+  user-select: none;
+  background: var(--surface-muted);
+  border-color: var(--border-strong);
+  color: var(--ink-strong);
+}
+
+.apply-page .captcha-error {
+  margin-top: var(--space-2);
+}
+
+.apply-page .captcha-refresh {
+  margin-top: var(--space-2);
+}
+
+.apply-page .submit-button {
+  width: 100%;
+  min-height: 52px;
+  margin-top: 0;
+  padding: 14px 24px;
+  background: var(--brand);
+  font-size: 16px;
+}
+
+.apply-page .submit-button:hover:not(:disabled) {
+  background: var(--brand-dark);
+}
+
+.apply-page .submit-button:disabled {
+  background: var(--border-strong);
+  color: var(--ink-muted);
+}
+
+@media (max-width: 1024px) {
+  .apply-page .qualification-item .form-row-three,
+  .apply-page .form-row-six {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* Phones: one field per row, and 16px text so iOS doesn't zoom into a field */
+@media (max-width: 768px) {
+  .apply-page .form-section {
+    padding: var(--space-4);
+  }
+
+  .apply-page .form-row,
+  .apply-page .form-row-three,
+  .apply-page .qualification-item .form-row-three,
+  .apply-page .form-row-four,
+  .apply-page .form-row-six {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .apply-page .form-row .form-group,
+  .apply-page .form-row-three .form-group,
+  .apply-page .form-row-four .form-group,
+  .apply-page .form-row-six .form-group {
+    margin-bottom: var(--space-4);
+  }
+
+  .apply-page .form-group input,
+  .apply-page .form-group select,
+  .apply-page .form-group textarea,
+  .apply-page .captcha-group input {
+    font-size: 16px;
+  }
+
+  .apply-page .captcha-group input {
+    max-width: none;
+  }
+}
