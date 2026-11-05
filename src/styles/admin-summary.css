@@ -1,0 +1,197 @@
+/* Admin Programs page: summary tiles and applications per programme (AdminSummary.jsx) */
+.admin-summary {
+  max-width: 1400px;
+  margin: 0 auto 2rem;
+}
+
+.summary-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.summary-tile {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 18px 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.summary-tile__label {
+  margin: 0 0 6px;
+  color: var(--ink-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.summary-tile__value {
+  margin: 0;
+  color: var(--ink-strong);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.summary-tile__skeleton {
+  display: inline-block;
+  width: 48px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+}
+
+.summary-tile__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--brand-tint);
+  color: var(--brand-text);
+}
+
+.program-bars {
+  padding: 20px 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.program-bars__title {
+  margin: 0 0 var(--space-3);
+  color: var(--ink-strong);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.program-bars__list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.program-bar {
+  display: grid;
+  grid-template-columns: minmax(160px, 280px) 1fr 48px 110px;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 40px;
+  padding: 6px 8px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+.program-bar:hover {
+  background: var(--surface-muted);
+}
+
+.program-bar:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.program-bar__name {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.program-bar__track {
+  height: 12px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+}
+
+/* --brand on white is 9.3:1, well above the 3:1 chart marks need */
+.program-bar__fill {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+  border-radius: inherit;
+  background: var(--brand);
+}
+
+.program-bar__count {
+  color: var(--ink-strong);
+  font-weight: 700;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.program-bar__pending {
+  color: var(--warning);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.program-bars__empty {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-4) 0;
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+}
+
+.program-bars__skeleton {
+  height: 28px;
+  margin-bottom: 10px;
+  border-radius: var(--radius-sm);
+}
+
+@media (max-width: 1024px) {
+  .summary-tiles {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .summary-tiles {
+    gap: var(--space-3);
+  }
+
+  .summary-tile {
+    padding: 14px;
+  }
+
+  .summary-tile__value {
+    font-size: 24px;
+  }
+
+  /* Name on its own line, then bar, number and pending */
+  .program-bar {
+    grid-template-columns: 1fr 40px;
+    grid-template-areas:
+      'name name'
+      'track count'
+      'pending pending';
+    row-gap: 4px;
+  }
+
+  .program-bar__name { grid-area: name; }
+  .program-bar__track { grid-area: track; }
+  .program-bar__count { grid-area: count; }
+  .program-bar__pending { grid-area: pending; }
+}

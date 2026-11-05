@@ -338,14 +338,15 @@
   white-space: nowrap;
 }
 
-.pending-badge-pill.pending-red {
-  background: var(--danger-bg);
-  color: #dc2626;
+/* Pending is amber, never red; "0 Pending" is neutral */
+.pending-badge-pill.pending-some {
+  background: var(--warning-bg);
+  color: var(--warning);
 }
 
-.pending-badge-pill.pending-gray {
-  background: #f3f4f6;
-  color: #6b7280;
+.pending-badge-pill.pending-none {
+  background: var(--surface-muted);
+  color: var(--ink-muted);
 }
 
 .card-title-admin {

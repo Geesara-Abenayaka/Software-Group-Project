@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   User,
   PlusCircle,
@@ -8,6 +9,7 @@ import {
 import '../styles/AdminDashboard.css';
 import API_BASE_URL from '../utils/apiConfig';
 import AdminLayout from '../components/AdminLayout';
+import AdminSummary from '../components/AdminSummary';
 import useConfirm from '../utils/useConfirm';
 import { toast } from '../utils/toast';
 import { PageLoader } from '../components/Loaders';
@@ -56,7 +58,10 @@ const fromProgramForm = ({ eligibilityText, ...program }) => ({
 
 function AdminDashboard() {
   const { confirm, confirmDialog } = useConfirm();
+  const navigate = useNavigate();
   const [programs, setPrograms] = useState([]);
+  // Rows of /applications/summary/by-program; null while loading, 'error' if it failed
+  const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editingProgram, setEditingProgram] = useState(null);
@@ -82,23 +87,23 @@ function AdminDashboard() {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 6000);
 
-        fetch(`${API_BASE_URL}/applications/summary`, { signal: controller.signal })
+        // Counts per programme (total, pending, approved, rejected) for the summary and the pending pills
+        fetch(`${API_BASE_URL}/applications/summary/by-program`, { signal: controller.signal })
           .then((response) => response.json())
-          .then((appsData) => {
-            if (!appsData?.success || !Array.isArray(appsData.data)) {
+          .then((summaryData) => {
+            if (!summaryData?.success || !Array.isArray(summaryData.data)) {
+              setSummary('error');
               return;
             }
 
-            setPrograms((currentPrograms) => {
-              return currentPrograms.map((program) => {
-                const pendingCount = appsData.data.filter(
-                  (app) => app.program === program.shortCode && app.status === 'pending'
-                ).length;
-                return { ...program, pendingCount };
-              });
-            });
+            setSummary(summaryData.data);
+            setPrograms((currentPrograms) => currentPrograms.map((program) => ({
+              ...program,
+              pendingCount: summaryData.data.find((row) => row.program === program.shortCode)?.pending || 0
+            })));
           })
           .catch((countError) => {
+            setSummary('error');
             if (countError?.name !== 'AbortError') {
               console.warn('Pending count fetch failed:', countError);
             }
@@ -353,6 +358,14 @@ function AdminDashboard() {
             </div>
           </div>
 
+          {!loading && !error && (
+            <AdminSummary
+              programs={programs}
+              summary={summary}
+              onOpenProgram={(program) => navigate(`/admin/applications/${program.shortCode}`)}
+            />
+          )}
+
           {loading ? (
             <PageLoader message="Loading programs…" />
           ) : error ? (
@@ -382,7 +395,7 @@ function AdminDashboard() {
                     </div>
                     <div className="program-status-block">
                       <span className="program-code-badge">{program.shortCode}</span>
-                      <span className={`pending-badge-pill ${program.pendingCount > 0 ? 'pending-red' : 'pending-gray'}`}>
+                      <span className={`pending-badge-pill ${program.pendingCount > 0 ? 'pending-some' : 'pending-none'}`}>
                         {program.pendingCount} Pending
                       </span>
                     </div>
