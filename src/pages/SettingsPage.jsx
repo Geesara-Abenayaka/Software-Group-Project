@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User } from 'lucide-react';
 import axios from 'axios';
 import '../styles/SettingsPage.css';
 import API_BASE_URL from '../utils/apiConfig';
-import uomLogo from '../assets/uom-logo.png';
+import AdminLayout from '../components/AdminLayout';
 
 const FEEDBACK_FILTERS = [
   { value: '', label: 'All' },
@@ -22,8 +20,7 @@ const getFeedbackLabel = (item) => {
 const monthStart = (date, offset = 0) => new Date(date.getFullYear(), date.getMonth() + offset, 1);
 
 function SettingsPage() {
-  const navigate = useNavigate();
-  const [user, setUser] = useState(null);
+  const [user] = useState(() => JSON.parse(localStorage.getItem('user') || 'null'));
   // null means not set: no date range keeps applications open all year.
   const [currentDateRange, setCurrentDateRange] = useState(null);
   const [selectedDates, setSelectedDates] = useState([]);
@@ -45,15 +42,6 @@ function SettingsPage() {
   const [assistantFeedback, setAssistantFeedback] = useState([]);
   const [feedbackFilter, setFeedbackFilter] = useState('');
   const [feedbackError, setFeedbackError] = useState('');
-
-  useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-    } else {
-      navigate('/login');
-    }
-  }, [navigate]);
 
   const applyFacts = (data) => {
     setAssistantFacts(data.value || '');
@@ -142,11 +130,6 @@ function SettingsPage() {
     } finally {
       setIsSavingFacts(false);
     }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    navigate('/login');
   };
 
   const handleDateClick = (date) => {
@@ -325,63 +308,9 @@ function SettingsPage() {
   };
 
   return (
-    <div className="admin-app">
-      <header className="admin-header">
-        <div className="admin-header-content">
-          <div className="header-left">
-            <img src={uomLogo} alt="University of Moratuwa logo" className="uom-logo" />
-            <div className="header-text">
-              <h1 className="university-name">University of Moratuwa</h1>
-              <p className="portal-subtitle">Postgraduate Management Information System</p>
-            </div>
-          </div>
-          <div className="header-right">
-            <div className="user-info">
-              <div className="user-avatar">
-                <User size={20} color="white" />
-              </div>
-              <div className="user-details">
-                <span className="user-role">Admin User</span>
-                <span className="user-email">{user?.email || 'admin@uom.lk'}</span>
-              </div>
-            </div>
-            <button className="logout-btn" onClick={handleLogout}>
-              <LogOut size={16} />
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
-      <nav className="admin-navbar">
-        <div className="navbar-content">
-          <button className="navbar-btn" onClick={() => navigate('/admin/dashboard')}>
-            <GraduationCap size={18} className="nav-icon" />
-            Programs
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/applications')}>
-            <ClipboardList size={18} className="nav-icon" />
-            Applications
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/search')}>
-            <Search size={18} className="nav-icon" />
-            Search
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/download')}>
-            <Download size={18} className="nav-icon" />
-            Download
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/marks')}>
-            <BarChart2 size={18} className="nav-icon" />
-            Marks
-          </button>
-          <button className="navbar-btn active">
-            <Settings size={18} className="nav-icon" />
-            Settings
-          </button>
-        </div>
-      </nav>
+    <AdminLayout>
       <div className="admin-content-full">
-        <main className="admin-main-full settings-main">
+        <main id="main" tabIndex={-1} className="admin-main-full settings-main">
           <div className="settings-section">
             <h2 className="settings-title">Set Date Range</h2>
             <p className="current-range">
@@ -601,7 +530,7 @@ function SettingsPage() {
           </div>
         </main>
       </div>
-    </div>
+    </AdminLayout>
   );
 }
 
