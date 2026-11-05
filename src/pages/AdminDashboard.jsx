@@ -8,6 +8,7 @@ import {
 import '../styles/AdminDashboard.css';
 import API_BASE_URL from '../utils/apiConfig';
 import AdminLayout from '../components/AdminLayout';
+import { PageLoader } from '../components/Loaders';
 
 const createEmptyProgram = () => ({
   title: '',
@@ -343,10 +344,7 @@ function AdminDashboard() {
           </div>
 
           {loading ? (
-            <div className="loading-container">
-              <div className="loading-spinner"></div>
-              <p>Loading programs...</p>
-            </div>
+            <PageLoader message="Loading programs…" />
           ) : error ? (
             <div className="error-container">
               <h2>Error</h2>

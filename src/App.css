@@ -428,6 +428,11 @@
   background-color: var(--brand-dark);
 }
 
+.sign-in-button:disabled {
+  background-color: var(--brand-dark);
+  cursor: progress;
+}
+
 .forgot-password {
   display: block;
   text-align: center;

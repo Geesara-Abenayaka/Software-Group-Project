@@ -5,16 +5,19 @@ import '../App.css'
 import API_BASE_URL from '../utils/apiConfig'
 import SiteHeader from '../components/SiteHeader'
 import SiteFooter from '../components/SiteFooter'
+import { ButtonSpinner } from '../components/Loaders'
 
 function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    setLoading(true)
 
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/login`, {
@@ -30,6 +33,8 @@ function LoginPage() {
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -78,8 +83,8 @@ function LoginPage() {
 
             {error && <p style={{color: 'red', fontSize: '14px', marginBottom: '10px'}}>{error}</p>}
 
-            <button type="submit" className="sign-in-button">
-              Sign In
+            <button type="submit" className="sign-in-button" disabled={loading}>
+              {loading ? <><ButtonSpinner />Signing in…</> : 'Sign In'}
             </button>
 
             <Link to="/reset-password" className="forgot-password">
