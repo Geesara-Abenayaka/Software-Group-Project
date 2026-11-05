@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { AlertCircle, AlertTriangle, Calendar, Check, Info, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { AlertCircle, AlertTriangle, Calendar, Check, CheckCircle2, Info, Loader2, Plus, RefreshCw, Trash2, XCircle } from 'lucide-react';
 import '../styles/ApplicationFormPage.css';
 import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
+import UploadZone from '../components/UploadZone';
 import API_BASE_URL from '../utils/apiConfig';
 import { MAX_GPA, getFieldLabel, getSectionCompletion, getSectionOfField, hasDocument, validateApplication, validateField } from '../utils/applicationValidation';
 import { loadDraft, mergeDraft, removeDraft, saveDraft } from '../utils/applicationDraft';
@@ -114,6 +115,22 @@ function FieldError({ fieldKey, message }) {
     <p id={`${fieldId(fieldKey)}-error`} className="field-error">
       <AlertCircle size={16} aria-hidden="true" />
       <span>{message}</span>
+    </p>
+  );
+}
+
+// A document slot holds a File, an array of Files, or nothing; the upload zones want a list.
+const asFileList = (value) => (Array.isArray(value) ? value.filter(Boolean) : value ? [value] : []);
+
+const VERIFICATION_ICONS = { verified: CheckCircle2, failed: XCircle, loading: Loader2 };
+
+// One line about an automatic check (name, NIC, degree, memberships, work experience).
+function VerificationNote({ status, children }) {
+  const Icon = VERIFICATION_ICONS[status] || Info;
+  return (
+    <p className={`verification-status ${status}`}>
+      <Icon size={16} className={status === 'loading' ? 'verification-spin' : undefined} aria-hidden="true" />
+      <span>{children}</span>
     </p>
   );
 }
@@ -366,10 +383,6 @@ function ApplicationFormPage() {
     });
   };
 
-  const triggerFilePicker = (inputRef) => {
-    inputRef?.current?.click();
-  };
-
   const generateCaptcha = () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
     let next = '';
@@ -462,6 +475,9 @@ function ApplicationFormPage() {
     if (String(value ?? '').trim() === '' && !changedFieldsRef.current.has(key)) return;
     setFieldError(key, validateField(key, value));
   };
+
+  // A wrong file type or size (shown at once), else "Please upload this document" after submit.
+  const documentError = (documentType) => fileErrors[documentType] || fieldErrors[`documents.${documentType}`] || '';
 
   // `liveError` is a message the field's own change handler shows while typing (mobile, NIC, dates…).
   const errorFor = (key, liveError = '') => liveError || fieldErrors[key] || '';
@@ -634,12 +650,14 @@ function ApplicationFormPage() {
     }
   };
 
-  const handleFileChange = (e, documentType) => {
-    const selectedFiles = Array.from(e.target.files || []);
+  // Files from the Browse picker or dropped on an upload zone.
+  const handleDocumentFiles = (documentType, files) => {
+    const supportsMultiple = documentType === 'degreeCertificate' || documentType === 'membershipProofs' || documentType === 'employerLetter';
+    // A single-file document takes the first of several dropped files.
+    const selectedFiles = supportsMultiple ? files : files.slice(0, 1);
 
     if (selectedFiles.length > 0) {
       const supportsImages = documentType === 'nic' || documentType === 'degreeCertificate' || documentType === 'membershipProofs' || documentType === 'employerLetter' || documentType === 'paymentConfirmation';
-      const supportsMultiple = documentType === 'degreeCertificate' || documentType === 'membershipProofs' || documentType === 'employerLetter';
       const allowedMimeTypes = supportsImages
         ? ['application/pdf', 'image/png', 'image/jpeg', 'image/jpg', 'image/webp']
         : ['application/pdf'];
@@ -652,7 +670,6 @@ function ApplicationFormPage() {
               ? 'Please upload a PDF or image file (PNG/JPG/WEBP)'
               : 'Please upload a PDF file only'
           }));
-          e.target.value = '';
           return;
         }
 
@@ -661,7 +678,6 @@ function ApplicationFormPage() {
             ...prev,
             [documentType]: 'Each file must be 4 MB or less'
           }));
-          e.target.value = '';
           return;
         }
       }
@@ -702,12 +718,6 @@ function ApplicationFormPage() {
           }
         };
       });
-
-      // For multi-file inputs, clear picker so users can append more files.
-      // Keep single-file input value so the native control shows the selected file name.
-      if (supportsMultiple) {
-        e.target.value = '';
-      }
 
       if (documentType === 'degreeCertificate') {
         resetNameAndDegreeVerification();
@@ -2060,18 +2070,13 @@ function ApplicationFormPage() {
               {...errorProps('fullName')}
             />
             <FieldError fieldKey="fullName" message={errorFor('fullName')} />
-            <div className={`verification-status ${documentVerification.name.status}`} style={{ marginTop: '8px' }}>
-              <span className="verification-icon">
-                {documentVerification.name.status === 'verified' ? '✔' : documentVerification.name.status === 'failed' ? '✖' : '•'}
-              </span>
-              <span>
-                {documentVerification.name.status === 'verified'
-                  ? 'Full Name matched with NIC document'
-                  : documentVerification.name.status === 'failed'
-                    ? documentVerification.name.message
-                    : 'Full Name will be automatically matched with uploaded NIC document'}
-              </span>
-            </div>
+            <VerificationNote status={documentVerification.name.status}>
+              {documentVerification.name.status === 'verified'
+                ? 'Full Name matched with NIC document'
+                : documentVerification.name.status === 'failed'
+                  ? documentVerification.name.message
+                  : 'Full Name will be automatically matched with uploaded NIC document'}
+            </VerificationNote>
           </div>
           </div>
 
@@ -2105,18 +2110,13 @@ function ApplicationFormPage() {
                 {...errorProps('nicNo', nicError)}
               />
               <FieldError fieldKey="nicNo" message={errorFor('nicNo', nicError)} />
-              <div className={`verification-status ${documentVerification.nic.status}`} style={{ marginTop: '8px' }}>
-                <span className="verification-icon">
-                  {documentVerification.nic.status === 'verified' ? '✔' : documentVerification.nic.status === 'failed' ? '✖' : '•'}
-                </span>
-                <span>
-                  {documentVerification.nic.status === 'verified'
-                    ? 'NIC number verified'
-                    : documentVerification.nic.status === 'failed'
-                      ? documentVerification.nic.message
-                      : 'NIC will be auto-verified after NIC file upload'}
-                </span>
-              </div>
+              <VerificationNote status={documentVerification.nic.status}>
+                {documentVerification.nic.status === 'verified'
+                  ? 'NIC number verified'
+                  : documentVerification.nic.status === 'failed'
+                    ? documentVerification.nic.message
+                    : 'NIC will be auto-verified after NIC file upload'}
+              </VerificationNote>
             </div>
           </div>
 
@@ -2338,18 +2338,13 @@ function ApplicationFormPage() {
             Add another qualification
           </button>
 
-          <div className={`verification-status ${documentVerification.degreeCertificate.status}`} style={{ marginTop: '12px' }}>
-            <span className="verification-icon">
-              {documentVerification.degreeCertificate.status === 'verified' ? '✔' : documentVerification.degreeCertificate.status === 'failed' ? '✖' : '•'}
-            </span>
-            <span>
-              {documentVerification.degreeCertificate.status === 'verified'
-                ? (documentVerification.degreeCertificate.message || 'Degree/Diploma details verified')
-                : documentVerification.degreeCertificate.status === 'failed'
-                  ? documentVerification.degreeCertificate.message
-                  : 'Degree/Diploma will be auto-verified after certificate upload'}
-            </span>
-          </div>
+          <VerificationNote status={documentVerification.degreeCertificate.status}>
+            {documentVerification.degreeCertificate.status === 'verified'
+              ? (documentVerification.degreeCertificate.message || 'Degree/Diploma details verified')
+              : documentVerification.degreeCertificate.status === 'failed'
+                ? documentVerification.degreeCertificate.message
+                : 'Degree/Diploma will be auto-verified after certificate upload'}
+          </VerificationNote>
 
         </fieldset>
 
@@ -2443,20 +2438,15 @@ function ApplicationFormPage() {
             Add another membership
           </button>
 
-          <div className={`verification-status ${membershipExtraction.status === 'verified' ? 'verified' : membershipExtraction.status === 'failed' ? 'failed' : ''}`} style={{ marginTop: '12px' }}>
-            <span className="verification-icon">
-              {membershipExtraction.status === 'verified' ? '✔' : membershipExtraction.status === 'failed' ? '✖' : membershipExtraction.status === 'loading' ? '…' : '•'}
-            </span>
-            <span>
-              {membershipExtraction.status === 'verified'
+          <VerificationNote status={membershipExtraction.status}>
+            {membershipExtraction.status === 'verified'
+              ? membershipExtraction.message
+              : membershipExtraction.status === 'failed'
                 ? membershipExtraction.message
-                : membershipExtraction.status === 'failed'
-                  ? membershipExtraction.message
-                  : membershipExtraction.status === 'loading'
-                    ? 'Extracting membership details from uploaded document(s)...'
-                    : 'Upload membership proof files to auto-extract organization, category, and date.'}
-            </span>
-          </div>
+                : membershipExtraction.status === 'loading'
+                  ? 'Extracting membership details from uploaded document(s)...'
+                  : 'Upload membership proof files to auto-extract organization, category, and date.'}
+          </VerificationNote>
 
         </fieldset>
 
@@ -2582,42 +2572,29 @@ function ApplicationFormPage() {
             Add another experience
           </button>
 
-          <div className={`verification-status ${workExperienceVerification.status === 'verified' ? 'verified' : workExperienceVerification.status === 'failed' ? 'failed' : ''}`} style={{ marginTop: '12px' }}>
-            <span className="verification-icon">
-              {workExperienceVerification.status === 'verified' ? '✔' : workExperienceVerification.status === 'failed' ? '✖' : workExperienceVerification.status === 'loading' ? '…' : '•'}
-            </span>
-            <span>
-              {workExperienceVerification.status === 'verified'
+          <VerificationNote status={workExperienceVerification.status}>
+            {workExperienceVerification.status === 'verified'
+              ? workExperienceVerification.message
+              : workExperienceVerification.status === 'failed'
                 ? workExperienceVerification.message
-                : workExperienceVerification.status === 'failed'
-                  ? workExperienceVerification.message
-                  : workExperienceVerification.status === 'loading'
-                    ? 'Verifying work experience with employer letter...'
-                    : 'Work experience will be auto-verified after uploading Employer Consent Letter'}
-            </span>
-          </div>
+                : workExperienceVerification.status === 'loading'
+                  ? 'Verifying work experience with employer letter...'
+                  : 'Work experience will be auto-verified after uploading Employer Consent Letter'}
+          </VerificationNote>
 
-          {(Array.isArray(workExperienceVerification.extracted?.companies) && workExperienceVerification.extracted.companies.length > 0
-            || Array.isArray(workExperienceVerification.extracted?.positions) && workExperienceVerification.extracted.positions.length > 0
-            || Array.isArray(workExperienceVerification.extracted?.dateRanges) && workExperienceVerification.extracted.dateRanges.length > 0) && (
-            <div style={{ marginTop: '10px', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', background: '#f8fafc' }}>
-              <div style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a', marginBottom: '6px' }}>
-                Extracted from Employer Letter
-              </div>
-              {Array.isArray(workExperienceVerification.extracted?.companies) && workExperienceVerification.extracted.companies.length > 0 && (
-                <div style={{ fontSize: '13px', color: '#334155', marginBottom: '4px' }}>
-                  Companies: {workExperienceVerification.extracted.companies.join(' | ')}
-                </div>
+          {(workExperienceVerification.extracted?.companies?.length > 0
+            || workExperienceVerification.extracted?.positions?.length > 0
+            || workExperienceVerification.extracted?.dateRanges?.length > 0) && (
+            <div className="extracted-details">
+              <p className="extracted-details__title">Extracted from Employer Letter</p>
+              {workExperienceVerification.extracted.companies?.length > 0 && (
+                <p>Companies: {workExperienceVerification.extracted.companies.join(' | ')}</p>
               )}
-              {Array.isArray(workExperienceVerification.extracted?.positions) && workExperienceVerification.extracted.positions.length > 0 && (
-                <div style={{ fontSize: '13px', color: '#334155', marginBottom: '4px' }}>
-                  Positions: {workExperienceVerification.extracted.positions.join(' | ')}
-                </div>
+              {workExperienceVerification.extracted.positions?.length > 0 && (
+                <p>Positions: {workExperienceVerification.extracted.positions.join(' | ')}</p>
               )}
-              {Array.isArray(workExperienceVerification.extracted?.dateRanges) && workExperienceVerification.extracted.dateRanges.length > 0 && (
-                <div style={{ fontSize: '13px', color: '#334155' }}>
-                  Date Ranges: {workExperienceVerification.extracted.dateRanges.map((range) => `${range.from} -> ${range.to}`).join(' | ')}
-                </div>
+              {workExperienceVerification.extracted.dateRanges?.length > 0 && (
+                <p>Date Ranges: {workExperienceVerification.extracted.dateRanges.map((range) => `${range.from} -> ${range.to}`).join(' | ')}</p>
               )}
             </div>
           )}
@@ -2627,225 +2604,95 @@ function ApplicationFormPage() {
         <fieldset className="form-section" ref={documentsSectionRef} tabIndex={-1}>
           <legend className="section-legend"><h2 className="section-title">Documents</h2></legend>
           <p className="document-note">
-            * Please make sure each file is 4 MB or less (Please upload the files in PDF format). All documents are required.
+            All documents are required. Each file must be 4 MB or less.
           </p>
 
-          <div className="form-group">
-            <label>Degree / Diploma Certificate(s)</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-              <button
-                type="button"
-                onClick={() => triggerFilePicker(degreeInputRef)}
-                style={{
-                  border: '1px solid #bfc5cc',
-                  borderRadius: '4px',
-                  background: '#fff',
-                  color: '#111827',
-                  cursor: 'pointer',
-                  padding: '8px 14px',
-                  fontSize: '16px',
-                  lineHeight: 1
-                }}
-              >
-                Choose files
-              </button>
-              <span style={{ fontSize: '16px', color: '#374151' }}>
-                {Array.isArray(formData.documents.degreeCertificate) && formData.documents.degreeCertificate.length > 0
-                  ? `${formData.documents.degreeCertificate.length} file(s) selected`
-                  : 'No file chosen'}
-              </span>
-            </div>
-            <input
-              ref={degreeInputRef}
-              type="file"
+          <div className="upload-grid">
+            <UploadZone
+              id={fieldId('documents.degreeCertificate')}
+              label="Degree / Diploma Certificate(s)"
+              hint="PDF, PNG, JPG or WEBP · up to 4 MB each"
               accept=".pdf,.png,.jpg,.jpeg,.webp"
               multiple
-              onChange={(e) => handleFileChange(e, 'degreeCertificate')}
-              style={{ display: 'none' }}
+              files={asFileList(formData.documents.degreeCertificate)}
+              inputRef={degreeInputRef}
+              onFiles={(files) => handleDocumentFiles('degreeCertificate', files)}
+              onRemove={removeDegreeFile}
+              error={documentError('degreeCertificate')}
+              verification={{
+                status: documentVerification.isVerifying ? 'loading' : documentVerification.degreeCertificate.status,
+                message: documentVerification.degreeCertificate.message
+              }}
             />
-            {Array.isArray(formData.documents.degreeCertificate) && formData.documents.degreeCertificate.length > 0 && (
-              <p className="document-note" style={{ marginTop: '8px', marginBottom: '8px' }}>
-                {formData.documents.degreeCertificate.length} degree files selected.
-              </p>
-            )}
-            {Array.isArray(formData.documents.degreeCertificate) && formData.documents.degreeCertificate.length > 0 && (
-              <div style={{ marginBottom: '10px' }}>
-                {formData.documents.degreeCertificate.map((file, index) => (
-                  <div
-                    key={`${file.name}-${file.lastModified}-${index}`}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '6px' }}
-                  >
-                    <span style={{ fontSize: '13px', color: '#374151' }}>{file.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeDegreeFile(index)}
-                      style={{
-                        border: '1px solid #d1d5db',
-                        borderRadius: '4px',
-                        background: '#fff',
-                        color: '#374151',
-                        cursor: 'pointer',
-                        padding: '2px 8px',
-                        fontSize: '12px'
-                      }}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-            {fileErrors.degreeCertificate && (
-              <div className="error-box">
-                <span className="error-icon">⚠</span>
-                <span className="error-text">{fileErrors.degreeCertificate}</span>
-              </div>
-            )}
-          </div>
 
-          <div className="form-group">
-            <label>NIC</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-              <button
-                type="button"
-                onClick={() => triggerFilePicker(nicInputRef)}
-                style={{
-                  border: '1px solid #bfc5cc',
-                  borderRadius: '4px',
-                  background: '#fff',
-                  color: '#111827',
-                  cursor: 'pointer',
-                  padding: '8px 14px',
-                  fontSize: '16px',
-                  lineHeight: 1
-                }}
-              >
-                Choose file
-              </button>
-              <span style={{ fontSize: '16px', color: '#374151' }}>
-                {formData.documents.nic ? formData.documents.nic.name : 'No file chosen'}
-              </span>
-            </div>
-            <input
-              ref={nicInputRef}
-              type="file"
+            <UploadZone
+              id={fieldId('documents.nic')}
+              label="NIC"
+              hint="PDF, PNG, JPG or WEBP · up to 4 MB"
               accept=".pdf,.png,.jpg,.jpeg,.webp"
-              onChange={(e) => handleFileChange(e, 'nic')}
-              style={{ display: 'none' }}
+              files={asFileList(formData.documents.nic)}
+              inputRef={nicInputRef}
+              onFiles={(files) => handleDocumentFiles('nic', files)}
+              onRemove={removeNicFile}
+              error={documentError('nic')}
+              verification={{
+                status: documentVerification.isVerifying ? 'loading' : documentVerification.nic.status,
+                message: documentVerification.nic.message
+              }}
             />
-            {formData.documents.nic && (
-              <p className="document-note" style={{ marginTop: '8px', marginBottom: '8px' }}>
-                NIC file selected.
-              </p>
-            )}
-            {formData.documents.nic && (
-              <div style={{ marginBottom: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '13px', color: '#374151' }}>{formData.documents.nic.name}</span>
-                  <button
-                    type="button"
-                    onClick={removeNicFile}
-                    style={{
-                      border: '1px solid #d1d5db',
-                      borderRadius: '4px',
-                      background: '#fff',
-                      color: '#374151',
-                      cursor: 'pointer',
-                      padding: '2px 8px',
-                      fontSize: '12px'
-                    }}
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-            )}
-            {fileErrors.nic && (
-              <div className="error-box">
-                <span className="error-icon">⚠</span>
-                <span className="error-text">{fileErrors.nic}</span>
-              </div>
-            )}
-          </div>
 
-          {documentVerification.isVerifying && (
-            <p className="document-note" style={{ marginBottom: '10px', color: '#0f766e' }}>
-              Verifying Name, Degree, and NIC automatically...
-            </p>
-          )}
-
-          <div className="form-group">
-            <label>Membership of Professional Organizations (Proof)</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-              <button
-                type="button"
-                onClick={() => triggerFilePicker(membershipProofInputRef)}
-                style={{
-                  border: '1px solid #bfc5cc',
-                  borderRadius: '4px',
-                  background: '#fff',
-                  color: '#111827',
-                  cursor: 'pointer',
-                  padding: '8px 14px',
-                  fontSize: '16px',
-                  lineHeight: 1
-                }}
-              >
-                Choose files
-              </button>
-              <span style={{ fontSize: '16px', color: '#374151' }}>
-                {Array.isArray(formData.documents.membershipProofs) && formData.documents.membershipProofs.length > 0
-                  ? `${formData.documents.membershipProofs.length} file(s) selected`
-                  : 'No file chosen'}
-              </span>
-            </div>
-            <input
-              ref={membershipProofInputRef}
-              type="file"
+            <UploadZone
+              id={fieldId('documents.membershipProofs')}
+              label="Membership of Professional Organizations (Proof)"
+              hint="PDF, PNG, JPG or WEBP · up to 4 MB each"
               accept=".pdf,.png,.jpg,.jpeg,.webp"
               multiple
-              onChange={(e) => handleFileChange(e, 'membershipProofs')}
-              style={{ display: 'none' }}
+              files={asFileList(formData.documents.membershipProofs)}
+              inputRef={membershipProofInputRef}
+              onFiles={(files) => handleDocumentFiles('membershipProofs', files)}
+              onRemove={removeMembershipProofFile}
+              error={documentError('membershipProofs')}
+              verification={membershipExtraction}
             />
-            {Array.isArray(formData.documents.membershipProofs) && formData.documents.membershipProofs.length > 0 && (
-              <p className="document-note" style={{ marginTop: '8px', marginBottom: '8px' }}>
-                {formData.documents.membershipProofs.length} membership file(s) selected.
-              </p>
-            )}
-            {Array.isArray(formData.documents.membershipProofs) && formData.documents.membershipProofs.length > 0 && (
-              <div style={{ marginBottom: '10px' }}>
-                {formData.documents.membershipProofs.map((file, index) => (
-                  <div
-                    key={`${file.name}-${file.lastModified}-${index}`}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '6px' }}
-                  >
-                    <span style={{ fontSize: '13px', color: '#374151' }}>{file.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeMembershipProofFile(index)}
-                      style={{
-                        border: '1px solid #d1d5db',
-                        borderRadius: '4px',
-                        background: '#fff',
-                        color: '#374151',
-                        cursor: 'pointer',
-                        padding: '2px 8px',
-                        fontSize: '12px'
-                      }}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
 
-            {fileErrors.membershipProofs && (
-              <div className="error-box">
-                <span className="error-icon">⚠</span>
-                <span className="error-text">{fileErrors.membershipProofs}</span>
-              </div>
-            )}
+            <UploadZone
+              id={fieldId('documents.employerLetter')}
+              label="Employer Consent Letter"
+              hint="PDF, PNG, JPG or WEBP · up to 4 MB each"
+              accept=".pdf,.png,.jpg,.jpeg,.webp"
+              multiple
+              files={asFileList(formData.documents.employerLetter)}
+              inputRef={employerLetterInputRef}
+              onFiles={(files) => handleDocumentFiles('employerLetter', files)}
+              onRemove={removeEmployerLetterFile}
+              error={documentError('employerLetter')}
+              verification={workExperienceVerification}
+            />
+
+            <UploadZone
+              id={fieldId('documents.transcript')}
+              label="Transcript(s)"
+              hint="PDF only · up to 4 MB"
+              accept=".pdf"
+              files={asFileList(formData.documents.transcript)}
+              inputRef={transcriptInputRef}
+              onFiles={(files) => handleDocumentFiles('transcript', files)}
+              onRemove={removeTranscriptFile}
+              error={documentError('transcript')}
+            />
+
+            <UploadZone
+              id={fieldId('documents.paymentConfirmation')}
+              label="Payment Confirmation / Bank Receipt"
+              hint="PDF, PNG, JPG or WEBP · up to 4 MB. Checked for account no. 0043618 and the Rs. 2,000 fee."
+              accept=".pdf,.png,.jpg,.jpeg,.webp"
+              files={asFileList(formData.documents.paymentConfirmation)}
+              inputRef={paymentConfirmationInputRef}
+              onFiles={(files) => handleDocumentFiles('paymentConfirmation', files)}
+              onRemove={removePaymentConfirmationFile}
+              error={documentError('paymentConfirmation')}
+              verification={paymentReceiptVerification}
+            />
           </div>
 
           {documentVerification.error && (
@@ -2855,242 +2702,18 @@ function ApplicationFormPage() {
             </div>
           )}
 
-          <div className="form-group">
-            <label>Employer Consent Letter</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-              <button
-                type="button"
-                onClick={() => triggerFilePicker(employerLetterInputRef)}
-                style={{
-                  border: '1px solid #bfc5cc',
-                  borderRadius: '4px',
-                  background: '#fff',
-                  color: '#111827',
-                  cursor: 'pointer',
-                  padding: '8px 14px',
-                  fontSize: '16px',
-                  lineHeight: 1
-                }}
-              >
-                Choose files
-              </button>
-              <span style={{ fontSize: '16px', color: '#374151' }}>
-                {Array.isArray(formData.documents.employerLetter) && formData.documents.employerLetter.length > 0
-                  ? `${formData.documents.employerLetter.length} file(s) selected`
-                  : 'No file chosen'}
-              </span>
+          {(paymentReceiptVerification.extracted?.accountNumbers?.length > 0
+            || paymentReceiptVerification.extracted?.amounts?.length > 0) && (
+            <div className="extracted-details">
+              <p className="extracted-details__title">Extracted from Payment Receipt</p>
+              {paymentReceiptVerification.extracted.accountNumbers?.length > 0 && (
+                <p>Account Numbers: {paymentReceiptVerification.extracted.accountNumbers.join(' | ')}</p>
+              )}
+              {paymentReceiptVerification.extracted.amounts?.length > 0 && (
+                <p>Amounts: {paymentReceiptVerification.extracted.amounts.map((amount) => `Rs. ${amount}`).join(' | ')}</p>
+              )}
             </div>
-            <input
-              ref={employerLetterInputRef}
-              type="file"
-              accept=".pdf,.png,.jpg,.jpeg,.webp"
-              multiple
-              onChange={(e) => handleFileChange(e, 'employerLetter')}
-              style={{ display: 'none' }}
-            />
-            {Array.isArray(formData.documents.employerLetter) && formData.documents.employerLetter.length > 0 && (
-              <p className="document-note" style={{ marginTop: '8px', marginBottom: '8px' }}>
-                {formData.documents.employerLetter.length} employer letter file(s) selected.
-              </p>
-            )}
-            {Array.isArray(formData.documents.employerLetter) && formData.documents.employerLetter.length > 0 && (
-              <div style={{ marginBottom: '10px' }}>
-                {formData.documents.employerLetter.map((file, index) => (
-                  <div
-                    key={`${file.name}-${file.lastModified}-${index}`}
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '6px' }}
-                  >
-                    <span style={{ fontSize: '13px', color: '#374151' }}>{file.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeEmployerLetterFile(index)}
-                      style={{
-                        border: '1px solid #d1d5db',
-                        borderRadius: '4px',
-                        background: '#fff',
-                        color: '#374151',
-                        cursor: 'pointer',
-                        padding: '2px 8px',
-                        fontSize: '12px'
-                      }}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-            {fileErrors.employerLetter && (
-              <div className="error-box">
-                <span className="error-icon">⚠</span>
-                <span className="error-text">{fileErrors.employerLetter}</span>
-              </div>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label>Transcript(s)</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-              <button
-                type="button"
-                onClick={() => triggerFilePicker(transcriptInputRef)}
-                style={{
-                  border: '1px solid #bfc5cc',
-                  borderRadius: '4px',
-                  background: '#fff',
-                  color: '#111827',
-                  cursor: 'pointer',
-                  padding: '8px 14px',
-                  fontSize: '16px',
-                  lineHeight: 1
-                }}
-              >
-                Choose file
-              </button>
-              <span style={{ fontSize: '16px', color: '#374151' }}>
-                {formData.documents.transcript ? formData.documents.transcript.name : 'No file chosen'}
-              </span>
-            </div>
-            <input
-              ref={transcriptInputRef}
-              type="file"
-              accept=".pdf"
-              onChange={(e) => handleFileChange(e, 'transcript')}
-              style={{ display: 'none' }}
-            />
-            {formData.documents.transcript && (
-              <p className="document-note" style={{ marginTop: '8px', marginBottom: '8px' }}>
-                Transcript file selected.
-              </p>
-            )}
-            {formData.documents.transcript && (
-              <div style={{ marginBottom: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '13px', color: '#374151' }}>{formData.documents.transcript.name}</span>
-                  <button
-                    type="button"
-                    onClick={removeTranscriptFile}
-                    style={{
-                      border: '1px solid #d1d5db',
-                      borderRadius: '4px',
-                      background: '#fff',
-                      color: '#374151',
-                      cursor: 'pointer',
-                      padding: '2px 8px',
-                      fontSize: '12px'
-                    }}
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-            )}
-            {fileErrors.transcript && (
-              <div className="error-box">
-                <span className="error-icon">⚠</span>
-                <span className="error-text">{fileErrors.transcript}</span>
-              </div>
-            )}
-          </div>
-
-          <div className="form-group">
-            <label>Payment Confirmation / Bank Receipt</label>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-              <button
-                type="button"
-                onClick={() => triggerFilePicker(paymentConfirmationInputRef)}
-                style={{
-                  border: '1px solid #bfc5cc',
-                  borderRadius: '4px',
-                  background: '#fff',
-                  color: '#111827',
-                  cursor: 'pointer',
-                  padding: '8px 14px',
-                  fontSize: '16px',
-                  lineHeight: 1
-                }}
-              >
-                Choose file
-              </button>
-              <span style={{ fontSize: '16px', color: '#374151' }}>
-                {formData.documents.paymentConfirmation ? formData.documents.paymentConfirmation.name : 'No file chosen'}
-              </span>
-            </div>
-            <input
-              ref={paymentConfirmationInputRef}
-              type="file"
-              accept=".pdf,.png,.jpg,.jpeg,.webp"
-              onChange={(e) => handleFileChange(e, 'paymentConfirmation')}
-              style={{ display: 'none' }}
-            />
-            {formData.documents.paymentConfirmation && (
-              <p className="document-note" style={{ marginTop: '8px', marginBottom: '8px' }}>
-                Payment confirmation file selected.
-              </p>
-            )}
-            {formData.documents.paymentConfirmation && (
-              <div style={{ marginBottom: '10px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '13px', color: '#374151' }}>{formData.documents.paymentConfirmation.name}</span>
-                  <button
-                    type="button"
-                    onClick={removePaymentConfirmationFile}
-                    style={{
-                      border: '1px solid #d1d5db',
-                      borderRadius: '4px',
-                      background: '#fff',
-                      color: '#374151',
-                      cursor: 'pointer',
-                      padding: '2px 8px',
-                      fontSize: '12px'
-                    }}
-                  >
-                    Remove
-                  </button>
-                </div>
-              </div>
-            )}
-            {fileErrors.paymentConfirmation && (
-              <div className="error-box">
-                <span className="error-icon">⚠</span>
-                <span className="error-text">{fileErrors.paymentConfirmation}</span>
-              </div>
-            )}
-
-            <div className={`verification-status ${paymentReceiptVerification.status === 'verified' ? 'verified' : paymentReceiptVerification.status === 'failed' ? 'failed' : ''}`}>
-              <span className="verification-icon">
-                {paymentReceiptVerification.status === 'verified' ? '✔' : paymentReceiptVerification.status === 'failed' ? '✖' : paymentReceiptVerification.status === 'loading' ? '…' : '•'}
-              </span>
-              <span>
-                {paymentReceiptVerification.status === 'verified'
-                  ? paymentReceiptVerification.message
-                  : paymentReceiptVerification.status === 'failed'
-                    ? paymentReceiptVerification.message
-                    : paymentReceiptVerification.status === 'loading'
-                      ? 'Extracting and verifying account number and processing fee from receipt...'
-                      : 'Upload payment receipt to auto-verify account no (0043618) and fee (Rs. 2,000).'}
-              </span>
-            </div>
-
-            {(Array.isArray(paymentReceiptVerification.extracted?.accountNumbers) && paymentReceiptVerification.extracted.accountNumbers.length > 0
-              || Array.isArray(paymentReceiptVerification.extracted?.amounts) && paymentReceiptVerification.extracted.amounts.length > 0) && (
-              <div style={{ marginTop: '10px', padding: '10px 12px', border: '1px solid #d1d5db', borderRadius: '6px', background: '#f8fafc' }}>
-                <div style={{ fontSize: '13px', fontWeight: 600, color: '#0f172a', marginBottom: '6px' }}>
-                  Extracted from Payment Receipt
-                </div>
-                {Array.isArray(paymentReceiptVerification.extracted?.accountNumbers) && paymentReceiptVerification.extracted.accountNumbers.length > 0 && (
-                  <div style={{ fontSize: '13px', color: '#334155', marginBottom: '4px' }}>
-                    Account Numbers: {paymentReceiptVerification.extracted.accountNumbers.join(' | ')}
-                  </div>
-                )}
-                {Array.isArray(paymentReceiptVerification.extracted?.amounts) && paymentReceiptVerification.extracted.amounts.length > 0 && (
-                  <div style={{ fontSize: '13px', color: '#334155' }}>
-                    Amounts: {paymentReceiptVerification.extracted.amounts.map((amount) => `Rs. ${amount}`).join(' | ')}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+          )}
 
           <p className="document-info">
             ** The application processing fee of Rs. 2,000/- (Per subject for LLB/University Repeat) will be paid either to University Receipt or as a bank or 
