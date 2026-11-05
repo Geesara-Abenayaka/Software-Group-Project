@@ -1,13 +1,9 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User } from 'lucide-react';
 import '../styles/MarksPage.css';
 import API_BASE_URL from '../utils/apiConfig';
-import uomLogo from '../assets/uom-logo.png';
+import AdminLayout from '../components/AdminLayout';
 
 function MarksPage() {
-  const navigate = useNavigate();
-  const [user, setUser] = useState(null);
   const [selectedCourse, setSelectedCourse] = useState(() => {
     // Restore selected course from localStorage or default to 'All'
     return localStorage.getItem('selectedCourse') || 'All';
@@ -36,14 +32,8 @@ function MarksPage() {
   });
 
   useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-    } else {
-      navigate('/login');
-    }
     fetchApplications();
-  }, [navigate, selectedCourse]);
+  }, [selectedCourse]);
 
   // The course filter lists the real programs, so new programs appear without code changes.
   useEffect(() => {
@@ -141,11 +131,6 @@ function MarksPage() {
     } catch (err) {
       console.error('Error fetching applications:', err);
     }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    navigate('/login');
   };
 
   const handleSearch = (e) => {
@@ -432,63 +417,9 @@ function MarksPage() {
   };
 
   return (
-    <div className="admin-app" onClick={handleDeselectRow}>
-      <header className="admin-header" onClick={(e) => e.stopPropagation()}>
-        <div className="admin-header-content">
-          <div className="header-left">
-            <img src={uomLogo} alt="University of Moratuwa logo" className="uom-logo" />
-            <div className="header-text">
-              <h1 className="university-name">University of Moratuwa</h1>
-              <p className="portal-subtitle">Postgraduate Management Information System</p>
-            </div>
-          </div>
-          <div className="header-right">
-            <div className="user-info">
-              <div className="user-avatar">
-                <User size={20} color="white" />
-              </div>
-              <div className="user-details">
-                <span className="user-role">Admin User</span>
-                <span className="user-email">{user?.email || 'admin@uom.lk'}</span>
-              </div>
-            </div>
-            <button className="logout-btn" onClick={handleLogout}>
-              <LogOut size={16} />
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
-      <nav className="admin-navbar" onClick={(e) => e.stopPropagation()}>
-        <div className="navbar-content">
-          <button className="navbar-btn" onClick={() => navigate('/admin/dashboard')}>
-            <GraduationCap size={18} className="nav-icon" />
-            Programs
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/applications')}>
-            <ClipboardList size={18} className="nav-icon" />
-            Applications
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/search')}>
-            <Search size={18} className="nav-icon" />
-            Search
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/download')}>
-            <Download size={18} className="nav-icon" />
-            Download
-          </button>
-          <button className="navbar-btn active">
-            <BarChart2 size={18} className="nav-icon" />
-            Marks
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/settings')}>
-            <Settings size={18} className="nav-icon" />
-            Settings
-          </button>
-        </div>
-      </nav>
+    <AdminLayout onClick={handleDeselectRow}>
       <div className="admin-content-full">
-        <main className="admin-main-full marks-main">
+        <main id="main" tabIndex={-1} className="admin-main-full marks-main">
           <div className="marks-controls" onClick={(e) => e.stopPropagation()}>
             <div className="search-wrapper">
               <input
@@ -777,7 +708,7 @@ function MarksPage() {
           </div>
         </main>
       </div>
-    </div>
+    </AdminLayout>
   );
 }
 
