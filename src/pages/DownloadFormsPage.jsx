@@ -5,10 +5,13 @@ import 'jspdf-autotable';
 import '../styles/DownloadFormsPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import AdminLayout from '../components/AdminLayout';
+import { Skeleton } from '../components/Loaders';
+import useDelayedFlag from '../utils/useDelayedFlag';
 
 function DownloadFormsPage() {
   const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
+  const showSkeletons = useDelayedFlag(loading);
   
   const [selectedPrograms, setSelectedPrograms] = useState([]);
   const [documentType, setDocumentType] = useState('All');
@@ -558,7 +561,12 @@ function DownloadFormsPage() {
             <div className="form-group">
               <label className="group-label">Application Forms</label>
               {loading ? (
-                <p style={{ color: '#6b7280', fontStyle: 'italic' }}>Loading programs...</p>
+                <div className={`checkbox-group${showSkeletons ? '' : ' skeleton-wait'}`} aria-busy="true">
+                  {/* the real list is a wrapping row of checkbox labels */}
+                  {['180px', '150px', '210px', '170px', '140px'].map((width) => (
+                    <Skeleton key={width} className="skeleton-text" style={{ width, height: '18px', marginBottom: 0 }} />
+                  ))}
+                </div>
               ) : programs.length === 0 ? (
                 <p style={{ color: '#6b7280', fontStyle: 'italic' }}>No programs available</p>
               ) : (

@@ -5,6 +5,8 @@ import { generateCourseDetailsPDF, generateCallForApplicationPDF } from '../util
 import API_BASE_URL from '../utils/apiConfig';
 import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
+import { Skeleton } from '../components/Loaders';
+import useDelayedFlag from '../utils/useDelayedFlag';
 
 function ProgramDetailPage() {
   const { shortCode } = useParams();
@@ -30,6 +32,7 @@ function ProgramDetailPage() {
   const [program, setProgram] = useState(initialProgram);
   const [loading, setLoading] = useState(!initialProgram);
   const [error, setError] = useState(null);
+  const showSkeleton = useDelayedFlag(loading);
 
   useEffect(() => {
     const nextInitialProgram = location.state?.program?.shortCode === shortCode
@@ -89,10 +92,44 @@ function ProgramDetailPage() {
   if (loading) {
     return (
       <div className="app">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading program details...</p>
-        </div>
+        <SiteHeader showAdminLogin />
+
+        <main className="content-area" id="main" tabIndex={-1} aria-busy="true">
+          <div
+            className={`detail-container skeleton-on-page${showSkeleton ? '' : ' skeleton-wait'}`}
+            style={{ width: '100%' }}
+            aria-hidden="true"
+          >
+            <Skeleton className="skeleton-text" style={{ width: '110px', marginBottom: '24px' }} />
+            <Skeleton className="skeleton-title" style={{ width: '40%', height: '36px', marginBottom: '6px' }} />
+            <div className="detail-title-divider"></div>
+            <div className="detail-description">
+              {['96%', '100%', '62%'].map((width) => (
+                <Skeleton key={width} className="skeleton-text" style={{ width, height: '14px' }} />
+              ))}
+            </div>
+
+            <div className="detail-section">
+              <Skeleton className="skeleton-title" style={{ width: '300px' }} />
+              {['38%', '30%', '44%', '35%'].map((width) => (
+                <Skeleton key={width} className="skeleton-text" style={{ width, height: '16px', margin: '0 0 30px' }} />
+              ))}
+            </div>
+
+            <div className="detail-section">
+              <Skeleton className="skeleton-title" style={{ width: '120px' }} />
+              <div className="resources-grid">
+                {[0, 1, 2].map((index) => (
+                  <div key={index} className="resource-card" style={{ cursor: 'default' }}>
+                    <Skeleton style={{ width: '44px', height: '44px', flexShrink: 0 }} />
+                    <Skeleton className="skeleton-text" style={{ width: '60%', marginBottom: 0 }} />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </main>
+        <SiteFooter />
       </div>
     );
   }
@@ -100,13 +137,18 @@ function ProgramDetailPage() {
   if (error || !program) {
     return (
       <div className="app">
-        <div className="error-container">
-          <h2>Error</h2>
-          <p>{error || 'Program not found'}</p>
-          <button type="button" onClick={handleBackToHome} className="back-btn">
-            Back to Home
-          </button>
-        </div>
+        <SiteHeader showAdminLogin />
+
+        <main className="content-area" id="main" tabIndex={-1}>
+          <div className="error-container">
+            <h2>Error</h2>
+            <p>{error || 'Program not found'}</p>
+            <button type="button" onClick={handleBackToHome} className="back-btn">
+              Back to Home
+            </button>
+          </div>
+        </main>
+        <SiteFooter />
       </div>
     );
   }

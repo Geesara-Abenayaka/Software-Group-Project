@@ -4,6 +4,8 @@ import { User } from 'lucide-react';
 import '../styles/ApplicationsPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import AdminLayout from '../components/AdminLayout';
+import { AdminProgramCardSkeleton } from '../components/Loaders';
+import useDelayedFlag from '../utils/useDelayedFlag';
 
 const fetchWithTimeout = async (url, timeoutMs = 8000) => {
   const controller = new AbortController();
@@ -21,6 +23,7 @@ function ApplicationsPage() {
   const navigate = useNavigate();
   const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
+  const showSkeletons = useDelayedFlag(loading);
 
   useEffect(() => {
     fetchPrograms();
@@ -86,11 +89,9 @@ function ApplicationsPage() {
           <div className="page-title-row">
             <h2 className="page-heading">Applications</h2>
           </div>
-          <div className="programs-grid-admin">
+          <div className={`programs-grid-admin${loading && !showSkeletons ? ' skeleton-wait' : ''}`} aria-busy={loading}>
             {loading ? (
-              <div style={{ padding: '2rem', color: '#9ca3af', gridColumn: '1/-1' }}>
-                <div className="loading-spinner" style={{ margin: '0 auto' }}></div>
-              </div>
+              Array.from({ length: 6 }, (_, index) => <AdminProgramCardSkeleton key={index} />)
             ) : (
             programs.map((program) => (
               <div key={program._id} className="program-card-admin">

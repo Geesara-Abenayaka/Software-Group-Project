@@ -5,6 +5,8 @@ import API_BASE_URL from '../utils/apiConfig';
 import '../styles/AdminDashboard.css';
 import '../styles/ApplicationDetailPage.css';
 import AdminLayout from '../components/AdminLayout';
+import { TableSkeleton } from '../components/Loaders';
+import useDelayedFlag from '../utils/useDelayedFlag';
 
 const NO_GPA_CATEGORY = 'No GPA';
 
@@ -40,6 +42,7 @@ function ApplicationDetailPage() {
   const [applications, setApplications] = useState([]);
   const [filteredApplications, setFilteredApplications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const showSkeletons = useDelayedFlag(loading);
   const [searchText, setSearchText] = useState('');
   const [filters, setFilters] = useState({
     category: 'All',
@@ -501,13 +504,9 @@ function ApplicationDetailPage() {
                   <th>Status</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className={loading && !showSkeletons ? 'skeleton-wait' : undefined} aria-busy={loading}>
                 {loading ? (
-                  <tr>
-                    <td colSpan="6" className="no-apps-msg">
-                      <div className="loading-spinner" style={{ margin: '0 auto' }}></div>
-                    </td>
-                  </tr>
+                  <TableSkeleton rows={8} columns={6} rowHeight={57} />
                 ) : filteredApplications.length === 0 ? (
                   <tr>
                     <td colSpan="6" className="no-apps-msg">No applications found</td>

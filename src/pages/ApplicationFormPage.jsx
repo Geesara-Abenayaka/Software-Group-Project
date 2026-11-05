@@ -4,6 +4,10 @@ import '../styles/ApplicationFormPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import { MAX_GPA, getErrorSummary, getSectionOfField, hasDocument, validateApplication, validateField } from '../utils/applicationValidation';
 import { loadDraft, mergeDraft, removeDraft, saveDraft } from '../utils/applicationDraft';
+import { formatReference } from '../utils/applicationReference';
+
+// Shown in the submission modal; handleSubmit moves through them with setSubmissionStep.
+const SUBMISSION_STEPS = ['Checking your details', 'Uploading documents', 'Submitting application'];
 
 const createEmptyFormData = (program) => ({
   program,
@@ -102,6 +106,7 @@ function ApplicationFormPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState('submitting');
   const [submissionMessage, setSubmissionMessage] = useState('Your application is submitting...');
+  const [submissionStep, setSubmissionStep] = useState(0); // index in SUBMISSION_STEPS
   const autoVerificationKeyRef = useRef('');
   const membershipExtractionKeyRef = useRef('');
   const workExperienceVerificationKeyRef = useRef('');
@@ -1455,8 +1460,9 @@ function ApplicationFormPage() {
     setIsSubmitting(true);
     setSubmissionStatus('submitting');
     setSubmissionMessage('Your application is submitting...');
+    setSubmissionStep(0);
     await new Promise((resolve) => setTimeout(resolve, 0));
-    let keepModalVisibleForRedirect = false;
+    let keepModalOpen = false;
 
     const showSubmissionModalError = async (message) => {
       setSubmissionStatus('error');
@@ -1551,7 +1557,8 @@ function ApplicationFormPage() {
     }
 
     try {
-      
+      setSubmissionStep(1);
+
       // Helper function to convert File to base64
       const fileToBase64 = (file) => {
         return new Promise((resolve, reject) => {
@@ -1609,7 +1616,8 @@ function ApplicationFormPage() {
       const timeoutId = setTimeout(() => {
         controller.abort();
       }, 120000); // 2 minutes
-      
+
+      setSubmissionStep(2);
       const response = await fetch(`${API_BASE_URL}/applications`, {
         method: 'POST',
         headers: {
@@ -1628,10 +1636,9 @@ function ApplicationFormPage() {
         setSubmittedApplicationId(result.data._id);
         setDraftSavedAt(null);
         setSubmissionStatus('success');
-        setSubmissionMessage('Application submitted successfully! Redirecting...');
-        keepModalVisibleForRedirect = true;
-        await new Promise((resolve) => setTimeout(resolve, 1400));
-        navigate('/');
+        setSubmissionMessage('Application submitted successfully!');
+        // The modal stays open with the reference number until the applicant leaves.
+        keepModalOpen = true;
         return;
       } else {
         setSubmissionStatus('error');
@@ -1653,7 +1660,7 @@ function ApplicationFormPage() {
       }
     }
     } finally {
-      if (!keepModalVisibleForRedirect) {
+      if (!keepModalOpen) {
         setIsSubmitting(false);
       }
     }
@@ -1663,15 +1670,52 @@ function ApplicationFormPage() {
     <div className="application-form-page">
       {isSubmitting && (
         <div className="submission-modal-overlay">
-          <div className="submission-modal">
+          <div className="submission-modal" role="dialog" aria-modal="true" aria-live="polite">
             {submissionStatus === 'submitting' ? (
               <div className="submission-spinner"></div>
             ) : submissionStatus === 'success' ? (
-              <div className="submission-success-icon">✓</div>
+              <svg className="success-check submission-check" width="64" height="64" viewBox="0 0 52 52" fill="none" aria-hidden="true">
+                <circle cx="26" cy="26" r="24" stroke="currentColor" strokeWidth="3" />
+                <path d="M15 27l7 7 15-15" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
             ) : (
               <div className="submission-error-icon">!</div>
             )}
             <p>{submissionMessage}</p>
+
+            {submissionStatus === 'submitting' && (
+              <ol className="submission-steps">
+                {SUBMISSION_STEPS.map((label, index) => (
+                  <li
+                    key={label}
+                    className={index < submissionStep ? 'is-done' : index === submissionStep ? 'is-current' : ''}
+                    aria-current={index === submissionStep ? 'step' : undefined}
+                  >
+                    <span className="submission-step-marker" aria-hidden="true">
+                      {index < submissionStep ? '✓' : index + 1}
+                    </span>
+                    {label}
+                  </li>
+                ))}
+              </ol>
+            )}
+
+            {submissionStatus === 'success' && (
+              <>
+                {submittedApplicationId && (
+                  <div className="submission-reference">
+                    <span className="submission-reference-label">Your reference number</span>
+                    <strong className="submission-reference-number">{formatReference(submittedApplicationId)}</strong>
+                    <span className="submission-reference-note">
+                      Please save it. Quote it if you contact the department about your application.
+                    </span>
+                  </div>
+                )}
+                <button type="button" className="submission-done-btn" onClick={() => navigate('/')} autoFocus>
+                  Back to programs
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}

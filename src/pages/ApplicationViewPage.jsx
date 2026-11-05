@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import '../styles/ApplicationViewPage.css';
 import API_BASE_URL from '../utils/apiConfig';
+import { PageLoader } from '../components/Loaders';
 
 const fetchWithTimeout = async (url, timeoutMs = 8000) => {
   const controller = new AbortController();
@@ -97,10 +98,7 @@ function ApplicationViewPage() {
   if (loading) {
     return (
       <div className="application-form-page">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Loading application details...</p>
-        </div>
+        <PageLoader message="Loading application…" />
       </div>
     );
   }
