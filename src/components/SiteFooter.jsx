@@ -11,12 +11,16 @@ function SiteFooter() {
         </div>
         <div>
           <h2 className="site-footer__heading">Contact</h2>
-          <a href="mailto:postgrad@cse.mrt.ac.lk">postgrad@cse.mrt.ac.lk</a>
+          <a href="mailto:adeeshaw@cse.mrt.ac.lk">adeeshaw@cse.mrt.ac.lk</a>
         </div>
         <nav aria-label="Footer">
           <h2 className="site-footer__heading">Links</h2>
           <ul className="site-footer__links">
-            <li><Link to="/">Programs</Link></li>
+            <li>
+              <a href="https://online.uom.lk/login/index.php" target="_blank" rel="noopener noreferrer">
+                Undergraduate LMS
+              </a>
+            </li>
             <li><Link to="/login">Admin Login</Link></li>
           </ul>
         </nav>
