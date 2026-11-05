@@ -1223,6 +1223,17 @@ label.required::before {
   box-shadow: var(--shadow-sm);
 }
 
+/* Covers the gap above the stuck bar, so text scrolling underneath doesn't peek out */
+.form-progress::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  right: -1px;
+  bottom: 100%;
+  height: calc(var(--space-2) + 1px);
+  background: var(--page);
+}
+
 .form-progress__steps {
   display: flex;
   justify-content: space-between;
@@ -1368,4 +1379,81 @@ label.required::before {
   .apply-page .application-form button {
     scroll-margin-top: 110px;
   }
+}
+
+/* Errors next to the field (6.3) */
+.apply-page .field-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: var(--space-1) 0 0;
+  color: var(--danger);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.apply-page .field-error svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* The old rule gives invalid fields an amber fill; on this page they keep a red border until fixed */
+.apply-page .form-group .input-error,
+.apply-page .captcha-group .input-error {
+  border-color: var(--input-error-border) !important;
+  background-color: var(--surface) !important;
+}
+
+.apply-page .form-group .input-error:focus,
+.apply-page .captcha-group .input-error:focus {
+  box-shadow: 0 0 0 3px var(--danger-bg);
+}
+
+/* Summary of every problem after a failed submit */
+.error-summary {
+  margin: 0 0 var(--space-6);
+  padding: var(--space-4) var(--space-6);
+  background: var(--danger-bg);
+  border-left: 4px solid var(--danger);
+  border-radius: var(--radius-sm);
+  color: var(--danger);
+  scroll-margin-top: var(--space-4);
+}
+
+.error-summary:focus {
+  outline: 3px solid var(--danger);
+  outline-offset: 2px;
+}
+
+.error-summary__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.error-summary__list {
+  margin: 0;
+  padding-left: 28px;
+  font-size: var(--text-sm);
+  line-height: 1.6;
+}
+
+.error-summary__list a {
+  color: var(--danger);
+  font-weight: 500;
+  text-decoration: underline;
+}
+
+.error-summary__list a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.error-summary__list a:focus-visible {
+  outline: 2px solid var(--danger);
+  outline-offset: 2px;
+  border-radius: 2px;
 }

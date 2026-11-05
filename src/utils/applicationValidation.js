@@ -64,7 +64,34 @@ const ROW_LABELS = {
   experiences: 'Work Experience'
 };
 
+const ROW_FIELD_LABELS = {
+  university: 'University / Institute',
+  degree: 'Degree / Qualification',
+  specialization: 'Specialization / Minor',
+  duration: 'Duration',
+  graduationDate: 'Graduation date',
+  gpa: 'GPA',
+  organization: 'Professional organization',
+  category: 'Membership category',
+  dateJoined: 'Date joined',
+  fromMonth: 'From month',
+  fromYear: 'From year',
+  toMonth: 'To month',
+  toYear: 'To year',
+  company: 'Company',
+  position: 'Position'
+};
+
 const REQUIRED_DOCUMENTS = ['degreeCertificate', 'nic', 'membershipProofs', 'employerLetter', 'transcript', 'paymentConfirmation'];
+
+export const DOCUMENT_LABELS = {
+  degreeCertificate: 'Degree / Diploma certificate',
+  nic: 'NIC',
+  membershipProofs: 'Membership proof',
+  employerLetter: 'Employer consent letter',
+  transcript: 'Transcript',
+  paymentConfirmation: 'Payment confirmation'
+};
 
 // A document slot holds a File, an array of Files, or nothing.
 export const hasDocument = (value) => (Array.isArray(value) ? value.length > 0 : Boolean(value));
@@ -127,6 +154,16 @@ export const getSectionCompletion = (data, options) => {
   const sectionsWithErrors = new Set(Object.keys(errors).map(getSectionOfField));
   return ['personal', 'academic', 'memberships', 'work', 'documents', 'declaration']
     .reduce((result, key) => ({ ...result, [key]: !sectionsWithErrors.has(key) }), {});
+};
+
+// Name of a field for the error summary, e.g. 'Full Name' or 'Academic Qualification 2, GPA'.
+export const getFieldLabel = (fieldKey) => {
+  const [listName, index, field] = fieldKey.split('.');
+
+  if (ROW_LABELS[listName]) return `${ROW_LABELS[listName]} ${Number(index) + 1}, ${ROW_FIELD_LABELS[field] || field}`;
+  if (listName === 'documents') return DOCUMENT_LABELS[index] || 'Document';
+  if (fieldKey === 'captcha') return 'Captcha';
+  return PERSONAL_LABELS[fieldKey] || fieldKey;
 };
 
 // One sentence for the submission modal, e.g. 'Please fill Full Name.' or

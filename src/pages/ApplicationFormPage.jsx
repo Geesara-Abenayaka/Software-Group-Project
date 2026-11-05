@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { AlertTriangle, Calendar, Check, Info, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { AlertCircle, AlertTriangle, Calendar, Check, Info, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import '../styles/ApplicationFormPage.css';
 import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
 import API_BASE_URL from '../utils/apiConfig';
-import { MAX_GPA, getErrorSummary, getSectionCompletion, getSectionOfField, hasDocument, validateApplication, validateField } from '../utils/applicationValidation';
+import { MAX_GPA, getFieldLabel, getSectionCompletion, getSectionOfField, hasDocument, validateApplication, validateField } from '../utils/applicationValidation';
 import { loadDraft, mergeDraft, removeDraft, saveDraft } from '../utils/applicationDraft';
 import { formatReference } from '../utils/applicationReference';
 
@@ -104,6 +104,18 @@ const fieldId = (key) => `field-${key.replace(/\./g, '-')}`;
 // so the star is only for the eye.
 function RequiredMark() {
   return <span className="required-mark" aria-hidden="true">*</span>;
+}
+
+// The message under a field. The input points at it with aria-describedby, so screen readers
+// read it when the field gets focus; the icon means it isn't shown by colour alone.
+function FieldError({ fieldKey, message }) {
+  if (!message) return null;
+  return (
+    <p id={`${fieldId(fieldKey)}-error`} className="field-error">
+      <AlertCircle size={16} aria-hidden="true" />
+      <span>{message}</span>
+    </p>
+  );
 }
 
 // Smooth scrolling, unless the visitor asked the system for less motion.
@@ -212,7 +224,15 @@ function ApplicationFormPage() {
     extracted: { accountNumbers: [], amounts: [], requiredAccountNumber: '0043618', requiredFee: 2000 }
   });
   const [captchaValue, setCaptchaValue] = useState('');
-  const [captchaError, setCaptchaError] = useState('');
+  // Errors from the shared rules (validateField / validateApplication), keyed like 'email' or
+  // 'qualifications.0.gpa'. Set when a changed field loses focus and on submit; cleared as soon as the field changes.
+  const [fieldErrors, setFieldErrors] = useState({});
+  // Fields listed in the error summary after a failed submit; an entry goes away once it is fixed.
+  const [summaryKeys, setSummaryKeys] = useState([]);
+  const [summaryFocusRequest, setSummaryFocusRequest] = useState(0);
+  const errorSummaryRef = useRef(null);
+  // Fields the user has typed in. Leaving an untouched empty field doesn't show "required" yet.
+  const changedFieldsRef = useRef(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState('submitting');
   const [submissionMessage, setSubmissionMessage] = useState('Your application is submitting...');
@@ -409,6 +429,82 @@ function ApplicationFormPage() {
 
   const sectionCompletion = getSectionCompletion(formData, { captchaValue });
 
+  const setFieldError = (key, message) => {
+    setFieldErrors((prev) => {
+      if ((prev[key] || '') === (message || '')) return prev;
+      const next = { ...prev };
+      if (message) {
+        next[key] = message;
+      } else {
+        delete next[key];
+      }
+      return next;
+    });
+  };
+
+  // Called by every change handler: the field is being fixed, so its message goes away.
+  const markFieldChanged = (key) => {
+    changedFieldsRef.current.add(key);
+    setFieldError(key, '');
+  };
+
+  // Rows are keyed by index, so after removing a row the messages of that list are dropped;
+  // the next blur or submit checks them again.
+  const clearListErrors = (listName) => {
+    const belongsToList = (key) => key.startsWith(`${listName}.`);
+    setFieldErrors((prev) => Object.fromEntries(Object.entries(prev).filter(([key]) => !belongsToList(key))));
+    setSummaryKeys((prev) => prev.filter((key) => !belongsToList(key)));
+  };
+
+  // On blur, check a field with the shared rules. An empty field the user never typed in waits for submit,
+  // so tabbing through the form doesn't fill it with "required" messages.
+  const checkFieldOnBlur = (key, value) => {
+    if (String(value ?? '').trim() === '' && !changedFieldsRef.current.has(key)) return;
+    setFieldError(key, validateField(key, value));
+  };
+
+  // `liveError` is a message the field's own change handler shows while typing (mobile, NIC, dates…).
+  const errorFor = (key, liveError = '') => liveError || fieldErrors[key] || '';
+
+  // Red border, aria-invalid and the link to the message, for one field.
+  const errorProps = (key, liveError = '') => (
+    errorFor(key, liveError)
+      ? { className: 'input-error', 'aria-invalid': true, 'aria-describedby': `${fieldId(key)}-error` }
+      : {}
+  );
+
+  // Links in the error summary: bring the field to the middle of the screen and focus it.
+  const focusField = (key) => {
+    const element = document.getElementById(fieldId(key));
+    if (!element) {
+      goToSection(getSectionOfField(key));
+      return;
+    }
+    element.scrollIntoView({ behavior: scrollBehavior(), block: 'center' });
+    element.focus({ preventScroll: true });
+  };
+
+  // After a failed submit: every problem under its field, the summary on top, and focus on the summary.
+  const showErrorSummary = (errors) => {
+    setFieldErrors(errors);
+    setSummaryKeys(Object.keys(errors));
+    setSummaryFocusRequest((count) => count + 1);
+
+    // A wrong captcha can't be corrected by retyping it, so show a new one.
+    if (errors.captcha && formData.captcha.trim()) {
+      setFormData((prev) => ({ ...prev, captcha: '' }));
+      generateCaptcha();
+    }
+  };
+
+  useEffect(() => {
+    if (summaryFocusRequest) {
+      errorSummaryRef.current?.focus();
+    }
+  }, [summaryFocusRequest]);
+
+  const summaryErrors = summaryKeys.filter((key) => fieldErrors[key]);
+
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -416,9 +512,7 @@ function ApplicationFormPage() {
       [name]: type === 'checkbox' ? checked : value
     }));
 
-    if (name === 'captcha') {
-      setCaptchaError('');
-    }
+    markFieldChanged(name);
 
     if (name === 'fullName' || name === 'nameWithInitials') {
       resetNameAndDegreeVerification();
@@ -427,7 +521,8 @@ function ApplicationFormPage() {
 
   const handleMobileChange = (e) => {
     const value = e.target.value;
-    
+    markFieldChanged('mobile');
+
     // Check if value contains only digits
     if (value && !/^\d*$/.test(value)) {
       setMobileError('Enter valid phone number');
@@ -455,7 +550,8 @@ function ApplicationFormPage() {
 
   const handleTelephoneChange = (e) => {
     const value = e.target.value;
-    
+    markFieldChanged('telephone');
+
     // Check if value contains only digits
     if (value && !/^\d*$/.test(value)) {
       setTelephoneError('Enter valid phone number');
@@ -483,7 +579,8 @@ function ApplicationFormPage() {
 
   const handleNicChange = (e) => {
     const value = e.target.value.toUpperCase();
-    
+    markFieldChanged('nicNo');
+
     // Allow only digits and V
     if (value && !/^[0-9V]*$/.test(value)) {
       setNicError('Enter valid NIC number');
@@ -517,7 +614,8 @@ function ApplicationFormPage() {
 
   const handleEmailChange = (e) => {
     const value = e.target.value;
-    
+    markFieldChanged('email');
+
     // Update the form data
     setFormData(prev => ({
       ...prev,
@@ -568,6 +666,8 @@ function ApplicationFormPage() {
         }
       }
       
+      markFieldChanged(`documents.${documentType}`);
+
       // Clear error if file is valid
       setFileErrors(prev => {
         const updated = { ...prev };
@@ -831,6 +931,7 @@ function ApplicationFormPage() {
     }));
 
     resetNameAndDegreeVerification();
+    clearListErrors('qualifications');
 
     // Also remove the errors for this index and shift the later ones down
     setGraduationDateErrors(prev => removeIndexedError(prev, index));
@@ -859,7 +960,8 @@ function ApplicationFormPage() {
       ...prev,
       memberships: prev.memberships.filter((_, i) => i !== index)
     }));
-    
+    clearListErrors('memberships');
+
     // Also remove the error for this index if it exists
     setMembershipDateErrors(prev => {
       const updated = { ...prev };
@@ -903,12 +1005,14 @@ function ApplicationFormPage() {
       ...prev,
       experiences: prev.experiences.filter((_, i) => i !== index)
     }));
+    clearListErrors('experiences');
   };
 
   const handleQualificationChange = (index, field, value) => {
     const updated = [...formData.qualifications];
     updated[index][field] = value;
     setFormData(prev => ({ ...prev, qualifications: updated }));
+    markFieldChanged(`qualifications.${index}.${field}`);
 
     if (['university', 'degree', 'specialization', 'graduationDate'].includes(field)) {
       resetNameAndDegreeVerification();
@@ -977,7 +1081,8 @@ function ApplicationFormPage() {
     const updated = [...formData.memberships];
     updated[index][field] = value;
     setFormData(prev => ({ ...prev, memberships: updated }));
-    
+    markFieldChanged(`memberships.${index}.${field}`);
+
     // Validate date joined if that field is being changed
     if (field === 'dateJoined') {
       validateMembershipDate(value, index);
@@ -1027,6 +1132,7 @@ function ApplicationFormPage() {
     const updated = [...formData.experiences];
     updated[index][field] = value;
     setFormData(prev => ({ ...prev, experiences: updated }));
+    markFieldChanged(`experiences.${index}.${field}`);
 
     setWorkExperienceVerification({ status: 'idle', message: '', extracted: { companies: [], positions: [], dateRanges: [] } });
   };
@@ -1592,34 +1698,19 @@ function ApplicationFormPage() {
   ]);
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e?.preventDefault();
 
-    const focusField = (selector) => {
-      const element = document.querySelector(selector);
-      if (element && typeof element.focus === 'function') {
-        element.focus();
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    };
+    // Problems the applicant can fix are shown next to their fields with a summary on top;
+    // the modal below is only for the document checks and the server.
+    const errors = validateApplication(formData, { captchaValue });
+    if (Object.keys(errors).length > 0) {
+      showErrorSummary(errors);
+      return;
+    }
+    setSummaryKeys([]);
 
     const scrollToSection = (sectionRef) => {
-      sectionRef?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    };
-
-    // Personal fields are focused directly, so that section has no ref here.
-    const sectionRefs = {
-      academic: qualificationsSectionRef,
-      memberships: membershipsSectionRef,
-      work: experiencesSectionRef,
-      documents: documentsSectionRef,
-      declaration: declarationSectionRef
-    };
-
-    const personalErrorSetters = {
-      nicNo: setNicError,
-      email: setEmailError,
-      mobile: setMobileError,
-      telephone: setTelephoneError
+      sectionRef?.current?.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
     };
 
     // Show loader immediately so long verification/preparation steps are visible to users.
@@ -1641,41 +1732,6 @@ function ApplicationFormPage() {
     // Validate program is selected
     if (!formData.program) {
       await showSubmissionModalError('Program information is missing. Please go back and select a program.');
-      return;
-    }
-
-    // Show the first problem (in page order) and take the user to it.
-    const errors = validateApplication(formData, { captchaValue });
-    const firstErrorKey = Object.keys(errors)[0];
-
-    if (firstErrorKey) {
-      const message = errors[firstErrorKey];
-      const section = getSectionOfField(firstErrorKey);
-      const gpaErrorMatch = firstErrorKey.match(/^qualifications\.(\d+)\.gpa$/);
-
-      if (gpaErrorMatch) {
-        setGpaErrors(prev => ({ ...prev, [gpaErrorMatch[1]]: message }));
-      }
-      personalErrorSetters[firstErrorKey]?.(message);
-      if (firstErrorKey === 'captcha') {
-        setCaptchaError(message);
-      }
-
-      await showSubmissionModalError(getErrorSummary(firstErrorKey, message));
-
-      if (section === 'personal') {
-        focusField(`[name="${firstErrorKey}"]`);
-      } else {
-        scrollToSection(sectionRefs[section]);
-      }
-
-      if (firstErrorKey === 'captcha') {
-        setFormData((prev) => ({ ...prev, captcha: '' }));
-        generateCaptcha();
-        setTimeout(() => {
-          captchaInputRef.current?.focus();
-        }, 200);
-      }
       return;
     }
 
@@ -1922,6 +1978,37 @@ function ApplicationFormPage() {
         </div>
       )}
 
+      {summaryErrors.length > 0 && (
+        <div
+          className="error-summary"
+          role="alert"
+          tabIndex={-1}
+          ref={errorSummaryRef}
+          aria-labelledby="error-summary-title"
+        >
+          <h2 id="error-summary-title" className="error-summary__title">
+            <AlertCircle size={20} aria-hidden="true" />
+            Please fix {summaryErrors.length} {summaryErrors.length === 1 ? 'problem' : 'problems'}
+          </h2>
+          <ul className="error-summary__list">
+            {summaryErrors.map((key) => (
+              <li key={key}>
+                {/* A plain #hash link would drop the programme from the router state, so focus the field instead */}
+                <a
+                  href={`#${fieldId(key)}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    focusField(key);
+                  }}
+                >
+                  {getFieldLabel(key)}: {fieldErrors[key]}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <FormProgress
         sections={SECTIONS}
         completion={sectionCompletion}
@@ -1945,14 +2032,17 @@ function ApplicationFormPage() {
               name="title"
               value={formData.title}
               onChange={handleInputChange}
+              onBlur={(e) => checkFieldOnBlur('title', e.target.value)}
               autoComplete="honorific-prefix"
               required
+              {...errorProps('title')}
             >
               <option value="">Select</option>
               {TITLE_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>{option.label}</option>
               ))}
             </select>
+            <FieldError fieldKey="title" message={errorFor('title')} />
           </div>
 
           <div className="form-group">
@@ -1963,10 +2053,13 @@ function ApplicationFormPage() {
               name="fullName"
               value={formData.fullName}
               onChange={handleInputChange}
+              onBlur={(e) => checkFieldOnBlur('fullName', e.target.value)}
               placeholder="Tharindu Eranda Weerasinghe"
               autoComplete="name"
               required
+              {...errorProps('fullName')}
             />
+            <FieldError fieldKey="fullName" message={errorFor('fullName')} />
             <div className={`verification-status ${documentVerification.name.status}`} style={{ marginTop: '8px' }}>
               <span className="verification-icon">
                 {documentVerification.name.status === 'verified' ? '✔' : documentVerification.name.status === 'failed' ? '✖' : '•'}
@@ -1991,9 +2084,12 @@ function ApplicationFormPage() {
                 name="nameWithInitials"
                 value={formData.nameWithInitials}
                 onChange={handleInputChange}
+                onBlur={(e) => checkFieldOnBlur('nameWithInitials', e.target.value)}
                 placeholder="T.E. Weerasinghe"
                 required
+                {...errorProps('nameWithInitials')}
               />
+              <FieldError fieldKey="nameWithInitials" message={errorFor('nameWithInitials')} />
             </div>
             <div className="form-group">
               <label htmlFor={fieldId('nicNo')}>NIC No<RequiredMark /></label>
@@ -2003,16 +2099,12 @@ function ApplicationFormPage() {
                 name="nicNo"
                 value={formData.nicNo}
                 onChange={handleNicChange}
+                onBlur={(e) => checkFieldOnBlur('nicNo', e.target.value)}
                 placeholder="123456789V or 200012345678"
                 required
-                className={nicError ? 'input-error' : ''}
+                {...errorProps('nicNo', nicError)}
               />
-              {nicError && (
-                <div className="error-box">
-                  <span className="error-icon">⚠</span>
-                  <span className="error-text">{nicError}</span>
-                </div>
-              )}
+              <FieldError fieldKey="nicNo" message={errorFor('nicNo', nicError)} />
               <div className={`verification-status ${documentVerification.nic.status}`} style={{ marginTop: '8px' }}>
                 <span className="verification-icon">
                   {documentVerification.nic.status === 'verified' ? '✔' : documentVerification.nic.status === 'failed' ? '✖' : '•'}
@@ -2037,17 +2129,13 @@ function ApplicationFormPage() {
                 name="telephone"
                 value={formData.telephone}
                 onChange={handleTelephoneChange}
+                onBlur={(e) => checkFieldOnBlur('telephone', e.target.value)}
                 placeholder="0112345678"
                 autoComplete="tel"
                 required
-                className={telephoneError ? 'input-error' : ''}
+                {...errorProps('telephone', telephoneError)}
               />
-              {telephoneError && (
-                <div className="error-box">
-                  <span className="error-icon">⚠</span>
-                  <span className="error-text">{telephoneError}</span>
-                </div>
-              )}
+              <FieldError fieldKey="telephone" message={errorFor('telephone', telephoneError)} />
             </div>
             <div className="form-group">
               <label htmlFor={fieldId('mobile')}>Mobile<RequiredMark /></label>
@@ -2057,17 +2145,13 @@ function ApplicationFormPage() {
                 name="mobile"
                 value={formData.mobile}
                 onChange={handleMobileChange}
+                onBlur={(e) => checkFieldOnBlur('mobile', e.target.value)}
                 placeholder="0771234567"
                 autoComplete="tel"
                 required
-                className={mobileError ? 'input-error' : ''}
+                {...errorProps('mobile', mobileError)}
               />
-              {mobileError && (
-                <div className="error-box">
-                  <span className="error-icon">⚠</span>
-                  <span className="error-text">{mobileError}</span>
-                </div>
-              )}
+              <FieldError fieldKey="mobile" message={errorFor('mobile', mobileError)} />
             </div>
           </div>
 
@@ -2079,17 +2163,13 @@ function ApplicationFormPage() {
               name="email"
               value={formData.email}
               onChange={handleEmailChange}
+              onBlur={(e) => checkFieldOnBlur('email', e.target.value)}
               placeholder="name@gmail.com"
               autoComplete="email"
               required
-              className={emailError ? 'input-error' : ''}
+              {...errorProps('email', emailError)}
             />
-            {emailError && (
-              <div className="error-box">
-                <span className="error-icon">⚠</span>
-                <span className="error-text">{emailError}</span>
-              </div>
-            )}
+            <FieldError fieldKey="email" message={errorFor('email', emailError)} />
           </div>
 
           <div className="form-group">
@@ -2099,10 +2179,13 @@ function ApplicationFormPage() {
               name="contactAddress"
               value={formData.contactAddress}
               onChange={handleInputChange}
+              onBlur={(e) => checkFieldOnBlur('contactAddress', e.target.value)}
               rows="3"
               autoComplete="street-address"
               required
+              {...errorProps('contactAddress')}
             />
+            <FieldError fieldKey="contactAddress" message={errorFor('contactAddress')} />
           </div>
         </fieldset>
 
@@ -2133,13 +2216,16 @@ function ApplicationFormPage() {
                     id={fieldId(`qualifications.${index}.university`)}
                     value={qual.university}
                     onChange={(e) => handleQualificationChange(index, 'university', e.target.value)}
+                    onBlur={(e) => checkFieldOnBlur(`qualifications.${index}.university`, e.target.value)}
                     required
+                    {...errorProps(`qualifications.${index}.university`)}
                   >
                     <option value="">Select University</option>
                     {UNIVERSITY_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>{option.label}</option>
                     ))}
                   </select>
+                  <FieldError fieldKey={`qualifications.${index}.university`} message={errorFor(`qualifications.${index}.university`)} />
                 </div>
                 <div className="form-group">
                   <label htmlFor={fieldId(`qualifications.${index}.degree`)}>Degree / Qualification<RequiredMark /></label>
@@ -2147,13 +2233,16 @@ function ApplicationFormPage() {
                     id={fieldId(`qualifications.${index}.degree`)}
                     value={qual.degree}
                     onChange={(e) => handleQualificationChange(index, 'degree', e.target.value)}
+                    onBlur={(e) => checkFieldOnBlur(`qualifications.${index}.degree`, e.target.value)}
                     required
+                    {...errorProps(`qualifications.${index}.degree`)}
                   >
                     <option value="">Select Qualifications</option>
                     {DEGREE_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>{option.label}</option>
                     ))}
                   </select>
+                  <FieldError fieldKey={`qualifications.${index}.degree`} message={errorFor(`qualifications.${index}.degree`)} />
                 </div>
               </div>
 
@@ -2165,8 +2254,11 @@ function ApplicationFormPage() {
                     type="text"
                     value={qual.specialization}
                     onChange={(e) => handleQualificationChange(index, 'specialization', e.target.value)}
+                    onBlur={(e) => checkFieldOnBlur(`qualifications.${index}.specialization`, e.target.value)}
                     required
+                    {...errorProps(`qualifications.${index}.specialization`)}
                   />
+                  <FieldError fieldKey={`qualifications.${index}.specialization`} message={errorFor(`qualifications.${index}.specialization`)} />
                 </div>
                 <div className="form-group">
                   <label htmlFor={fieldId(`qualifications.${index}.duration`)}>Duration (Years)<RequiredMark /></label>
@@ -2174,13 +2266,16 @@ function ApplicationFormPage() {
                     id={fieldId(`qualifications.${index}.duration`)}
                     value={qual.duration}
                     onChange={(e) => handleQualificationChange(index, 'duration', e.target.value)}
+                    onBlur={(e) => checkFieldOnBlur(`qualifications.${index}.duration`, e.target.value)}
                     required
+                    {...errorProps(`qualifications.${index}.duration`)}
                   >
                     <option value="">Select Duration</option>
                     {DURATION_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>{option.label}</option>
                     ))}
                   </select>
+                  <FieldError fieldKey={`qualifications.${index}.duration`} message={errorFor(`qualifications.${index}.duration`)} />
                 </div>
                 <div className="form-group">
                   <label htmlFor={fieldId(`qualifications.${index}.graduationDate`)}>Graduation Date<RequiredMark /></label>
@@ -2190,9 +2285,10 @@ function ApplicationFormPage() {
                       type="text"
                       value={qual.graduationDate}
                       onChange={(e) => handleQualificationChange(index, 'graduationDate', e.target.value)}
+                      onBlur={(e) => checkFieldOnBlur(`qualifications.${index}.graduationDate`, e.target.value)}
                       placeholder="mm/dd/yyyy"
-                      className={graduationDateErrors[index] ? 'input-error' : ''}
                       required
+                      {...errorProps(`qualifications.${index}.graduationDate`, graduationDateErrors[index])}
                     />
                     <label className="calendar-icon-label">
                       <Calendar size={18} className="calendar-icon" aria-hidden="true" />
@@ -2210,12 +2306,10 @@ function ApplicationFormPage() {
                       />
                     </label>
                   </div>
-                  {graduationDateErrors[index] && (
-                    <div className="error-box">
-                      <span className="error-icon">⚠</span>
-                      <span className="error-text">{graduationDateErrors[index]}</span>
-                    </div>
-                  )}
+                  <FieldError
+                    fieldKey={`qualifications.${index}.graduationDate`}
+                    message={errorFor(`qualifications.${index}.graduationDate`, graduationDateErrors[index])}
+                  />
                 </div>
                 <div className="form-group">
                   <label htmlFor={fieldId(`qualifications.${index}.gpa`)}>GPA (Max {MAX_GPA.toFixed(1)})<RequiredMark /></label>
@@ -2229,15 +2323,11 @@ function ApplicationFormPage() {
                     max={MAX_GPA}
                     value={qual.gpa ?? ''}
                     onChange={(e) => handleQualificationChange(index, 'gpa', e.target.value)}
+                    onBlur={(e) => checkFieldOnBlur(`qualifications.${index}.gpa`, e.target.value)}
                     placeholder="e.g. 3.75"
-                    className={gpaErrors[index] ? 'input-error' : ''}
+                    {...errorProps(`qualifications.${index}.gpa`, gpaErrors[index])}
                   />
-                  {gpaErrors[index] && (
-                    <div className="error-box">
-                      <span className="error-icon">⚠</span>
-                      <span className="error-text">{gpaErrors[index]}</span>
-                    </div>
-                  )}
+                  <FieldError fieldKey={`qualifications.${index}.gpa`} message={errorFor(`qualifications.${index}.gpa`, gpaErrors[index])} />
                 </div>
               </div>
             </div>
@@ -2291,8 +2381,11 @@ function ApplicationFormPage() {
                     type="text"
                     value={membership.organization}
                     onChange={(e) => handleMembershipChange(index, 'organization', e.target.value)}
+                    onBlur={(e) => checkFieldOnBlur(`memberships.${index}.organization`, e.target.value)}
                     required
+                    {...errorProps(`memberships.${index}.organization`)}
                   />
+                  <FieldError fieldKey={`memberships.${index}.organization`} message={errorFor(`memberships.${index}.organization`)} />
                 </div>
                 <div className="form-group">
                   <label htmlFor={fieldId(`memberships.${index}.category`)}>Membership Category<RequiredMark /></label>
@@ -2301,8 +2394,11 @@ function ApplicationFormPage() {
                     type="text"
                     value={membership.category}
                     onChange={(e) => handleMembershipChange(index, 'category', e.target.value)}
+                    onBlur={(e) => checkFieldOnBlur(`memberships.${index}.category`, e.target.value)}
                     required
+                    {...errorProps(`memberships.${index}.category`)}
                   />
+                  <FieldError fieldKey={`memberships.${index}.category`} message={errorFor(`memberships.${index}.category`)} />
                 </div>
                 <div className="form-group">
                   <label htmlFor={fieldId(`memberships.${index}.dateJoined`)}>Date Joined<RequiredMark /></label>
@@ -2312,9 +2408,10 @@ function ApplicationFormPage() {
                       type="text"
                       value={membership.dateJoined}
                       onChange={(e) => handleMembershipChange(index, 'dateJoined', e.target.value)}
+                      onBlur={(e) => checkFieldOnBlur(`memberships.${index}.dateJoined`, e.target.value)}
                       placeholder="mm/dd/yyyy"
-                      className={membershipDateErrors[index] ? 'input-error' : ''}
                       required
+                      {...errorProps(`memberships.${index}.dateJoined`, membershipDateErrors[index])}
                     />
                     <label className="calendar-icon-label">
                       <Calendar size={18} className="calendar-icon" aria-hidden="true" />
@@ -2332,12 +2429,10 @@ function ApplicationFormPage() {
                       />
                     </label>
                   </div>
-                  {membershipDateErrors[index] && (
-                    <div className="error-box">
-                      <span className="error-icon">⚠</span>
-                      <span className="error-text">{membershipDateErrors[index]}</span>
-                    </div>
-                  )}
+                  <FieldError
+                    fieldKey={`memberships.${index}.dateJoined`}
+                    message={errorFor(`memberships.${index}.dateJoined`, membershipDateErrors[index])}
+                  />
                 </div>
               </div>
             </div>
@@ -2392,13 +2487,16 @@ function ApplicationFormPage() {
                     id={fieldId(`experiences.${index}.fromMonth`)}
                     value={exp.fromMonth}
                     onChange={(e) => handleExperienceChange(index, 'fromMonth', e.target.value)}
+                    onBlur={(e) => checkFieldOnBlur(`experiences.${index}.fromMonth`, e.target.value)}
                     required
+                    {...errorProps(`experiences.${index}.fromMonth`)}
                   >
                     <option value="">Month</option>
                     {MONTH_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>{option.label}</option>
                     ))}
                   </select>
+                  <FieldError fieldKey={`experiences.${index}.fromMonth`} message={errorFor(`experiences.${index}.fromMonth`)} />
                 </div>
                 <div className="form-group">
                   <label htmlFor={fieldId(`experiences.${index}.fromYear`)}>Year<RequiredMark /></label>
@@ -2408,9 +2506,12 @@ function ApplicationFormPage() {
                     inputMode="numeric"
                     value={exp.fromYear}
                     onChange={(e) => handleExperienceChange(index, 'fromYear', e.target.value)}
+                    onBlur={(e) => checkFieldOnBlur(`experiences.${index}.fromYear`, e.target.value)}
                     placeholder="Year"
                     required
+                    {...errorProps(`experiences.${index}.fromYear`)}
                   />
+                  <FieldError fieldKey={`experiences.${index}.fromYear`} message={errorFor(`experiences.${index}.fromYear`)} />
                 </div>
                 <div className="form-group">
                   <label htmlFor={fieldId(`experiences.${index}.toMonth`)}>To Month<RequiredMark /></label>
@@ -2418,13 +2519,16 @@ function ApplicationFormPage() {
                     id={fieldId(`experiences.${index}.toMonth`)}
                     value={exp.toMonth}
                     onChange={(e) => handleExperienceChange(index, 'toMonth', e.target.value)}
+                    onBlur={(e) => checkFieldOnBlur(`experiences.${index}.toMonth`, e.target.value)}
                     required
+                    {...errorProps(`experiences.${index}.toMonth`)}
                   >
                     <option value="">Month</option>
                     {MONTH_OPTIONS.map((option) => (
                       <option key={option.value} value={option.value}>{option.label}</option>
                     ))}
                   </select>
+                  <FieldError fieldKey={`experiences.${index}.toMonth`} message={errorFor(`experiences.${index}.toMonth`)} />
                 </div>
                 <div className="form-group">
                   <label htmlFor={fieldId(`experiences.${index}.toYear`)}>Year<RequiredMark /></label>
@@ -2434,9 +2538,12 @@ function ApplicationFormPage() {
                     inputMode="numeric"
                     value={exp.toYear}
                     onChange={(e) => handleExperienceChange(index, 'toYear', e.target.value)}
+                    onBlur={(e) => checkFieldOnBlur(`experiences.${index}.toYear`, e.target.value)}
                     placeholder="Year"
                     required
+                    {...errorProps(`experiences.${index}.toYear`)}
                   />
+                  <FieldError fieldKey={`experiences.${index}.toYear`} message={errorFor(`experiences.${index}.toYear`)} />
                 </div>
                 <div className="form-group">
                   <label htmlFor={fieldId(`experiences.${index}.company`)}>Company<RequiredMark /></label>
@@ -2445,9 +2552,12 @@ function ApplicationFormPage() {
                     type="text"
                     value={exp.company}
                     onChange={(e) => handleExperienceChange(index, 'company', e.target.value)}
+                    onBlur={(e) => checkFieldOnBlur(`experiences.${index}.company`, e.target.value)}
                     autoComplete="organization"
                     required
+                    {...errorProps(`experiences.${index}.company`)}
                   />
+                  <FieldError fieldKey={`experiences.${index}.company`} message={errorFor(`experiences.${index}.company`)} />
                 </div>
                 <div className="form-group">
                   <label htmlFor={fieldId(`experiences.${index}.position`)}>Position<RequiredMark /></label>
@@ -2456,9 +2566,12 @@ function ApplicationFormPage() {
                     type="text"
                     value={exp.position}
                     onChange={(e) => handleExperienceChange(index, 'position', e.target.value)}
+                    onBlur={(e) => checkFieldOnBlur(`experiences.${index}.position`, e.target.value)}
                     autoComplete="organization-title"
                     required
+                    {...errorProps(`experiences.${index}.position`)}
                   />
+                  <FieldError fieldKey={`experiences.${index}.position`} message={errorFor(`experiences.${index}.position`)} />
                 </div>
               </div>
             </div>
@@ -3021,13 +3134,9 @@ function ApplicationFormPage() {
               placeholder="Enter captcha"
               autoComplete="off"
               required
+              {...errorProps('captcha')}
             />
-            {captchaError && (
-              <div className="error-box captcha-error">
-                <span className="error-icon">⚠</span>
-                <span className="error-text">{captchaError}</span>
-              </div>
-            )}
+            <FieldError fieldKey="captcha" message={errorFor('captcha')} />
             <button type="button" className="btn btn--quiet btn--sm captcha-refresh" onClick={generateCaptcha}>
               <RefreshCw size={16} aria-hidden="true" />
               Refresh captcha
