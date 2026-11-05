@@ -7,6 +7,7 @@ import API_BASE_URL from '../utils/apiConfig'
 import SiteHeader from '../components/SiteHeader'
 import SiteFooter from '../components/SiteFooter'
 import { ButtonSpinner } from '../components/Loaders'
+import PasswordInput from '../components/PasswordInput'
 
 function LoginPage() {
   const [email, setEmail] = useState('')
@@ -54,11 +55,14 @@ function LoginPage() {
 
           <form className="login-form" onSubmit={handleSubmit}>
             <div className="form-group">
-              <label className="form-label">Email Address</label>
-              <input 
-                type="email" 
-                className="form-input" 
+              <label className="form-label" htmlFor="login-email">Email address</label>
+              <input
+                id="login-email"
+                type="email"
+                className="form-input"
                 placeholder="admin@university.ac.lk"
+                autoComplete="username"
+                autoFocus
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -66,11 +70,11 @@ function LoginPage() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Password</label>
-              <input 
-                type="password" 
-                className="form-input" 
+              <label className="form-label" htmlFor="login-password">Password</label>
+              <PasswordInput
+                id="login-password"
                 placeholder="••••••••"
+                autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required

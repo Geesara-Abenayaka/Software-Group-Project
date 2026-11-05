@@ -635,24 +635,74 @@
   font-weight: 500;
 }
 
+.login-form .form-group {
+  margin-bottom: 20px;
+}
+
 .form-input {
   width: 100%;
-  padding: 12px 15px;
-  border: 1px solid var(--border-strong);
-  border-radius: 4px;
-  font-size: 14px;
-  transition: border-color 0.2s;
-  background-color: var(--surface-muted);
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 15px;
+  color: var(--ink);
+  transition: border-color var(--duration-fast) var(--ease-out);
+  background-color: var(--surface);
 }
 
 .form-input:focus {
   outline: none;
-  border-color: var(--brand);
-  background-color: var(--surface);
+  border-color: var(--input-focus-border);
+  box-shadow: var(--focus-ring);
 }
 
 .form-input::placeholder {
-  color: var(--subtle);
+  color: var(--muted);
+}
+
+/* Show / hide password: an icon button inside the field */
+.password-field {
+  position: relative;
+}
+
+.password-field .form-input {
+  padding-right: 52px;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+
+.password-toggle:hover {
+  color: var(--ink);
+  background: var(--surface-muted);
+}
+
+.password-toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* 16px stops iOS zooming into the field */
+@media (max-width: 768px) {
+  .form-input {
+    font-size: 16px;
+  }
 }
 
 .sign-in-button {
