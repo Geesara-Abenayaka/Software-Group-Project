@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { FileDown, GraduationCap, SendHorizontal, ThumbsDown, ThumbsUp, X } from 'lucide-react'
 import API_BASE_URL from '../utils/apiConfig'
 import { getFallbackResponse, normalize, toRecommendation } from '../utils/assistantFallback'
-import { generateCourseDetailsPDF } from '../utils/pdfGenerator'
 import { QUIZ_QUESTIONS, scorePrograms } from '../utils/programQuiz'
 import '../styles/FloatingAssistant.css'
 
@@ -442,6 +441,8 @@ function FloatingAssistant() {
       if (!data.success) {
         throw new Error(data.message)
       }
+      // jsPDF is downloaded only when a PDF is asked for
+      const { generateCourseDetailsPDF } = await import('../utils/pdfGenerator')
       generateCourseDetailsPDF(data.data)
     } catch {
       addMessages(createMessage('bot', 'Sorry, I couldn\'t load that programme\'s details.'))

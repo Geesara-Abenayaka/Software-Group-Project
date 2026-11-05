@@ -12,7 +12,6 @@ import {
   Lock
 } from 'lucide-react';
 import '../styles/ProgramDetailPage.css';
-import { generateCourseDetailsPDF, generateCallForApplicationPDF } from '../utils/pdfGenerator';
 import API_BASE_URL from '../utils/apiConfig';
 import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
@@ -40,6 +39,9 @@ const formatDate = (date) => new Date(date).toLocaleDateString('en-GB', {
   year: 'numeric',
   timeZone: 'UTC'
 });
+
+// jsPDF is large, so the PDF code is downloaded only when someone asks for a PDF.
+const loadPdfGenerator = () => import('../utils/pdfGenerator');
 
 function ProgramDetailPage() {
   const { shortCode } = useParams();
@@ -135,9 +137,9 @@ function ProgramDetailPage() {
     if (action === 'apply') {
       handleApply();
     } else if (action === 'course-details') {
-      generateCourseDetailsPDF(program);
+      loadPdfGenerator().then(({ generateCourseDetailsPDF }) => generateCourseDetailsPDF(program));
     } else if (action === 'call-for-application') {
-      generateCallForApplicationPDF(program);
+      loadPdfGenerator().then(({ generateCallForApplicationPDF }) => generateCallForApplicationPDF(program));
     }
   };
 
@@ -313,7 +315,7 @@ function ProgramDetailPage() {
                 <button
                   type="button"
                   className="program-btn program-btn--secondary"
-                  onClick={() => generateCourseDetailsPDF(program)}
+                  onClick={() => loadPdfGenerator().then(({ generateCourseDetailsPDF }) => generateCourseDetailsPDF(program))}
                 >
                   <Download size={16} aria-hidden="true" /> Course details (PDF)
                 </button>
