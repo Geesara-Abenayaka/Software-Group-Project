@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import '../styles/MarksPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import AdminLayout from '../components/AdminLayout';
+import { toast } from '../utils/toast';
 
 function MarksPage() {
   const [selectedCourse, setSelectedCourse] = useState(() => {
@@ -326,26 +327,26 @@ function MarksPage() {
         setSelectedApplication(null);
         setSelectedApplicationId(null);
         
-        alert('Application deleted successfully!');
+        toast.success('Application deleted');
       } else {
-        alert('Error deleting application: ' + result.message);
+        toast.error(`Couldn't delete the application: ${result.message}`);
       }
     } catch (error) {
       console.error('Error deleting application:', error);
-      alert('Error deleting application. Please try again.');
+      toast.error("Couldn't delete the application. Please try again.");
     }
   };
 
   const handleSave = async () => {
     // Check if an application is selected by ID
     if (!selectedApplicationId) {
-      alert('Please enter a valid NIC number of a submitted application');
+      toast.info('Enter the NIC number of a submitted application');
       return;
     }
 
     // Check for validation errors
     if (marksErrors.oaMarks || marksErrors.writingMarks || marksErrors.interviewMarks) {
-      alert('Please fix the validation errors before saving');
+      toast.info('Fix the highlighted marks before saving');
       return;
     }
 
@@ -355,13 +356,13 @@ function MarksPage() {
 
   const handleUpdate = async () => {
     if (!selectedApplicationId) {
-      alert('Please select an application from the table to update');
+      toast.info('Select an application in the table first');
       return;
     }
 
     // Check for validation errors
     if (marksErrors.oaMarks || marksErrors.writingMarks || marksErrors.interviewMarks) {
-      alert('Please fix the validation errors before updating');
+      toast.info('Fix the highlighted marks before updating');
       return;
     }
 
@@ -401,13 +402,13 @@ function MarksPage() {
           graduationDate: ''
         });
 
-        alert('Marks updated successfully!');
+        toast.success('Marks updated');
       } else {
-        alert('Error updating marks: ' + result.message);
+        toast.error(`Couldn't update the marks: ${result.message}`);
       }
     } catch (error) {
       console.error('Error updating marks:', error);
-      alert('Error updating marks. Please try again.');
+      toast.error("Couldn't update the marks. Please try again.");
     }
   };
 
