@@ -589,7 +589,7 @@ function ApplicationFormPage() {
         contentBase64: await readFileAsBase64(paymentFile)
       };
 
-      const response = await fetch(`${API_BASE_URL}/applications/verify-payment-receipt`, {
+      const response = await fetch(`${API_BASE_URL}/verify/verify-payment-receipt`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -914,7 +914,7 @@ function ApplicationFormPage() {
         }))
       );
 
-      const response = await fetch(`${API_BASE_URL}/applications/verify-documents`, {
+      const response = await fetch(`${API_BASE_URL}/verify/verify-documents`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -1114,7 +1114,7 @@ function ApplicationFormPage() {
         }))
       );
 
-      const response = await fetch(`${API_BASE_URL}/applications/extract-memberships`, {
+      const response = await fetch(`${API_BASE_URL}/verify/extract-memberships`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -1189,7 +1189,7 @@ function ApplicationFormPage() {
         }))
       );
 
-      const response = await fetch(`${API_BASE_URL}/applications/extract-work-experience`, {
+      const response = await fetch(`${API_BASE_URL}/verify/extract-work-experience`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
