@@ -1018,3 +1018,152 @@
     font-size: 0.73rem;
   }
 }
+
+/* Programme add / edit modal: fields in groups, the body scrolls while the title and buttons stay */
+.modal-content.program-modal {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.program-modal .modal-header,
+.program-modal .modal-footer {
+  flex-shrink: 0;
+}
+
+.program-modal .modal-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  gap: 0;
+}
+
+.program-form-group {
+  min-width: 0;
+  margin: 0 0 var(--space-6);
+  padding: 0 0 var(--space-6);
+  border: 0;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.program-form-group:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.program-form-group legend {
+  float: left;
+  width: 100%;
+  margin-bottom: var(--space-3);
+  padding: 0;
+  color: var(--ink-strong);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.program-form-group legend + * {
+  clear: both;
+}
+
+.program-form-group > .form-group-modal + .form-group-modal,
+.program-form-group > .program-form-row + .form-group-modal,
+.program-form-group > .form-group-modal + .program-form-row,
+.program-form-group > .program-form-row + .program-form-row {
+  margin-top: var(--space-4);
+}
+
+.program-form-group .specialization-input-group {
+  margin-bottom: var(--space-2);
+}
+
+/* Short fields side by side on desktop */
+.program-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+
+.program-field-hint {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.program-field-error {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 0;
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.program-modal .has-error {
+  border-color: var(--input-error-border) !important;
+}
+
+/* The new Level select looks like the inputs; textareas use the page font, not monospace */
+.program-modal .form-group-modal select {
+  padding: 0.75rem;
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.95rem;
+}
+
+.program-modal .form-group-modal select:focus {
+  outline: none;
+  border-color: var(--input-focus-border);
+  box-shadow: 0 0 0 3px rgba(139, 26, 26, 0.1);
+}
+
+.program-modal .form-group-modal textarea {
+  font-family: inherit;
+}
+
+.program-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  color: var(--ink);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.program-checkbox input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--brand);
+}
+
+.close-modal-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Level and "Proposed" on the admin programme cards */
+.program-level-badge {
+  padding: 0.28rem 0.65rem;
+  border-radius: 20px;
+  background: var(--surface-muted);
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.program-proposed-badge {
+  margin-left: 0;
+}
+
+@media (max-width: 640px) {
+  .program-form-row {
+    grid-template-columns: 1fr;
+  }
+}
