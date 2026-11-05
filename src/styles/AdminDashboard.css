@@ -204,7 +204,7 @@
 
 .programs-subtitle-admin {
   margin: 0.45rem 0 0;
-  color: #6b7280;
+  color: var(--ink-muted);
   font-size: 0.95rem;
   font-weight: 500;
 }
@@ -779,7 +779,7 @@
 
 .add-program-card-subtitle {
   font-size: 0.875rem;
-  color: #9ca3af;
+  color: var(--muted);
   margin: 0;
 }
 
@@ -845,7 +845,7 @@
 .programs-management-main .program-meta-label {
   font-size: 0.72rem;
   font-weight: 700;
-  color: #9ca3af;
+  color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -865,7 +865,7 @@
 .programs-management-main .program-specializations-label {
   font-size: 0.72rem;
   font-weight: 700;
-  color: #9ca3af;
+  color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -899,7 +899,7 @@
 
 .programs-management-main .program-specializations-empty {
   margin: 0;
-  color: #9ca3af;
+  color: var(--muted);
   font-size: 0.78rem;
 }
 
