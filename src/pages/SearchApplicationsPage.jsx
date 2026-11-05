@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Download, FileText, Clock, CheckCircle2, XCircle } from 'lucide-react';
+import { ArrowDown, ArrowUp, ArrowUpDown, Download, FileText, Clock, CheckCircle2, SearchX, XCircle } from 'lucide-react';
 import '../styles/SearchApplicationsPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import { formatReference } from '../utils/applicationReference';
@@ -36,6 +36,7 @@ function SearchApplicationsPage() {
   const showSkeletons = useDelayedFlag(loading);
   const [currentPage, setCurrentPage] = useState(1);
   const [resultsPerPage, setResultsPerPage] = useState(25);
+  const [sort, setSort] = useState({ key: null, direction: 'ascending' });
   const [searchText, setSearchText] = useState('');
   const [activeSearchText, setActiveSearchText] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -118,7 +119,37 @@ function SearchApplicationsPage() {
   const currentPageSafe = Math.min(currentPage, totalPages);
   const startIndex = totalResults === 0 ? 0 : (currentPageSafe - 1) * resultsPerPage;
   const endIndex = Math.min(startIndex + resultsPerPage, totalResults);
-  const paginatedApplications = filteredApplications.slice(startIndex, endIndex);
+  // Sorting from the column headers; with no column chosen the list keeps the server's order.
+  const SORT_VALUES = {
+    id: (app) => app._id || '',
+    program: (app) => programs.find((p) => p.shortCode === app.program)?.title || app.program || '',
+    status: (app) => app.status || '',
+    fullName: (app) => app.fullName || ''
+  };
+  const sortedApplications = sort.key
+    ? [...filteredApplications].sort((a, b) => {
+      const result = String(SORT_VALUES[sort.key](a)).localeCompare(String(SORT_VALUES[sort.key](b)), undefined, { sensitivity: 'base', numeric: true });
+      return sort.direction === 'ascending' ? result : -result;
+    })
+    : filteredApplications;
+  const paginatedApplications = sortedApplications.slice(startIndex, endIndex);
+
+  const toggleSort = (key) => {
+    setSort((prev) => ({ key, direction: prev.key === key && prev.direction === 'ascending' ? 'descending' : 'ascending' }));
+    setCurrentPage(1);
+  };
+  const sortState = (key) => (sort.key === key ? sort.direction : 'none');
+  const sortIcon = (column) => {
+    if (sort.key !== column) return <ArrowUpDown size={14} aria-hidden="true" />;
+    return sort.direction === 'ascending' ? <ArrowUp size={14} aria-hidden="true" /> : <ArrowDown size={14} aria-hidden="true" />;
+  };
+
+  const clearFilters = () => {
+    setFilters({ program: 'All Programs', category: 'All Categories', status: 'All Status', fromDate: '', toDate: '' });
+    setSearchText('');
+    setActiveSearchText('');
+    setCurrentPage(1);
+  };
 
   const getPaginationItems = () => {
     if (totalPages <= 7) {
@@ -430,26 +461,34 @@ function SearchApplicationsPage() {
             <table className="applications-table">
               <thead>
                 <tr>
-                  <th>
-                    Application<br/>ID
-                    <span className="sort-icon">⇅</span>
+                  <th aria-sort={sortState('id')}>
+                    <button type="button" className="th-sort" onClick={() => toggleSort('id')}>
+                      Application ID
+                      {sortIcon('id')}
+                    </button>
                   </th>
-                  <th>
-                    Program/Course
-                    <span className="sort-icon">⇅</span>
+                  <th aria-sort={sortState('program')}>
+                    <button type="button" className="th-sort" onClick={() => toggleSort('program')}>
+                      Program/Course
+                      {sortIcon('program')}
+                    </button>
                   </th>
-                  <th>
-                    Status
-                    <span className="sort-icon">⇅</span>
+                  <th aria-sort={sortState('status')}>
+                    <button type="button" className="th-sort" onClick={() => toggleSort('status')}>
+                      Status
+                      {sortIcon('status')}
+                    </button>
                   </th>
-                  <th>
-                    Full Name
-                    <span className="sort-icon">⇅</span>
+                  <th aria-sort={sortState('fullName')}>
+                    <button type="button" className="th-sort" onClick={() => toggleSort('fullName')}>
+                      Full Name
+                      {sortIcon('fullName')}
+                    </button>
                   </th>
                   <th>Name with Initials</th>
                   <th>NIC</th>
                   <th>Telephone</th>
-                  <th></th>
+                  <th><span className="sr-only">Actions</span></th>
                 </tr>
               </thead>
               <tbody>
@@ -457,8 +496,18 @@ function SearchApplicationsPage() {
                   <TableSkeleton rows={8} columns={8} rowHeight={70} />
                 ) : filteredApplications.length === 0 ? (
                   <tr>
-                    <td colSpan="8" style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
-                      No applications found matching your search criteria.
+                    <td colSpan="8" className="table-empty">
+                      <div className="table-empty__inner">
+                        <SearchX size={28} aria-hidden="true" />
+                        {applications.length === 0 ? (
+                          <p>No applications yet</p>
+                        ) : (
+                          <>
+                            <p>No applications match these filters</p>
+                            <button type="button" className="btn btn--secondary btn--sm" onClick={clearFilters}>Clear filters</button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ) : (

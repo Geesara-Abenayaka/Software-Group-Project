@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Download, User, Mail, Send, X } from 'lucide-react';
+import { Download, Inbox, User, Mail, Send, X } from 'lucide-react';
 import API_BASE_URL from '../utils/apiConfig';
 import '../styles/AdminDashboard.css';
 import '../styles/ApplicationDetailPage.css';
@@ -505,7 +505,12 @@ function ApplicationDetailPage() {
                   <TableSkeleton rows={8} columns={6} rowHeight={57} />
                 ) : filteredApplications.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="no-apps-msg">No applications found</td>
+                    <td colSpan="6" className="table-empty">
+                      <div className="table-empty__inner">
+                        <Inbox size={28} aria-hidden="true" />
+                        <p>{applications.length === 0 ? 'No applications for this program yet' : 'No applications match these filters'}</p>
+                      </div>
+                    </td>
                   </tr>
                 ) : (
                   filteredApplications.map((app) => (
@@ -519,7 +524,7 @@ function ApplicationDetailPage() {
                           {app.displayId}
                         </a>
                       </td>
-                      <td style={{ color: '#9ca3af' }}>{app.nic}</td>
+                      <td className="detail-nic">{app.nic}</td>
                       <td>{app.fullName}</td>
                       <td>{app.nameWithInitials}</td>
                       <td>

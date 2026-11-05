@@ -51,6 +51,12 @@
   --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.12);
   --focus-ring: 0 0 0 3px rgba(139, 26, 26, 0.35);
 
+  /* Admin tables */
+  --table-head-bg: var(--surface-muted);
+  --table-head-ink: var(--ink-soft);
+  --table-row-border: var(--border-subtle);
+  --table-row-hover-bg: var(--surface-muted);
+
   /* Form fields */
   --input-border: var(--border-strong);
   --input-focus-border: var(--brand);

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Inbox } from 'lucide-react';
 import '../styles/MarksPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import AdminLayout from '../components/AdminLayout';
@@ -471,9 +472,9 @@ function MarksPage() {
                   <th>NIC</th>
                   <th>Surname</th>
                   <th>Other Names</th>
-                  <th>O/A Marks</th>
-                  <th>Writing Marks</th>
-                  <th>Interview Marks</th>
+                  <th className="cell-number">O/A Marks</th>
+                  <th className="cell-number">Writing Marks</th>
+                  <th className="cell-number">Interview Marks</th>
                   <th>Graduation Date</th>
                   <th>Action</th>
                 </tr>
@@ -481,8 +482,11 @@ function MarksPage() {
               <tbody>
                 {filteredApplications.length === 0 ? (
                   <tr>
-                    <td colSpan="10" className="no-data">
-                      No data available in table
+                    <td colSpan="10" className="table-empty">
+                      <div className="table-empty__inner">
+                        <Inbox size={28} aria-hidden="true" />
+                        <p>No applications to mark yet</p>
+                      </div>
                     </td>
                   </tr>
                 ) : (
@@ -535,9 +539,9 @@ function MarksPage() {
                         <td>{app.nic}</td>
                         <td>{app.surname}</td>
                         <td>{app.otherNames}</td>
-                        <td>{app.oaMarks}</td>
-                        <td>{app.writingMarks}</td>
-                        <td>{app.interviewMarks}</td>
+                        <td className="cell-number">{app.oaMarks}</td>
+                        <td className="cell-number">{app.writingMarks}</td>
+                        <td className="cell-number">{app.interviewMarks}</td>
                         <td>{app.graduationDate}</td>
                         <td>
                           <button 
