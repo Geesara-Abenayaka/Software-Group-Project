@@ -14,7 +14,7 @@ function SiteHeader({ subtitle = 'Postgraduate Management Information System', s
           {/* alt="" because the university name is visible text in the same link */}
           <img src={uomLogo} alt="" className="uom-logo" />
           <span className="header-text">
-            <span className="university-name">University of Moratuwa1</span>
+            <span className="university-name">University of Moratuwa</span>
             <span className="portal-subtitle">{subtitle}</span>
           </span>
         </Link>
