@@ -328,14 +328,15 @@ function SearchApplicationsPage() {
                 <div className="autocomplete-dropdown">
                   <div className="autocomplete-header">Available Programs/Courses:</div>
                   {getFilteredProgramSuggestions().map((program) => (
-                    <div
+                    <button
+                      type="button"
                       key={program.shortCode}
-                      className="autocomplete-item"
+                      className="autocomplete-item btn-reset"
                       onClick={() => handleSuggestionClick(program.title)}
                     >
-                      <div className="autocomplete-program-name">{program.title}</div>
-                      <div className="autocomplete-program-code">{program.shortCode}</div>
-                    </div>
+                      <span className="autocomplete-program-name">{program.title}</span>
+                      <span className="autocomplete-program-code">{program.shortCode}</span>
+                    </button>
                   ))}
                 </div>
               )}

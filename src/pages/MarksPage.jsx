@@ -533,6 +533,15 @@ function MarksPage() {
                         }}
                         className={selectedApplication === originalIndex ? 'selected-row' : ''}
                         style={{ cursor: 'pointer' }}
+                        // A row is picked with Enter or Space too, not only the mouse
+                        tabIndex={0}
+                        aria-selected={selectedApplication === originalIndex}
+                        onKeyDown={(e) => {
+                          if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+                            e.preventDefault();
+                            e.currentTarget.click();
+                          }
+                        }}
                       >
                         <td>{app.program || '-'}</td>
                         <td><StatusPill status={app.status} /></td>

@@ -479,3 +479,20 @@
 .autocomplete-dropdown::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
 }
+
+/* Suggestions are buttons (keyboard reachable); they keep the look of the old list rows */
+button.autocomplete-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.autocomplete-program-name,
+.autocomplete-program-code {
+  display: block;
+}
+
+button.autocomplete-item:focus-visible {
+  outline-offset: -3px;
+}

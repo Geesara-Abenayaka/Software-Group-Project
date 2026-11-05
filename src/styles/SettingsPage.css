@@ -310,3 +310,8 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Calendar days are buttons (keyboard reachable, aria-pressed); same look as before */
+button.calendar-day {
+  width: 100%;
+}

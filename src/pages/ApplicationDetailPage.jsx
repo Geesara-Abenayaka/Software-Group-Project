@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Download, Inbox, User, Mail, Send, X } from 'lucide-react';
 import API_BASE_URL from '../utils/apiConfig';
 import '../styles/AdminDashboard.css';
 import '../styles/ApplicationDetailPage.css';
 import AdminLayout from '../components/AdminLayout';
+import useDialogFocus from '../utils/useDialogFocus';
 import Breadcrumbs from '../components/Breadcrumbs';
 import StatusPill from '../components/StatusPill';
 import useConfirm from '../utils/useConfirm';
@@ -55,6 +56,7 @@ function ApplicationDetailPage() {
   });
   const [sortByCategory, setSortByCategory] = useState(false);
   const [isBulkEmailOpen, setIsBulkEmailOpen] = useState(false);
+  const bulkEmailRef = useRef(null);
   const [selectedRecipientIds, setSelectedRecipientIds] = useState([]);
   const [bulkSubject, setBulkSubject] = useState('');
   const [bulkMessage, setBulkMessage] = useState('');
@@ -242,6 +244,9 @@ function ApplicationDetailPage() {
     setBulkEmailSuccess('');
     setIsBulkEmailOpen(true);
   };
+
+  // Esc closes the composer, Tab stays inside it
+  useDialogFocus(bulkEmailRef, () => closeBulkEmailComposer(), isBulkEmailOpen);
 
   const closeBulkEmailComposer = () => {
     if (sendingBulkEmail) {
@@ -556,14 +561,21 @@ function ApplicationDetailPage() {
 
           {isBulkEmailOpen && (
             <div className="bulk-email-overlay" onClick={closeBulkEmailComposer}>
-              <div className="bulk-email-modal" onClick={(event) => event.stopPropagation()}>
+              <div
+                className="bulk-email-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="bulk-email-title"
+                ref={bulkEmailRef}
+                onClick={(event) => event.stopPropagation()}
+              >
                 <div className="bulk-email-header">
                   <div className="bulk-email-header-left">
                     <button className="bulk-email-back" onClick={closeBulkEmailComposer} type="button" aria-label="Close bulk email composer">
                       ←
                     </button>
                     <div>
-                      <h3 className="bulk-email-title">Send Bulk Email</h3>
+                      <h3 className="bulk-email-title" id="bulk-email-title">Send Bulk Email</h3>
                       <p className="bulk-email-subtitle">Application Management</p>
                     </div>
                   </div>

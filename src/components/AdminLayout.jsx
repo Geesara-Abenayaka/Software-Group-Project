@@ -41,7 +41,19 @@ function AdminLayout({ children, onClick }) {
 
   return (
     <div className="admin-app" onClick={onClick}>
-      <a href="#main" className="skip-link">Skip to main content</a>
+      <a
+        href="#main"
+        className="skip-link"
+        onClick={(event) => {
+          // Focus the content without adding a #main history entry
+          const main = document.getElementById('main');
+          if (!main) return;
+          event.preventDefault();
+          main.focus();
+        }}
+      >
+        Skip to main content
+      </a>
       <header className="admin-header" onClick={stopClick}>
         <div className="admin-header-content">
           <div className="header-left">

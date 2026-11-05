@@ -1167,3 +1167,15 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* The Add New Program tile is a button; its parts are spans that keep the old layout */
+button.add-program-card {
+  width: 100%;
+  min-height: 100%;
+  border: 2.5px dashed var(--border-strong);
+}
+
+.add-program-card-title,
+.add-program-card-subtitle {
+  display: block;
+}

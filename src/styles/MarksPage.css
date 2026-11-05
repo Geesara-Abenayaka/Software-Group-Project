@@ -355,3 +355,9 @@
   align-items: center;
   justify-content: center;
 }
+
+/* Rows can be chosen with the keyboard too */
+.marks-table tbody tr:focus-visible {
+  outline: 3px solid var(--brand-text);
+  outline-offset: -3px;
+}

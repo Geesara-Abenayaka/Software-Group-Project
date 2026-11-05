@@ -275,13 +275,16 @@ function SettingsPage() {
       const isInRange = selectedDates.length === 2 && dateStr >= selectedDates[0] && dateStr <= selectedDates[1];
       
       days.push(
-        <div
+        <button
+          type="button"
           key={day}
-          className={`calendar-day ${isSelected ? 'selected' : ''} ${isInRange ? 'in-range' : ''}`}
+          className={`calendar-day btn-reset ${isSelected ? 'selected' : ''} ${isInRange ? 'in-range' : ''}`}
           onClick={() => handleDateClick(dateStr)}
+          aria-pressed={isSelected}
+          aria-label={new Date(year, month, day).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
         >
           {day}
-        </div>
+        </button>
       );
     }
 

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom'
 import LoginPage from './pages/LoginPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
@@ -23,6 +24,17 @@ function AppRoutes() {
     location.pathname.startsWith('/admin') ||
     location.pathname === '/login' ||
     location.pathname === '/reset-password'
+
+  // After moving to another page, put focus on its content so screen readers start there.
+  // Not on the first load: the browser already starts at the top of the page.
+  const isFirstLoad = useRef(true)
+  useEffect(() => {
+    if (isFirstLoad.current) {
+      isFirstLoad.current = false
+      return
+    }
+    document.getElementById('main')?.focus({ preventScroll: true })
+  }, [location.pathname])
 
   return (
     <>
