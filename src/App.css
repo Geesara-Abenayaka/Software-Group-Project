@@ -291,6 +291,7 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+  margin-left: auto;                 /* stays on the right when there are no chips */
   color: var(--ink-muted);
   font-size: var(--text-sm);
 }

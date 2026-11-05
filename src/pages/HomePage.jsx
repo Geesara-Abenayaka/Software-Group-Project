@@ -160,6 +160,8 @@ function HomePage() {
         <div className="content-area home-content">
           {!loading && !error && programs.length > 0 && (
             <div className="home-toolbar">
+              {/* Chips only help when there are at least two degree levels to choose between */}
+              {levels.length > 2 && (
               <div className="level-chips" role="group" aria-label="Filter by degree">
                 {levels.map((item) => (
                   <button
@@ -174,6 +176,7 @@ function HomePage() {
                   </button>
                 ))}
               </div>
+              )}
               <label className="home-sort">
                 Sort:
                 <select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
@@ -221,10 +224,12 @@ function HomePage() {
                     <span className="program-card__icon"><GraduationCap size={22} aria-hidden="true" /></span>
                     <div>
                       <h2 className="program-card__title">{program.title}</h2>
-                      <p className="program-card__meta">
-                        {[program.level, program.duration].filter(Boolean).join(' · ')}
-                        {program.isProposed && <span className="badge badge--proposed">Proposed</span>}
-                      </p>
+                      {(program.level || program.duration || program.isProposed) && (
+                        <p className="program-card__meta">
+                          {[program.level, program.duration].filter(Boolean).join(' · ')}
+                          {program.isProposed && <span className="badge badge--proposed">Proposed</span>}
+                        </p>
+                      )}
                     </div>
                   </div>
 
