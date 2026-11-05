@@ -1,5 +1,16 @@
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import {
+  ArrowLeft,
+  BookOpen,
+  CalendarDays,
+  Check,
+  ClipboardList,
+  Download,
+  FileText,
+  Link as LinkIcon,
+  Lock
+} from 'lucide-react';
 import '../styles/ProgramDetailPage.css';
 import { generateCourseDetailsPDF, generateCallForApplicationPDF } from '../utils/pdfGenerator';
 import API_BASE_URL from '../utils/apiConfig';
@@ -7,6 +18,27 @@ import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
 import { Skeleton } from '../components/Loaders';
 import useDelayedFlag from '../utils/useDelayedFlag';
+import { getDaysLeft, getToday } from '../utils/deadline';
+
+const CONTACT_EMAIL = 'adeeshaw@cse.mrt.ac.lk';
+
+const RESOURCE_ICONS = { pdf: FileText, form: ClipboardList, link: LinkIcon };
+
+// What a resource card does, or null when nothing is wired up for it yet.
+const getResourceAction = (resource) => {
+  if (resource.name === 'Online Application' || resource.type === 'form') return 'apply';
+  if (resource.type === 'pdf' && resource.name.includes('Course Details')) return 'course-details';
+  if (resource.type === 'pdf' && resource.name.includes('Call for Application')) return 'call-for-application';
+  return null;
+};
+
+// 2026-11-05 → 5 November 2026
+const formatDate = (date) => new Date(date).toLocaleDateString('en-GB', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC'
+});
 
 function ProgramDetailPage() {
   const { shortCode } = useParams();
@@ -33,6 +65,8 @@ function ProgramDetailPage() {
   const [loading, setLoading] = useState(!initialProgram);
   const [error, setError] = useState(null);
   const showSkeleton = useDelayedFlag(loading);
+  const [applicationWindow, setApplicationWindow] = useState(null);
+  const [today] = useState(getToday);
 
   useEffect(() => {
     const nextInitialProgram = location.state?.program?.shortCode === shortCode
@@ -47,6 +81,26 @@ function ProgramDetailPage() {
     }
   }, [shortCode, location.state]);
 
+  // Whether the program takes applications today (the server's rule: Settings period and deadlines)
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch(`${API_BASE_URL}/programs/${encodeURIComponent(shortCode)}/application-window`)
+      .then((response) => response.json())
+      .then((result) => {
+        if (!cancelled && result.success) {
+          setApplicationWindow({ shortCode, ...result.data });
+        }
+      })
+      .catch(() => {
+        // Fall back to the program's own deadline below
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [shortCode]);
+
   const fetchProgramDetails = async (prefetchedProgram = null) => {
     try {
       if (!prefetchedProgram) {
@@ -55,7 +109,7 @@ function ProgramDetailPage() {
 
       const response = await fetch(`${API_BASE_URL}/programs/${shortCode}`);
       const data = await response.json();
-      
+
       if (data.success) {
         setProgram(data.data);
       } else {
@@ -69,24 +123,20 @@ function ProgramDetailPage() {
     }
   };
 
-  const handleBackToHome = () => {
-    navigate(-1);
+  const handleApply = () => {
+    navigate('/apply', { state: { program: program.shortCode, programName: program.title } });
   };
 
   const handleResourceClick = (resource) => {
-    // Handle Online Application or form type resources
-    if (resource.name === 'Online Application' || resource.type === 'form') {
-      navigate('/apply', { state: { program: program.shortCode, programName: program.title } });
-    } 
-    // Handle Course Details PDF generation
-    else if (resource.type === 'pdf' && resource.name.includes('Course Details')) {
+    const action = getResourceAction(resource);
+
+    if (action === 'apply') {
+      handleApply();
+    } else if (action === 'course-details') {
       generateCourseDetailsPDF(program);
-    }
-    // Handle Call for Application PDF generation
-    else if (resource.type === 'pdf' && resource.name.includes('Call for Application')) {
+    } else if (action === 'call-for-application') {
       generateCallForApplicationPDF(program);
     }
-    // You can add more handlers for other resource types here
   };
 
   if (loading) {
@@ -95,36 +145,38 @@ function ProgramDetailPage() {
         <SiteHeader showAdminLogin />
 
         <main className="content-area" id="main" tabIndex={-1} aria-busy="true">
-          <div
-            className={`detail-container skeleton-on-page${showSkeleton ? '' : ' skeleton-wait'}`}
-            style={{ width: '100%' }}
-            aria-hidden="true"
-          >
-            <Skeleton className="skeleton-text" style={{ width: '110px', marginBottom: '24px' }} />
-            <Skeleton className="skeleton-title" style={{ width: '40%', height: '36px', marginBottom: '6px' }} />
-            <div className="detail-title-divider"></div>
-            <div className="detail-description">
-              {['96%', '100%', '62%'].map((width) => (
-                <Skeleton key={width} className="skeleton-text" style={{ width, height: '14px' }} />
-              ))}
-            </div>
+          <div className={`program-page skeleton-on-page${showSkeleton ? '' : ' skeleton-wait'}`} aria-hidden="true">
+            <Skeleton className="skeleton-text" style={{ width: '110px', margin: '8px 0 32px' }} />
+            <div className="program-layout">
+              <div className="program-title-block">
+                <Skeleton className="skeleton-text" style={{ width: '90px' }} />
+                <Skeleton className="skeleton-title" style={{ width: '45%', height: '36px', marginBottom: '6px' }} />
+                <div className="detail-title-divider"></div>
+              </div>
 
-            <div className="detail-section">
-              <Skeleton className="skeleton-title" style={{ width: '300px' }} />
-              {['38%', '30%', '44%', '35%'].map((width) => (
-                <Skeleton key={width} className="skeleton-text" style={{ width, height: '16px', margin: '0 0 30px' }} />
-              ))}
-            </div>
+              <div className="program-main">
+                <div className="detail-description">
+                  {['96%', '100%', '62%'].map((width) => (
+                    <Skeleton key={width} className="skeleton-text" style={{ width, height: '14px' }} />
+                  ))}
+                </div>
+                <Skeleton className="skeleton-title" style={{ width: '160px' }} />
+                <div className="specialization-cards">
+                  {[0, 1, 2, 3].map((index) => (
+                    <Skeleton key={index} style={{ height: '58px', borderRadius: 'var(--radius)' }} />
+                  ))}
+                </div>
+              </div>
 
-            <div className="detail-section">
-              <Skeleton className="skeleton-title" style={{ width: '120px' }} />
-              <div className="resources-grid">
-                {[0, 1, 2].map((index) => (
-                  <div key={index} className="resource-card" style={{ cursor: 'default' }}>
-                    <Skeleton style={{ width: '44px', height: '44px', flexShrink: 0 }} />
-                    <Skeleton className="skeleton-text" style={{ width: '60%', marginBottom: 0 }} />
-                  </div>
-                ))}
+              <div className="program-aside">
+                <div className="facts-card">
+                  <Skeleton className="skeleton-text" style={{ width: '80px' }} />
+                  {['70%', '50%', '90%', '40%'].map((width) => (
+                    <Skeleton key={width} className="skeleton-text" style={{ width }} />
+                  ))}
+                  <Skeleton className="skeleton-button" style={{ marginTop: '8px' }} />
+                  <Skeleton className="skeleton-button" style={{ marginTop: 0 }} />
+                </div>
               </div>
             </div>
           </div>
@@ -143,9 +195,9 @@ function ProgramDetailPage() {
           <div className="error-container">
             <h2>Error</h2>
             <p>{error || 'Program not found'}</p>
-            <button type="button" onClick={handleBackToHome} className="back-btn">
-              Back to Home
-            </button>
+            <Link to="/" className="program-btn program-btn--secondary program-btn--inline">
+              Back to all programs
+            </Link>
           </div>
         </main>
         <SiteFooter />
@@ -153,88 +205,198 @@ function ProgramDetailPage() {
     );
   }
 
+  const windowInfo = applicationWindow?.shortCode === shortCode ? applicationWindow : null;
+  const deadlineDate = program.applicationDeadline || windowInfo?.deadline || null;
+  const daysLeft = getDaysLeft(deadlineDate, today);
+  // Use the server's answer when it arrived; otherwise only the program's own deadline can close it
+  const isClosed = windowInfo ? !windowInfo.open : daysLeft !== null && daysLeft < 0;
+  const applyBy = program.applicationDeadline
+    ? program.deadlines?.application || program.deadline
+    : windowInfo?.deadline
+      ? formatDate(windowInfo.deadline)
+      : program.deadlines?.application || program.deadline;
+  const daysLeftText = isClosed || daysLeft === null
+    ? ''
+    : daysLeft === 0 ? 'Closes today' : `${daysLeft} day${daysLeft === 1 ? '' : 's'} left`;
+
+  const facts = [
+    ['Level', program.level],
+    ['Duration', program.duration],
+    ['Mode', program.mode],
+    ['SLQF', program.slqfLevel],
+    ['Fee', program.fee]
+  ].filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== '');
+
+  const specializations = program.specializations || [];
+  const eligibility = Array.isArray(program.eligibility) ? program.eligibility.filter(Boolean) : [];
+  const keyDates = [
+    { label: 'Apply by', value: applyBy, isDone: daysLeft !== null && daysLeft < 0 },
+    { label: 'Selection test / interview', value: program.deadlines?.selectionExams, isDone: false }
+  ].filter((item) => item.value);
+
+  const applyButton = isClosed ? (
+    <button type="button" className="program-btn program-btn--primary" disabled>
+      <Lock size={16} aria-hidden="true" /> Applications closed
+    </button>
+  ) : (
+    <button type="button" className="program-btn program-btn--primary" onClick={handleApply}>
+      Apply Now
+    </button>
+  );
+
   return (
     <div className="app">
       <SiteHeader showAdminLogin />
 
       <main className="content-area" id="main" tabIndex={-1}>
-        <div className="detail-container">
-          <button type="button" onClick={handleBackToHome} className="back-to-home-btn">
-            <span className="back-arrow">←</span> Back to Home
-          </button>
+        <div className="program-page">
+          <Link to="/" className="back-link">
+            <ArrowLeft size={16} aria-hidden="true" /> All programs
+          </Link>
 
-          <div className="detail-content">
-            <h1 className="detail-title">{program.title}</h1>
-            <div className="detail-title-divider"></div>
-            
-            <p className="detail-description">{program.detailedDescription || program.description}</p>
-
-            {program.specializations && program.specializations.length > 0 && (
-              <div className="detail-section">
-                <h3 className="section-title">Available specializations include :</h3>
-                <ul className="specializations-list">
-                  {program.specializations.map((spec, index) => (
-                    <li key={index}>{spec.name}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            <div className="detail-section">
-              <h3 className="section-title">Deadlines</h3>
-              <ul className="deadlines-list">
-                {program.deadlines && program.deadlines.application && (
-                  <li>Application {program.deadlines.application}</li>
-                )}
-                {program.deadlines && program.deadlines.selectionExams && (
-                  <li>{program.deadlines.selectionExams}</li>
-                )}
-              </ul>
+          <div className="program-layout">
+            <div className="program-title-block">
+              {(program.level || program.slqfLevel) && (
+                <p className="program-eyebrow">
+                  {[program.level, program.slqfLevel && `SLQF ${program.slqfLevel}`].filter(Boolean).join(' · ')}
+                </p>
+              )}
+              <h1 className="detail-title">{program.title}</h1>
+              <div className="detail-title-divider"></div>
             </div>
 
-            <div className="detail-section">
-              <h3 className="section-title">Resources</h3>
-              <div className="resources-grid">
-                {program.resources && program.resources.map((resource, index) => (
-                  <div 
-                    key={index} 
-                    className="resource-card"
-                    onClick={() => handleResourceClick(resource)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <div className="resource-icon">
-                      {resource.type === 'form' ? (
-                        /* Grey clipboard icon for forms */
-                        <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#6b7280" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
-                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
-                          <line x1="9" y1="12" x2="15" y2="12"/>
-                          <line x1="9" y1="16" x2="13" y2="16"/>
-                        </svg>
-                      ) : (
-                        /* Red document icon for PDFs */
-                        <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" stroke="#c0392b" strokeWidth="1.5" fill="#fff"/>
-                          <polyline points="14 2 14 8 20 8" stroke="#c0392b" strokeWidth="1.5" fill="none"/>
-                          <rect x="4" y="2" width="10" height="6" rx="0" fill="#c0392b" stroke="none"/>
-                          <path d="M14 2 L14 8 L20 8" stroke="#c0392b" strokeWidth="1.5" fill="none"/>
-                          <line x1="8" y1="13" x2="16" y2="13" stroke="#c0392b" strokeWidth="1.5"/>
-                          <line x1="8" y1="17" x2="14" y2="17" stroke="#c0392b" strokeWidth="1.5"/>
-                        </svg>
-                      )}
-                    </div>
-                    <div className="resource-content">
-                      <h4 className="resource-name">{resource.name}</h4>
-                      {resource.fileSize && (
-                        <p className="resource-size">
-                          {resource.type === 'pdf' ? `Download ${resource.fileSize}` : `${resource.type.toUpperCase()} (${resource.fileSize})`}
-                        </p>
-                      )}
-                    </div>
+            {/* Before the main column, so Tab reaches Apply Now first; the grid still puts it on the right */}
+            <aside className="program-aside" aria-label="Key facts">
+              <div className="facts-card">
+                {program.isProposed && (
+                  <div>
+                    <span className="badge badge--proposed facts-card__badge">Proposed</span>
+                    <p className="facts-card__note">
+                      This program is shown for demonstration and is not currently offered.
+                    </p>
                   </div>
-                ))}
+                )}
+
+                <h2 className="facts-card__title">Key facts</h2>
+                {facts.length > 0 && (
+                  <dl className="facts-list">
+                    {facts.map(([label, value]) => (
+                      <div key={label}>
+                        <dt>{label}</dt>
+                        <dd>{value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
+
+                <div className="facts-card__deadline">
+                  <CalendarDays size={18} aria-hidden="true" />
+                  <div>
+                    <span className="facts-card__label">Apply by</span>
+                    <span className="facts-card__date">{applyBy}</span>
+                    {daysLeftText && <span className="facts-card__days">{daysLeftText}</span>}
+                  </div>
+                </div>
+
+                {applyButton}
+                {isClosed && (
+                  <p className="facts-card__note">
+                    {windowInfo?.message || 'The application deadline has passed.'} Contact{' '}
+                    <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a> for the next intake.
+                  </p>
+                )}
+
+                <button
+                  type="button"
+                  className="program-btn program-btn--secondary"
+                  onClick={() => generateCourseDetailsPDF(program)}
+                >
+                  <Download size={16} aria-hidden="true" /> Course details (PDF)
+                </button>
               </div>
+            </aside>
+
+            <div className="program-main">
+              <p className="detail-description">{program.detailedDescription || program.description}</p>
+
+              {specializations.length > 0 && (
+                <section className="program-section">
+                  <h2 className="program-section__title">Specializations</h2>
+                  <ul className="specialization-cards">
+                    {specializations.map((spec) => (
+                      <li key={spec.name} className="specialization-card">
+                        <span className="specialization-card__icon"><BookOpen size={16} aria-hidden="true" /></span>
+                        {spec.name}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {eligibility.length > 0 && (
+                <section className="program-section">
+                  <h2 className="program-section__title">Who can apply</h2>
+                  <ul className="eligibility-list">
+                    {eligibility.map((item) => (
+                      <li key={item}>
+                        <Check size={18} aria-hidden="true" />
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {keyDates.length > 0 && (
+                <section className="program-section">
+                  <h2 className="program-section__title">Key dates</h2>
+                  <ol className="key-dates">
+                    {keyDates.map((item) => (
+                      <li key={item.label} className={item.isDone ? 'is-done' : undefined}>
+                        <span className="key-dates__label">{item.label}</span>
+                        <span className="key-dates__value">{item.value}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              )}
+
+              {program.resources?.length > 0 && (
+                <section className="program-section">
+                  <h2 className="program-section__title">Resources</h2>
+                  <div className="resources-grid">
+                    {program.resources.map((resource) => {
+                      const action = getResourceAction(resource);
+                      const isDisabled = !action || (action === 'apply' && isClosed);
+                      const Icon = RESOURCE_ICONS[resource.type] || FileText;
+                      let hint = 'Coming soon';
+                      if (action === 'apply') {
+                        hint = isClosed ? 'Applications closed' : 'Open form';
+                      } else if (action) {
+                        hint = resource.fileSize ? `Download PDF · ${resource.fileSize}` : 'Download PDF';
+                      }
+
+                      return (
+                        <button
+                          key={resource._id || resource.name}
+                          type="button"
+                          className="resource-card"
+                          disabled={isDisabled}
+                          onClick={() => handleResourceClick(resource)}
+                        >
+                          <span className="resource-icon"><Icon size={22} aria-hidden="true" /></span>
+                          <span className="resource-content">
+                            <span className="resource-name">{resource.name}</span>
+                            <span className="resource-size">{hint}</span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
             </div>
+
           </div>
         </div>
       </main>
