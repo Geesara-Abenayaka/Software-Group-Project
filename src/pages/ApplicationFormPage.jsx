@@ -5,8 +5,9 @@ import '../styles/ApplicationFormPage.css';
 import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
 import UploadZone from '../components/UploadZone';
+import ReviewPanel from '../components/ReviewPanel';
 import API_BASE_URL from '../utils/apiConfig';
-import { MAX_GPA, getFieldLabel, getSectionCompletion, getSectionOfField, hasDocument, validateApplication, validateField } from '../utils/applicationValidation';
+import { DOCUMENT_LABELS, MAX_GPA, getFieldLabel, getSectionCompletion, getSectionOfField, hasDocument, validateApplication, validateField } from '../utils/applicationValidation';
 import { loadDraft, mergeDraft, removeDraft, saveDraft } from '../utils/applicationDraft';
 import { formatReference } from '../utils/applicationReference';
 
@@ -118,6 +119,77 @@ function FieldError({ fieldKey, message }) {
     </p>
   );
 }
+
+const optionLabel = (options, value) => options.find((option) => option.value === value)?.label || value;
+
+// The answers as the review screen lists them, section by section (keys match the progress bar).
+const buildReviewSections = (data) => [
+  {
+    key: 'personal',
+    title: 'Personal Particulars',
+    groups: [{
+      rows: [
+        ['Title', optionLabel(TITLE_OPTIONS, data.title)],
+        ['Full name', data.fullName],
+        ['Name with initials', data.nameWithInitials],
+        ['NIC', data.nicNo],
+        ['Telephone', data.telephone],
+        ['Mobile', data.mobile],
+        ['Email', data.email],
+        ['Contact address', data.contactAddress]
+      ]
+    }]
+  },
+  {
+    key: 'academic',
+    title: 'Academic Qualifications',
+    groups: data.qualifications.map((qualification, index) => ({
+      heading: `Qualification ${index + 1}`,
+      rows: [
+        ['University / Institute', optionLabel(UNIVERSITY_OPTIONS, qualification.university)],
+        ['Degree / Qualification', optionLabel(DEGREE_OPTIONS, qualification.degree)],
+        ['Specialization / Minor', qualification.specialization],
+        ['Duration', optionLabel(DURATION_OPTIONS, qualification.duration)],
+        ['Graduation date', qualification.graduationDate],
+        ['GPA', qualification.gpa]
+      ]
+    }))
+  },
+  {
+    key: 'memberships',
+    title: 'Professional Memberships',
+    groups: data.memberships.map((membership, index) => ({
+      heading: `Membership ${index + 1}`,
+      rows: [
+        ['Organization', membership.organization],
+        ['Category', membership.category],
+        ['Date joined', membership.dateJoined]
+      ]
+    }))
+  },
+  {
+    key: 'work',
+    title: 'Work Experience',
+    groups: data.experiences.map((experience, index) => ({
+      heading: `Experience ${index + 1}`,
+      rows: [
+        ['Period', `${optionLabel(MONTH_OPTIONS, experience.fromMonth)} ${experience.fromYear} – ${optionLabel(MONTH_OPTIONS, experience.toMonth)} ${experience.toYear}`],
+        ['Company', experience.company],
+        ['Position', experience.position]
+      ]
+    }))
+  },
+  {
+    key: 'documents',
+    title: 'Documents',
+    groups: [{
+      rows: Object.entries(DOCUMENT_LABELS).map(([name, label]) => [
+        label,
+        asFileList(data.documents[name]).map((file) => file.name).join(', ')
+      ])
+    }]
+  }
+];
 
 // A document slot holds a File, an array of Files, or nothing; the upload zones want a list.
 const asFileList = (value) => (Array.isArray(value) ? value.filter(Boolean) : value ? [value] : []);
@@ -247,6 +319,7 @@ function ApplicationFormPage() {
   // Fields listed in the error summary after a failed submit; an entry goes away once it is fixed.
   const [summaryKeys, setSummaryKeys] = useState([]);
   const [summaryFocusRequest, setSummaryFocusRequest] = useState(0);
+  const [isReviewOpen, setIsReviewOpen] = useState(false);
   const errorSummaryRef = useRef(null);
   // Fields the user has typed in. Leaving an untouched empty field doesn't show "required" yet.
   const changedFieldsRef = useRef(new Set());
@@ -1707,6 +1780,30 @@ function ApplicationFormPage() {
     documentVerification.isVerifying
   ]);
 
+  // "Review application": the same checks as submit, then every answer on one screen before the real submit.
+  const handleReview = (e) => {
+    e.preventDefault();
+    const errors = validateApplication(formData, { captchaValue });
+    if (Object.keys(errors).length > 0) {
+      showErrorSummary(errors);
+      return;
+    }
+    setSummaryKeys([]);
+    setIsReviewOpen(true);
+  };
+
+  // Edit in the review: close it and take the applicant to that section.
+  const editFromReview = (sectionKey) => {
+    setIsReviewOpen(false);
+    // After the panel has closed and handed focus back
+    setTimeout(() => goToSection(sectionKey), 0);
+  };
+
+  const submitFromReview = () => {
+    setIsReviewOpen(false);
+    handleSubmit();
+  };
+
   const handleSubmit = async (e) => {
     e?.preventDefault();
 
@@ -2027,7 +2124,7 @@ function ApplicationFormPage() {
       />
 
       {/* noValidate: our own checks show the errors, not the browser's pop-ups */}
-      <form onSubmit={handleSubmit} className="application-form" noValidate>
+      <form onSubmit={handleReview} className="application-form" noValidate>
         <p className="required-note">Fields marked <span aria-hidden="true">*</span> are required.</p>
 
         {/* Personal Particulars */}
@@ -2773,10 +2870,21 @@ function ApplicationFormPage() {
         </fieldset>
 
         <button type="submit" className="btn btn--primary submit-button" disabled={!applicationWindow.open}>
-          {applicationWindow.open ? 'Submit Application' : 'Applications Closed'}
+          {applicationWindow.open ? 'Review application' : 'Applications Closed'}
         </button>
       </form>
       </main>
+
+      {isReviewOpen && (
+        <ReviewPanel
+          subtitle={location.state?.programName ? `Applying for: ${location.state.programName}` : ''}
+          sections={buildReviewSections(formData)}
+          note="By submitting, you confirm that everything above is correct, as set out in the Declaration. Inaccurate or false information makes the application invalid."
+          onEdit={editFromReview}
+          onClose={() => setIsReviewOpen(false)}
+          onSubmit={submitFromReview}
+        />
+      )}
 
       <SiteFooter />
     </div>
