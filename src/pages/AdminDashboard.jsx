@@ -1,13 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
-  GraduationCap,
-  ClipboardList,
-  Search,
-  Download,
-  BarChart2,
-  Settings,
-  LogOut,
   User,
   PlusCircle,
   Pencil,
@@ -15,7 +7,7 @@ import {
 } from 'lucide-react';
 import '../styles/AdminDashboard.css';
 import API_BASE_URL from '../utils/apiConfig';
-import uomLogo from '../assets/uom-logo.png';
+import AdminLayout from '../components/AdminLayout';
 
 const createEmptyProgram = () => ({
   title: '',
@@ -60,26 +52,17 @@ const fromProgramForm = ({ eligibilityText, ...program }) => ({
 });
 
 function AdminDashboard() {
-  const navigate = useNavigate();
   const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [user, setUser] = useState(null);
   const [editingProgram, setEditingProgram] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newProgram, setNewProgram] = useState(createEmptyProgram);
 
   useEffect(() => {
-    // Check if user is logged in
-    const userData = localStorage.getItem('user');
-    if (!userData) {
-      navigate('/login');
-      return;
-    }
-    setUser(JSON.parse(userData));
     fetchPrograms();
-  }, [navigate]);
+  }, []);
 
   const fetchPrograms = async () => {
     try {
@@ -128,11 +111,6 @@ function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    navigate('/login');
   };
 
   const handleEditProgram = async (program) => {
@@ -353,65 +331,10 @@ function AdminDashboard() {
 
 
   return (
-    <div className="admin-app">
-      <header className="admin-header">
-        <div className="admin-header-content">
-          <div className="header-left">
-            <img src={uomLogo} alt="University of Moratuwa logo" className="uom-logo" />
-            <div className="header-text">
-              <h1 className="university-name">University of Moratuwa</h1>
-              <p className="portal-subtitle">Postgraduate Management Information System</p>
-            </div>
-          </div>
-          <div className="header-right">
-            <div className="user-info">
-              <div className="user-avatar">
-                <User size={20} color="white" />
-              </div>
-              <div className="user-details">
-                <span className="user-role">Admin User</span>
-                <span className="user-email">{user?.email || 'admin@admin.lk'}</span>
-              </div>
-            </div>
-            <button className="logout-btn" onClick={handleLogout}>
-              <LogOut size={16} />
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <nav className="admin-navbar">
-        <div className="navbar-content">
-          <button className="navbar-btn active">
-            <GraduationCap size={18} className="nav-icon" />
-            Programs
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/applications')}>
-            <ClipboardList size={18} className="nav-icon" />
-            Applications
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/search')}>
-            <Search size={18} className="nav-icon" />
-            Search
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/download')}>
-            <Download size={18} className="nav-icon" />
-            Download
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/marks')}>
-            <BarChart2 size={18} className="nav-icon" />
-            Marks
-          </button>
-          <button className="navbar-btn" onClick={() => navigate('/admin/settings')}>
-            <Settings size={18} className="nav-icon" />
-            Settings
-          </button>
-        </div>
-      </nav>
+    <AdminLayout>
 
       <div className="admin-content-full">
-        <main className="admin-main-full programs-management-main">
+        <main id="main" tabIndex={-1} className="admin-main-full programs-management-main">
           <div className="programs-header-admin">
             <div>
               <h2 className="programs-title-admin">Postgraduate Programs</h2>
@@ -777,7 +700,7 @@ function AdminDashboard() {
           </div>
         </div>
       )}
-    </div>
+    </AdminLayout>
   );
 }
 
