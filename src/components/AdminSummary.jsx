@@ -66,7 +66,7 @@ function AdminSummary({ programs, summary, onOpenProgram }) {
       </div>
 
       <div className="program-bars">
-        <h3 className="program-bars__title">Applications per program</h3>
+        <h2 className="program-bars__title">Applications per program</h2>
 
         {failed && <p className="program-bars__empty">Couldn&apos;t load the numbers. Reload the page to try again.</p>}
 

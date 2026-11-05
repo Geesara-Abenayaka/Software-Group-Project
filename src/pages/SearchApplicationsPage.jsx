@@ -300,7 +300,7 @@ function SearchApplicationsPage() {
       <div className="admin-content-full">
         <main id="main" tabIndex={-1} className="admin-main-full">
           <div className="search-header">
-            <h2 className="search-title">Search Applications</h2>
+            <h1 className="search-title">Search Applications</h1>
             <p className="search-subtitle">View and manage all postgraduate applications across programs</p>
           </div>
 

@@ -552,12 +552,12 @@ function DownloadFormsPage() {
       <div className="admin-content-full">
         <main id="main" tabIndex={-1} className="admin-main-full">
           <div className="download-header">
-            <h2 className="download-title">Download Forms</h2>
+            <h1 className="download-title">Download Forms</h1>
             <p className="download-subtitle">Download application forms, templates, and applicant data</p>
           </div>
 
           <div className="download-section">
-            <h3 className="section-title">Download Forms</h3>
+            <h2 className="section-title">Download Forms</h2>
 
             <div className="form-group">
               <label className="group-label">Application Forms</label>
@@ -671,7 +671,7 @@ function DownloadFormsPage() {
           </div>
 
           <div className="download-section approved-section">
-            <h3 className="section-title">Download Approved Candidates File</h3>
+            <h2 className="section-title">Download Approved Candidates File</h2>
             <p className="section-description">Export a list of all approved applicants across all programs</p>
             <button className="download-list-btn" onClick={handleDownloadApproved}>
               <Download size={18} />

@@ -321,6 +321,7 @@ function SettingsPage() {
     <AdminLayout>
       <div className="admin-content-full">
         <main id="main" tabIndex={-1} className="admin-main-full settings-main">
+          <h1 className="sr-only">Settings</h1>
           <div className="settings-section">
             <h2 className="settings-title">Set Date Range</h2>
             <p className="current-range">

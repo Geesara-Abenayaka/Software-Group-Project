@@ -167,7 +167,7 @@ function ApplicationViewPage() {
 
       {/* Form Header */}
       <div className="form-header">
-        <h3>APPLICATION FOR POSTGRADUATE STUDIES</h3>
+        <h1 className="view-form-title">APPLICATION FOR POSTGRADUATE STUDIES</h1>
         {program && (
           <p style={{ marginTop: '10px', fontSize: '16px', fontWeight: '600' }}>
             Program: {program.title}
@@ -185,7 +185,7 @@ function ApplicationViewPage() {
       <div className="application-form">
         {/* Personal Particulars */}
         <div className="form-section">
-          <h3 className="section-title">Personal Particulars</h3>
+          <h2 className="section-title">Personal Particulars</h2>
           
           <div className="form-group view-only">
             <label>Title</label>
@@ -232,7 +232,7 @@ function ApplicationViewPage() {
 
         {/* Academic Qualifications */}
         <div className="form-section">
-          <h3 className="section-title">Academic Qualifications</h3>
+          <h2 className="section-title">Academic Qualifications</h2>
           
           {application.qualifications && application.qualifications.length > 0 ? (
             application.qualifications.map((qual, index) => (
@@ -280,7 +280,7 @@ function ApplicationViewPage() {
 
         {/* Membership of Professional Organizations */}
         <div className="form-section">
-          <h3 className="section-title">Membership of Professional Organizations</h3>
+          <h2 className="section-title">Membership of Professional Organizations</h2>
           
           {application.memberships && application.memberships.length > 0 ? (
             application.memberships.map((membership, index) => (
@@ -311,7 +311,7 @@ function ApplicationViewPage() {
 
         {/* Work Experience */}
         <div className="form-section">
-          <h3 className="section-title">Work Experience (most recent first)</h3>
+          <h2 className="section-title">Work Experience (most recent first)</h2>
           
           {application.experiences && application.experiences.length > 0 ? (
             application.experiences.map((exp, index) => (
@@ -356,7 +356,7 @@ function ApplicationViewPage() {
 
         {/* Documents */}
         <div className="form-section">
-          <h3 className="section-title">Documents</h3>
+          <h2 className="section-title">Documents</h2>
           <p className="document-note">
             * Please make sure each file is 4 MB or less (Please upload the files in PDF format). All documents are required.
           </p>
@@ -487,7 +487,7 @@ function ApplicationViewPage() {
 
         {/* Declaration */}
         <div className="form-section">
-          <h3 className="section-title">Declaration</h3>
+          <h2 className="section-title">Declaration</h2>
           <div className="declaration-text">
             <p>
               I affirm that all statements made/entered by me on this form are correct. I understand that any inaccurate or false information for 

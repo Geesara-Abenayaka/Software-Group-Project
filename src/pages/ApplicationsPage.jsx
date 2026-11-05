@@ -87,7 +87,7 @@ function ApplicationsPage() {
       <div className="admin-content-full">
         <main id="main" tabIndex={-1} className="admin-main-full applications-main">
           <div className="page-title-row">
-            <h2 className="page-heading">Applications</h2>
+            <h1 className="page-heading">Applications</h1>
           </div>
           <div className={`programs-grid-admin${loading && !showSkeletons ? ' skeleton-wait' : ''}`} aria-busy={loading}>
             {loading ? (
@@ -104,7 +104,7 @@ function ApplicationsPage() {
                   </span>
                 </div>
 
-                <h3 className="card-title-admin">{program.title}</h3>
+                <h2 className="card-title-admin">{program.title}</h2>
                 <p className="card-description-admin">{program.description}</p>
 
                 <div className="card-bottom-row">

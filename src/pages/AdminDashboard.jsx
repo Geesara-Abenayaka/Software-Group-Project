@@ -389,7 +389,7 @@ function AdminDashboard() {
         <main id="main" tabIndex={-1} className="admin-main-full programs-management-main">
           <div className="programs-header-admin">
             <div>
-              <h2 className="programs-title-admin">Postgraduate Programs</h2>
+              <h1 className="programs-title-admin">Postgraduate Programs</h1>
               <p className="programs-subtitle-admin">Manage course details, deadlines, and available resources.</p>
             </div>
           </div>
@@ -439,7 +439,7 @@ function AdminDashboard() {
                     </div>
                   </div>
 
-                  <h3 className="card-title-admin">{program.title}</h3>
+                  <h2 className="card-title-admin">{program.title}</h2>
 
                   <p className="card-description-admin">{program.description}</p>
 

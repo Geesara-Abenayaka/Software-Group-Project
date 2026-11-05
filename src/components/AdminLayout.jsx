@@ -59,7 +59,7 @@ function AdminLayout({ children, onClick }) {
           <div className="header-left">
             <img src={uomLogo} alt="" className="uom-logo" />
             <div className="header-text">
-              <h1 className="university-name">University of Moratuwa</h1>
+              <span className="university-name">University of Moratuwa</span>
               <p className="portal-subtitle">Postgraduate Management Information System</p>
             </div>
           </div>

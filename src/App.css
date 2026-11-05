@@ -76,7 +76,7 @@
   color: rgba(255, 255, 255, 0.9);
   font-size: 13px;
   margin: 0;
-  font-weight: 300;
+  font-weight: 400; /* 300 was thin and hard to read on maroon */
 }
 
 .admin-login-btn {

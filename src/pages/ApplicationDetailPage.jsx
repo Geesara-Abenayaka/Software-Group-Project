@@ -423,7 +423,7 @@ function ApplicationDetailPage() {
                   { label: program?.title || 'Program' }
                 ]}
               />
-              <h2 className="detail-topbar-title">{program?.title || 'Program'}</h2>
+              <h1 className="detail-topbar-title">{program?.title || 'Program'}</h1>
               <p className="detail-topbar-sub">Application Management</p>
             </div>
             <div className="detail-topbar-avatar">

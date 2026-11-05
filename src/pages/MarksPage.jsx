@@ -431,6 +431,7 @@ function MarksPage() {
     <AdminLayout onClick={handleDeselectRow}>
       <div className="admin-content-full">
         <main id="main" tabIndex={-1} className="admin-main-full marks-main">
+          <h1 className="sr-only">Marks</h1>
           <div className="marks-controls" onClick={(e) => e.stopPropagation()}>
             <div className="search-wrapper">
               <input
