@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { AlertTriangle, Info } from 'lucide-react';
 import '../styles/ApplicationFormPage.css';
 import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
@@ -55,6 +56,14 @@ const createEmptyFormData = (program) => ({
   declaration: false,
   captcha: ''
 });
+
+// "28 Oct, 3:15 pm" for the draft banner.
+const formatDraftTime = (timestamp) => {
+  const date = new Date(timestamp);
+  const day = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+  const time = date.toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: true });
+  return `${day}, ${time}`;
+};
 
 // Removes the error at `index` from an index-keyed error map and shifts later entries down by one.
 const removeIndexedError = (errors, index) => {
@@ -129,7 +138,6 @@ function ApplicationFormPage() {
   const [applicationWindow, setApplicationWindow] = useState({ open: true, message: '' });
 
   // Answers typed earlier for this programme come back after a refresh; files have to be chosen again.
-  // eslint-disable-next-line no-unused-vars -- shown by the "draft restored" banner (UI step 06)
   const [draftSavedAt, setDraftSavedAt] = useState(() => loadDraft(location.state?.program)?.savedAt || null);
   const [formData, setFormData] = useState(() => (
     mergeDraft(createEmptyFormData(location.state?.program || ''), loadDraft(location.state?.program))
@@ -169,7 +177,7 @@ function ApplicationFormPage() {
     return () => window.removeEventListener('beforeunload', warnBeforeLeaving);
   }, [hasChosenFiles, submittedApplicationId]);
 
-  // eslint-disable-next-line no-unused-vars -- used by the "Start over" button (UI step 06)
+  // "Start over" in the draft banner
   const discardDraft = () => {
     removeDraft(formData.program);
     const emptyFormData = createEmptyFormData(formData.program);
@@ -1740,9 +1748,21 @@ function ApplicationFormPage() {
       </div>
 
       {!applicationWindow.open && (
-        <div className="error-box applications-closed" role="alert">
-          <span className="error-icon">⚠</span>
-          <span className="error-text">{applicationWindow.message}</span>
+        <div className="form-alert form-alert--error applications-closed" role="alert">
+          <AlertTriangle size={18} aria-hidden="true" />
+          <p className="form-alert__body">{applicationWindow.message}</p>
+        </div>
+      )}
+
+      {draftSavedAt && (
+        <div className="form-alert form-alert--info draft-banner" role="status">
+          <Info size={18} aria-hidden="true" />
+          <p className="form-alert__body">
+            We restored your draft from {formatDraftTime(draftSavedAt)}. Documents need to be chosen again.
+          </p>
+          <button type="button" className="btn btn--quiet btn--sm draft-banner__action" onClick={discardDraft}>
+            Start over
+          </button>
         </div>
       )}
 
@@ -2522,9 +2542,9 @@ function ApplicationFormPage() {
           </div>
 
           {documentVerification.error && (
-            <div className="error-box">
-              <span className="error-icon">⚠</span>
-              <span className="error-text">{documentVerification.error}</span>
+            <div className="form-alert form-alert--error document-check-error" role="alert">
+              <AlertTriangle size={18} aria-hidden="true" />
+              <p className="form-alert__body">{documentVerification.error}</p>
             </div>
           )}
 

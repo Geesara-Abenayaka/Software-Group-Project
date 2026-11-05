@@ -941,3 +941,33 @@ label.required::before {
     font-size: 18px;
   }
 }
+
+.apply-page .draft-banner {
+  align-items: center;
+  margin-bottom: var(--space-6);
+}
+
+.apply-page .draft-banner__action {
+  flex-shrink: 0;
+  color: var(--info);
+  text-decoration: underline;
+}
+
+.apply-page .draft-banner__action:hover:not(:disabled) {
+  background: var(--surface);
+  color: var(--info);
+}
+
+.apply-page .document-check-error {
+  margin-bottom: var(--space-4);
+}
+
+@media (max-width: 480px) {
+  .apply-page .draft-banner {
+    flex-wrap: wrap;
+  }
+
+  .apply-page .draft-banner__action {
+    margin-left: 28px;
+  }
+}
