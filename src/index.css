@@ -93,6 +93,23 @@ body {
   min-height: 100vh;
 }
 
+/* Small status labels (deadline, proposed). Shared so admin pages can use them too. */
+.badge {
+  display: inline-block;
+  margin-left: var(--space-2);
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  vertical-align: middle;
+}
+
+.badge--soon { background: var(--warning-bg); color: var(--warning); }
+.badge--closed { background: var(--surface-muted); color: var(--ink-muted); }
+.badge--proposed { background: var(--info-bg); color: var(--info); }
+
 /* Hidden until a keyboard user tabs to it, then shown over the maroon header */
 .skip-link {
   position: absolute;

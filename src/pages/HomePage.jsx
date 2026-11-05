@@ -1,10 +1,22 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { AlertTriangle, ArrowRight, CalendarDays, Check, GraduationCap, Search } from 'lucide-react';
 import API_BASE_URL from '../utils/apiConfig';
 import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
+import DeadlineBadge from '../components/DeadlineBadge';
 import { ProgramCardSkeleton, TopProgressBar } from '../components/Loaders';
 import useDelayedFlag from '../utils/useDelayedFlag';
+import { getDaysLeft, getToday } from '../utils/deadline';
+
+const VISIBLE_SPECIALIZATIONS = 3;
+
+// "Closing soonest" order: open programs by days left, then those without a date, then closed ones.
+const getDeadlineRank = (program, today) => {
+  const daysLeft = getDaysLeft(program.applicationDeadline, today);
+  if (daysLeft === null) return 100000;
+  return daysLeft < 0 ? 200000 : daysLeft;
+};
 
 function HomePage() {
   const navigate = useNavigate();
@@ -26,6 +38,39 @@ function HomePage() {
   const [error, setError] = useState(null);
   const [openingProgram, setOpeningProgram] = useState(null);
   const showSkeletons = useDelayedFlag(loading);
+  const [query, setQuery] = useState('');
+  const [level, setLevel] = useState('All');
+  const [sortBy, setSortBy] = useState('deadline');
+  const [expandedProgram, setExpandedProgram] = useState(null); // _id of the card showing all specializations
+  const [today] = useState(getToday);
+
+  // Only levels that have a program get a chip
+  const levels = ['All', ...new Set(programs.map((program) => program.level).filter(Boolean))];
+
+  const visiblePrograms = useMemo(() => {
+    const text = query.trim().toLowerCase();
+
+    return programs
+      .filter((program) => level === 'All' || program.level === level)
+      .filter((program) => {
+        if (!text) return true;
+        const haystack = [
+          program.title,
+          program.description,
+          ...(program.specializations || []).map((spec) => spec.name)
+        ].join(' ').toLowerCase();
+        return haystack.includes(text);
+      })
+      .sort((a, b) => {
+        if (sortBy === 'title') return a.title.localeCompare(b.title);
+        return getDeadlineRank(a, today) - getDeadlineRank(b, today);
+      });
+  }, [programs, query, level, sortBy, today]);
+
+  const clearFilters = () => {
+    setQuery('');
+    setLevel('All');
+  };
 
   useEffect(() => {
     // Show cached programs straight away, but always refresh them so programs
@@ -35,7 +80,8 @@ function HomePage() {
 
   const fetchPrograms = async () => {
     try {
-      // Only show the spinner when there is nothing cached to show yet
+      setError(null);
+      // Only show the placeholders when there is nothing cached to show yet
       if (!cachedPrograms) {
         setLoading(true);
       }
@@ -84,89 +130,154 @@ function HomePage() {
       <TopProgressBar active={Boolean(openingProgram)} />
       <SiteHeader showAdminLogin />
 
-      <main className="content-area" id="main" tabIndex={-1}>
-        <div className="programs-header">
-          <h1 className="programs-title">Postgraduate Programs</h1>
-          <p className="programs-subtitle">Explore our range of postgraduate programs and apply today</p>
-        </div>
-
-        {error ? (
-          <div className="error-container">
-            <h2>Error</h2>
-            <p>{error}</p>
-            <button onClick={fetchPrograms} className="retry-btn">
-              Retry
-            </button>
+      <main className="home-main" id="main" tabIndex={-1}>
+        <section className="home-hero">
+          <div className="home-hero__inner">
+            <p className="home-hero__eyebrow">Department of Computer Science &amp; Engineering</p>
+            <h1 className="home-hero__title">Postgraduate Programs</h1>
+            <p className="home-hero__text">Advance your career with an MSc, MBA or professional master’s.</p>
+            <div className="home-hero__row">
+              <label className="home-search">
+                <Search size={18} aria-hidden="true" />
+                <input
+                  type="search"
+                  placeholder="Search programs or specializations"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  aria-label="Search programs"
+                />
+              </label>
+              {/* Announced to screen readers, so a search result is heard without moving focus */}
+              <p className="home-hero__meta" aria-live="polite">
+                {!loading && !error && (visiblePrograms.length === programs.length
+                  ? `${programs.length} programs · Apply online`
+                  : `${visiblePrograms.length} of ${programs.length} programs`)}
+              </p>
+            </div>
           </div>
-        ) : (
-        <div className={`programs-grid${loading && !showSkeletons ? ' skeleton-wait' : ''}`} aria-busy={loading}>
-          {loading ? (
-            Array.from({ length: 6 }, (_, index) => <ProgramCardSkeleton key={index} />)
-          ) : programs.map((program, index) => (
-            <div
-              key={program._id}
-              className="program-card stagger-in"
-              // 40 ms steps, capped so a long list doesn't keep the last cards waiting
-              style={{ animationDelay: `${Math.min(index, 8) * 40}ms` }}
-            >
-              <div className="card-header">
-                  <div className="card-icon">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
-                    <path d="M6 12v5c3 3 9 3 12 0v-5"/>
-                  </svg>
-                </div>
-                <h3 className="card-title">{program.title}</h3>
+        </section>
+
+        <div className="content-area home-content">
+          {!loading && !error && programs.length > 0 && (
+            <div className="home-toolbar">
+              {/* Chips only help when there are at least two degree levels to choose between */}
+              {levels.length > 2 && (
+              <div className="level-chips" role="group" aria-label="Filter by degree">
+                {levels.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    className="level-chip"
+                    aria-pressed={level === item}
+                    onClick={() => setLevel(item)}
+                  >
+                    {level === item && <Check size={14} aria-hidden="true" />}
+                    {item}
+                  </button>
+                ))}
               </div>
-              
-              <p className="card-description">{program.description}</p>
-              
-              {program.specializations && program.specializations.length > 0 && (
-                <div className="specializations">
-                  <p className="specializations-label">Specializations:</p>
-                  <div className="specialization-list">
-                    {program.specializations.map((spec, index) => (
-                      <span key={index} className="specialization-tag" style={{ color: '#6b7280' }}>{spec.name}</span>
-                    ))}
-                  </div>
-                </div>
               )}
-              
-              <div className="card-info">
-                <div className="info-item">
-                  <span className="info-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                      <line x1="16" y1="2" x2="16" y2="6"/>
-                      <line x1="8" y1="2" x2="8" y2="6"/>
-                      <line x1="3" y1="10" x2="21" y2="10"/>
-                    </svg>
-                  </span>
-                  <span className="info-text">Deadline:&nbsp; {program.deadline}</span>
-                </div>
-                <div className="info-item">
-                  <span className="info-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                      <polyline points="14 2 14 8 20 8"/>
-                    </svg>
-                  </span>
-                  <span className="info-text">{program.resourcesCount} Resources Available</span>
-                </div>
-              </div>
-              
-              <button 
-                type="button"
-                className="view-details-btn"
-                disabled={openingProgram === program.shortCode}
-                onClick={() => handleViewDetails(program)}
-              >
-                {openingProgram === program.shortCode ? 'Opening...' : 'View Details'}
+              <label className="home-sort">
+                Sort:
+                <select value={sortBy} onChange={(event) => setSortBy(event.target.value)}>
+                  <option value="deadline">Closing soonest</option>
+                  <option value="title">A–Z</option>
+                </select>
+              </label>
+            </div>
+          )}
+
+          {error ? (
+            <div className="home-message">
+              <AlertTriangle size={32} className="home-message__icon" aria-hidden="true" />
+              <h2>We couldn’t load the programs</h2>
+              <p>Check your connection and try again.</p>
+              <button type="button" onClick={fetchPrograms} className="home-btn home-btn--primary">
+                Try again
               </button>
             </div>
-          ))}
+          ) : !loading && visiblePrograms.length === 0 ? (
+            <div className="home-message">
+              <h2>{query.trim() ? `No programs match “${query.trim()}”.` : 'No programs match these filters.'}</h2>
+              <p>Try a broader word such as <em>data</em>, <em>security</em> or <em>MBA</em>.</p>
+              <button type="button" onClick={clearFilters} className="home-btn home-btn--secondary">
+                Clear filters
+              </button>
+            </div>
+          ) : (
+          <div className={`programs-grid${loading && !showSkeletons ? ' skeleton-wait' : ''}`} aria-busy={loading}>
+            {loading ? (
+              Array.from({ length: 6 }, (_, index) => <ProgramCardSkeleton key={index} />)
+            ) : visiblePrograms.map((program, index) => {
+              const specializations = program.specializations || [];
+              const isExpanded = expandedProgram === program._id;
+              const isOpening = openingProgram === program.shortCode;
+
+              return (
+                <article
+                  key={program._id}
+                  className="program-card stagger-in"
+                  // 40 ms steps, capped so a long list doesn't keep the last cards waiting
+                  style={{ animationDelay: `${Math.min(index, 8) * 40}ms` }}
+                >
+                  <div className="program-card__top">
+                    <span className="program-card__icon"><GraduationCap size={22} aria-hidden="true" /></span>
+                    <div>
+                      <h2 className="program-card__title">{program.title}</h2>
+                      {(program.level || program.duration || program.isProposed) && (
+                        <p className="program-card__meta">
+                          {[program.level, program.duration].filter(Boolean).join(' · ')}
+                          {program.isProposed && <span className="badge badge--proposed">Proposed</span>}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <p className="program-card__description">{program.description}</p>
+
+                  {specializations.length > 0 && (
+                    <ul className="chip-list" aria-label="Specializations">
+                      {specializations.slice(0, isExpanded ? undefined : VISIBLE_SPECIALIZATIONS).map((spec) => (
+                        <li key={spec.name} className="chip">{spec.name}</li>
+                      ))}
+                      {specializations.length > VISIBLE_SPECIALIZATIONS && (
+                        <li>
+                          <button
+                            type="button"
+                            className="chip chip--more"
+                            aria-expanded={isExpanded}
+                            onClick={() => setExpandedProgram(isExpanded ? null : program._id)}
+                          >
+                            {isExpanded ? 'Show less' : `+${specializations.length - VISIBLE_SPECIALIZATIONS} more`}
+                          </button>
+                        </li>
+                      )}
+                    </ul>
+                  )}
+
+                  <div className="program-card__footer">
+                    <p className="program-card__deadline">
+                      <CalendarDays size={14} aria-hidden="true" />
+                      <span>
+                        Deadline: {program.deadline}
+                        <DeadlineBadge date={program.applicationDeadline} today={today} />
+                      </span>
+                    </p>
+                    <button
+                      type="button"
+                      className="program-card__cta"
+                      disabled={isOpening}
+                      onClick={() => handleViewDetails(program)}
+                    >
+                      {isOpening ? 'Opening…' : <>View Details <ArrowRight size={16} aria-hidden="true" /></>}
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+          )}
         </div>
-        )}
       </main>
       <SiteFooter />
     </div>
