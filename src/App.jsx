@@ -25,6 +25,8 @@ function AppRoutes() {
 
   return (
     <>
+      {/* Each new page fades in. The chat stays outside so it isn't reset on every page change. */}
+      <div key={location.pathname} className="page-enter">
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/programs/:shortCode" element={<ProgramDetailPage />} />
@@ -40,6 +42,7 @@ function AppRoutes() {
         <Route path="/admin/marks" element={<MarksPage />} />
         <Route path="/admin/settings" element={<SettingsPage />} />
       </Routes>
+      </div>
 
       {!hideChatbot && <FloatingAssistant />}
     </>
