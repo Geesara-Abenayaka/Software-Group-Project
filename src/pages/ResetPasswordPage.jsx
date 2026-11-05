@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import '../App.css'
 import SiteHeader from '../components/SiteHeader'
+import SiteFooter from '../components/SiteFooter'
 
 const ADMIN_RECOVERY_EMAIL = 'admin@uom.lk'
 
@@ -243,11 +244,8 @@ function ResetPasswordPage() {
             </form>
           )}
         </div>
-
-        <footer className="footer">
-          © 2024 University of Moratuwa. All rights reserved.
-        </footer>
       </main>
+      <SiteFooter />
     </div>
   )
 }

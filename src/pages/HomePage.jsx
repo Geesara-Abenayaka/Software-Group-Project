@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import API_BASE_URL from '../utils/apiConfig';
 import SiteHeader from '../components/SiteHeader';
+import SiteFooter from '../components/SiteFooter';
 
 function HomePage() {
   const navigate = useNavigate();
@@ -171,6 +172,7 @@ function HomePage() {
           ))}
         </div>
       </main>
+      <SiteFooter />
     </div>
   );
 }

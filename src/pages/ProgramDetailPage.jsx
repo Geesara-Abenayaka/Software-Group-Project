@@ -4,6 +4,7 @@ import '../styles/ProgramDetailPage.css';
 import { generateCourseDetailsPDF, generateCallForApplicationPDF } from '../utils/pdfGenerator';
 import API_BASE_URL from '../utils/apiConfig';
 import SiteHeader from '../components/SiteHeader';
+import SiteFooter from '../components/SiteFooter';
 
 function ProgramDetailPage() {
   const { shortCode } = useParams();
@@ -195,6 +196,7 @@ function ProgramDetailPage() {
           </div>
         </div>
       </main>
+      <SiteFooter />
     </div>
   );
 }

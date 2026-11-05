@@ -4,6 +4,7 @@ import axios from 'axios'
 import '../App.css'
 import API_BASE_URL from '../utils/apiConfig'
 import SiteHeader from '../components/SiteHeader'
+import SiteFooter from '../components/SiteFooter'
 
 function LoginPage() {
   const [email, setEmail] = useState('')
@@ -86,11 +87,8 @@ function LoginPage() {
             </Link>
           </form>
         </div>
-
-        <footer className="footer">
-          © 2024 University of Moratuwa. All rights reserved.
-        </footer>
       </main>
+      <SiteFooter />
     </div>
   )
 }
