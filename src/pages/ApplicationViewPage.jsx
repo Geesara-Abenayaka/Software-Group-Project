@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import '../styles/ApplicationViewPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import { PageLoader } from '../components/Loaders';
+import StatusPill from '../components/StatusPill';
 import { toast } from '../utils/toast';
 
 const fetchWithTimeout = async (url, timeoutMs = 8000) => {
@@ -115,11 +116,6 @@ function ApplicationViewPage() {
     );
   }
 
-  const getStatusDisplay = (status) => {
-    if (status === 'under-review') return 'Under Review';
-    return status.charAt(0).toUpperCase() + status.slice(1);
-  };
-
   const getTitleDisplay = (title) => {
     const titleMap = {
       'mr': 'Mr',
@@ -154,9 +150,7 @@ function ApplicationViewPage() {
                 <option value="approved">Approved</option>
                 <option value="rejected">Rejected</option>
               </select>
-              <span className={`status-badge-header status-${application.status}`}>
-                {getStatusDisplay(application.status)}
-              </span>
+              <StatusPill status={application.status} />
             </div>
           </div>
         </div>

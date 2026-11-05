@@ -5,6 +5,7 @@ import '../styles/SearchApplicationsPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import { formatReference } from '../utils/applicationReference';
 import AdminLayout from '../components/AdminLayout';
+import StatusPill from '../components/StatusPill';
 import useConfirm from '../utils/useConfirm';
 import { toast } from '../utils/toast';
 import { Skeleton, TableSkeleton } from '../components/Loaders';
@@ -466,8 +467,6 @@ function SearchApplicationsPage() {
                     const programDisplay = program?.title 
                       ? program.title 
                       : (app.program ? app.program.toUpperCase() : 'N/A');
-                    const statusDisplay = app.status === 'under-review' ? 'Under Review' : 
-                                         app.status.charAt(0).toUpperCase() + app.status.slice(1);
                     return (
                       <tr key={app._id}>
                         <td className="app-id">
@@ -485,9 +484,7 @@ function SearchApplicationsPage() {
                         </td>
                         <td title={programDisplay}>{programDisplay}</td>
                         <td>
-                          <span className={`status-badge status-${app.status.toLowerCase()}`}>
-                            {statusDisplay}
-                          </span>
+                          <StatusPill status={app.status} />
                         </td>
                         <td>{app.fullName}</td>
                         <td>{app.nameWithInitials}</td>

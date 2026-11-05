@@ -98,10 +98,11 @@
   line-height: 1;
 }
 
-.stat-total    { color: #6b7280; }
-.stat-approved { color: #1f2937; }
-.stat-pending  { color: #ef4444; }
-.stat-rejected { color: #ef4444; }
+/* Same colours as the status pills: pending is amber, never red */
+.stat-total    { color: var(--ink-strong); }
+.stat-approved { color: var(--success); }
+.stat-pending  { color: var(--warning); }
+.stat-rejected { color: var(--danger); }
 
 /* -- Filter bar -------------------------------------------- */
 .detail-filter-bar {
@@ -266,36 +267,7 @@
 .cat-3 { background: #ffedd5; color: #9a3412; }
 .cat-none { background: #f3f4f6; color: #6b7280; }
 
-/* -- Status pills ------------------------------------------ */
-.detail-status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.3rem 0.8rem;
-  border-radius: 20px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.status-pending,
-.status-under-review {
-  background: #fff0f0;
-  color: #e11d48;
-  border: 1.5px solid #fecdd3;
-}
-
-.status-approved {
-  background: #374151;
-  color: #ffffff;
-  border: 1.5px solid #374151;
-}
-
-.status-rejected {
-  background: #dc2626;
-  color: #ffffff;
-  border: 1.5px solid #dc2626;
-}
+/* Status pills: the shared .status-pill in index.css */
 
 /* -- Action cell ------------------------------------------- */
 .detail-actions {

@@ -5,6 +5,7 @@ import API_BASE_URL from '../utils/apiConfig';
 import '../styles/AdminDashboard.css';
 import '../styles/ApplicationDetailPage.css';
 import AdminLayout from '../components/AdminLayout';
+import StatusPill from '../components/StatusPill';
 import useConfirm from '../utils/useConfirm';
 import { toast } from '../utils/toast';
 import { TableSkeleton } from '../components/Loaders';
@@ -400,19 +401,6 @@ function ApplicationDetailPage() {
     return 'cat-none';
   };
 
-  const getStatusClass = (status) => {
-    if (status === 'Approved') return 'status-approved';
-    if (status === 'Rejected') return 'status-rejected';
-    if (status === 'Under Review') return 'status-under-review';
-    return 'status-pending';
-  };
-
-  const getStatusIcon = (status) => {
-    if (status === 'Approved') return '✓';
-    if (status === 'Rejected') return '✕';
-    return '⏱';
-  };
-
   return (
     <AdminLayout>
 
@@ -541,9 +529,7 @@ function ApplicationDetailPage() {
                         </span>
                       </td>
                       <td>
-                        <span className={`detail-status-pill ${getStatusClass(app.status)}`}>
-                          {getStatusIcon(app.status)} {app.status}
-                        </span>
+                        <StatusPill status={app.status} />
                       </td>
                     </tr>
                   ))

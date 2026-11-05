@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import '../styles/MarksPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import AdminLayout from '../components/AdminLayout';
+import StatusPill from '../components/StatusPill';
 import useConfirm from '../utils/useConfirm';
 import { toast } from '../utils/toast';
 
@@ -530,7 +531,7 @@ function MarksPage() {
                         style={{ cursor: 'pointer' }}
                       >
                         <td>{app.program || '-'}</td>
-                        <td>{app.status}</td>
+                        <td><StatusPill status={app.status} /></td>
                         <td>{app.nic}</td>
                         <td>{app.surname}</td>
                         <td>{app.otherNames}</td>

@@ -66,33 +66,6 @@
   border-color: var(--brand);
 }
 
-.status-badge-header {
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: 0.85rem;
-}
-
-.status-badge-header.status-pending {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.status-badge-header.status-under-review {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.status-badge-header.status-approved {
-  background: #d1fae5;
-  color: #065f46;
-}
-
-.status-badge-header.status-rejected {
-  background: var(--danger-bg);
-  color: var(--danger);
-}
-
 /* View-only styling */
 .form-group.view-only {
   margin-bottom: 20px;
