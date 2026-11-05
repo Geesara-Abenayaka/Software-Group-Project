@@ -444,6 +444,11 @@
   box-shadow: var(--focus-ring);
 }
 
+/* Phone and tablet bar: hidden on desktop, where the key facts card stays in view */
+.apply-bar {
+  display: none;
+}
+
 .loading-container,
 .error-container {
   display: flex;
@@ -522,6 +527,61 @@
   .program-aside {
     position: static;
     margin-bottom: var(--space-8);
+  }
+
+  /* Room for the bar, so it never covers the last card */
+  .program-page {
+    padding-bottom: 96px;
+  }
+
+  .apply-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1300;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .apply-bar__deadline {
+    min-width: 0;
+  }
+
+  .apply-bar__date {
+    display: block;
+    overflow: hidden;
+    color: var(--ink-strong);
+    font-size: var(--text-sm);
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .apply-bar__btn {
+    width: auto;
+    flex: none;
+    padding: 10px 20px;
+  }
+
+  /* A control reached with Tab is never hidden behind the bar */
+  html:has(.apply-bar) {
+    scroll-padding-bottom: 80px;
+  }
+
+  /* Lift the chat button above the bar, and let the footer run on under it */
+  body:has(.apply-bar) .floating-assistant-wrapper {
+    bottom: 84px;
+  }
+
+  body:has(.apply-bar) .site-footer {
+    padding-bottom: 72px;
   }
 }
 

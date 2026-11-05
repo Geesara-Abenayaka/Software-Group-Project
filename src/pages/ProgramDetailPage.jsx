@@ -399,6 +399,23 @@ function ProgramDetailPage() {
 
           </div>
         </div>
+
+        {/* Phones and tablets: the deadline and Apply stay at the bottom of the screen */}
+        <div className="apply-bar">
+          <div className="apply-bar__deadline">
+            <span className="facts-card__label">Apply by</span>
+            <span className="apply-bar__date">{applyBy}</span>
+          </div>
+          {isClosed ? (
+            <button type="button" className="program-btn program-btn--primary apply-bar__btn" disabled>
+              <Lock size={16} aria-hidden="true" /> Closed
+            </button>
+          ) : (
+            <button type="button" className="program-btn program-btn--primary apply-bar__btn" onClick={handleApply}>
+              Apply Now
+            </button>
+          )}
+        </div>
       </main>
       <SiteFooter />
     </div>
