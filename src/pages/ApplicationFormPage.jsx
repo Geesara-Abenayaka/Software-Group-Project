@@ -10,6 +10,7 @@ import API_BASE_URL from '../utils/apiConfig';
 import { DOCUMENT_LABELS, MAX_GPA, getFieldLabel, getSectionCompletion, getSectionOfField, hasDocument, validateApplication, validateField } from '../utils/applicationValidation';
 import { loadDraft, mergeDraft, removeDraft, saveDraft } from '../utils/applicationDraft';
 import { formatReference } from '../utils/applicationReference';
+import { toast } from '../utils/toast';
 
 // Shown in the submission modal; handleSubmit moves through them with setSubmissionStep.
 const SUBMISSION_STEPS = ['Checking your details', 'Uploading documents', 'Submitting application'];
@@ -494,7 +495,7 @@ function ApplicationFormPage() {
   // Check if program is provided, if not redirect to homepage
   useEffect(() => {
     if (!location.state?.program) {
-      alert('Please select a program from the programs page first.');
+      toast.info('Choose a program first, then press Apply on its page.');
       navigate('/');
     }
   }, [location.state, navigate]);
@@ -1089,7 +1090,7 @@ function ApplicationFormPage() {
   const removeQualification = (index) => {
     // Keep at least one qualification
     if (formData.qualifications.length <= 1) {
-      alert('At least one qualification is required');
+      toast.info('Keep at least one qualification');
       return;
     }
 
@@ -1120,7 +1121,7 @@ function ApplicationFormPage() {
   const removeMembership = (index) => {
     // Keep at least one membership
     if (formData.memberships.length <= 1) {
-      alert('At least one membership is required');
+      toast.info('Keep at least one membership');
       return;
     }
     
@@ -1165,7 +1166,7 @@ function ApplicationFormPage() {
   const removeExperience = (index) => {
     // Keep at least one experience
     if (formData.experiences.length <= 1) {
-      alert('At least one work experience is required');
+      toast.info('Keep at least one work experience');
       return;
     }
     
