@@ -1875,3 +1875,137 @@ label.required::before {
     width: 100%;
   }
 }
+
+/* Success screen (6.6) */
+.submission-success {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-6);
+  background: var(--surface);
+  border-top: 4px solid var(--brand);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  text-align: center;
+}
+
+.submission-success__check {
+  display: block;
+  margin: 0 auto var(--space-4);
+}
+
+.submission-success__title {
+  margin: 0;
+  color: var(--ink-strong);
+  font-size: var(--text-xl);
+  font-weight: 700;
+}
+
+.submission-success__title:focus {
+  outline: none;
+}
+
+.submission-success__program {
+  margin: var(--space-1) 0 0;
+  color: var(--ink-muted);
+  font-size: var(--text-md);
+}
+
+.submission-success .submission-reference {
+  margin: var(--space-6) 0 0;
+}
+
+.submission-reference-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.submission-success__subtitle {
+  margin: var(--space-8) 0 var(--space-4);
+  color: var(--ink-strong);
+  font-size: 18px;
+  font-weight: 700;
+  text-align: left;
+}
+
+/* A small vertical timeline: numbered dots joined by a line */
+.next-steps {
+  counter-reset: next-step;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+.next-steps li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 0 var(--space-4) 44px;
+  counter-increment: next-step;
+  font-size: var(--text-sm);
+}
+
+.next-steps li::before {
+  content: counter(next-step);
+  position: absolute;
+  left: 0;
+  top: -2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--brand-tint);
+  color: var(--brand-text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.next-steps li:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 13px;
+  top: 28px;
+  bottom: 2px;
+  width: 2px;
+  background: var(--border);
+}
+
+.next-steps strong {
+  color: var(--ink);
+}
+
+.next-steps span {
+  color: var(--ink-muted);
+  line-height: 1.5;
+}
+
+.submission-success__contact {
+  margin: var(--space-4) 0 var(--space-6);
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+}
+
+.submission-success__contact a {
+  color: var(--brand-text);
+  font-weight: 600;
+}
+
+.submission-steps li.is-done .submission-step-marker svg {
+  color: var(--success);
+}
+
+@media (max-width: 480px) {
+  .submission-success {
+    padding: var(--space-6) var(--space-4);
+  }
+
+  .submission-success__title {
+    font-size: 24px;
+  }
+}

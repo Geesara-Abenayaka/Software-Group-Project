@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { AlertCircle, AlertTriangle, Calendar, Check, CheckCircle2, Info, Loader2, Plus, RefreshCw, Trash2, XCircle } from 'lucide-react';
+import { AlertCircle, AlertTriangle, ArrowLeft, Calendar, Check, CheckCircle2, Copy, Info, Loader2, Plus, RefreshCw, Trash2, XCircle } from 'lucide-react';
 import '../styles/ApplicationFormPage.css';
 import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
@@ -204,6 +204,91 @@ function VerificationNote({ status, children }) {
       <Icon size={16} className={status === 'loading' ? 'verification-spin' : undefined} aria-hidden="true" />
       <span>{children}</span>
     </p>
+  );
+}
+
+// Shown instead of the form once the application is saved: reference number, next steps, contact.
+function SubmissionSuccess({ reference, programName, email, onBack }) {
+  const headingRef = useRef(null);
+  const referenceRef = useRef(null);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0 });
+    headingRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    if (!copied) return undefined;
+    const timer = setTimeout(() => setCopied(false), 2000);
+    return () => clearTimeout(timer);
+  }, [copied]);
+
+  const copyReference = async () => {
+    try {
+      await navigator.clipboard.writeText(reference);
+      setCopied(true);
+    } catch {
+      // No clipboard access (old browser or http): select it so the applicant can copy it themselves.
+      window.getSelection()?.selectAllChildren(referenceRef.current);
+    }
+  };
+
+  return (
+    <section className="submission-success" aria-labelledby="success-title">
+      <svg className="success-check submission-success__check" width="72" height="72" viewBox="0 0 52 52" fill="none" aria-hidden="true">
+        <circle cx="26" cy="26" r="24" stroke="currentColor" strokeWidth="3" />
+        <path d="M15 27l7 7 15-15" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+      <h1 id="success-title" className="submission-success__title" tabIndex={-1} ref={headingRef}>
+        Application submitted
+      </h1>
+      {programName && <p className="submission-success__program">{programName}</p>}
+
+      <div className="submission-reference">
+        <span className="submission-reference-label">Your reference number</span>
+        <div className="submission-reference-row">
+          <strong className="submission-reference-number" ref={referenceRef}>{reference}</strong>
+          <button type="button" className="btn btn--secondary btn--sm" onClick={copyReference}>
+            {copied ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}
+            {copied ? 'Copied' : 'Copy'}
+          </button>
+        </div>
+        <span className="submission-reference-note">
+          Please save it. Quote it if you contact the department about your application.
+        </span>
+        <span className="sr-only" aria-live="polite">{copied ? 'Reference number copied' : ''}</span>
+      </div>
+
+      <h2 className="submission-success__subtitle">What happens next</h2>
+      <ol className="next-steps">
+        <li>
+          <strong>Referees</strong>
+          <span>Ask your referees to fill in the Online Referee Form, as the handbook explains. Without their recommendations the application is incomplete.</span>
+        </li>
+        <li>
+          <strong>Review</strong>
+          <span>The department checks your details and documents.</span>
+        </li>
+        <li>
+          <strong>Selection test or interview</strong>
+          <span>If you are shortlisted, you will be told the date by email.</span>
+        </li>
+        <li>
+          <strong>Result</strong>
+          <span>The decision is sent by email{email ? ` to ${email}` : ''}.</span>
+        </li>
+      </ol>
+
+      <p className="submission-success__contact">
+        Questions? Email <a href="mailto:adeeshaw@cse.mrt.ac.lk">adeeshaw@cse.mrt.ac.lk</a> and quote your reference number.
+      </p>
+
+      <button type="button" className="btn btn--secondary" onClick={onBack}>
+        <ArrowLeft size={18} aria-hidden="true" />
+        Back to programs
+      </button>
+    </section>
   );
 }
 
@@ -1826,7 +1911,6 @@ function ApplicationFormPage() {
     setSubmissionMessage('Your application is submitting...');
     setSubmissionStep(0);
     await new Promise((resolve) => setTimeout(resolve, 0));
-    let keepModalOpen = false;
 
     const showSubmissionModalError = async (message) => {
       setSubmissionStatus('error');
@@ -1961,13 +2045,10 @@ function ApplicationFormPage() {
       const result = await response.json();
 
       if (result.success) {
-        // The id is kept for the reference number (formatReference); setting it also removes the draft.
+        // The id is kept for the reference number (formatReference); setting it also removes the draft
+        // and replaces the form with the success screen. The modal closes in `finally`.
         setSubmittedApplicationId(result.data._id);
         setDraftSavedAt(null);
-        setSubmissionStatus('success');
-        setSubmissionMessage('Application submitted successfully!');
-        // The modal stays open with the reference number until the applicant leaves.
-        keepModalOpen = true;
         return;
       } else {
         setSubmissionStatus('error');
@@ -1989,9 +2070,7 @@ function ApplicationFormPage() {
       }
     }
     } finally {
-      if (!keepModalOpen) {
-        setIsSubmitting(false);
-      }
+      setIsSubmitting(false);
     }
   };
 
@@ -2003,13 +2082,10 @@ function ApplicationFormPage() {
           <div className="submission-modal" role="dialog" aria-modal="true" aria-live="polite">
             {submissionStatus === 'submitting' ? (
               <div className="submission-spinner"></div>
-            ) : submissionStatus === 'success' ? (
-              <svg className="success-check submission-check" width="64" height="64" viewBox="0 0 52 52" fill="none" aria-hidden="true">
-                <circle cx="26" cy="26" r="24" stroke="currentColor" strokeWidth="3" />
-                <path d="M15 27l7 7 15-15" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
             ) : (
-              <div className="submission-error-icon">!</div>
+              <div className="submission-error-icon">
+                <AlertTriangle size={28} aria-hidden="true" />
+              </div>
             )}
             <p>{submissionMessage}</p>
 
@@ -2022,29 +2098,12 @@ function ApplicationFormPage() {
                     aria-current={index === submissionStep ? 'step' : undefined}
                   >
                     <span className="submission-step-marker" aria-hidden="true">
-                      {index < submissionStep ? '✓' : index + 1}
+                      {index < submissionStep ? <Check size={14} strokeWidth={3} /> : index + 1}
                     </span>
                     {label}
                   </li>
                 ))}
               </ol>
-            )}
-
-            {submissionStatus === 'success' && (
-              <>
-                {submittedApplicationId && (
-                  <div className="submission-reference">
-                    <span className="submission-reference-label">Your reference number</span>
-                    <strong className="submission-reference-number">{formatReference(submittedApplicationId)}</strong>
-                    <span className="submission-reference-note">
-                      Please save it. Quote it if you contact the department about your application.
-                    </span>
-                  </div>
-                )}
-                <button type="button" className="submission-done-btn" onClick={() => navigate('/')} autoFocus>
-                  Back to programs
-                </button>
-              </>
             )}
           </div>
         </div>
@@ -2053,6 +2112,15 @@ function ApplicationFormPage() {
       <SiteHeader />
 
       <main className="apply-main" id="main" tabIndex={-1}>
+      {submittedApplicationId ? (
+        <SubmissionSuccess
+          reference={formatReference(submittedApplicationId)}
+          programName={location.state?.programName}
+          email={formData.email}
+          onBack={() => navigate('/')}
+        />
+      ) : (
+      <>
       {/* Mirrors the title of the paper form */}
       <div className="form-header">
         <p className="form-header__org">University of Moratuwa</p>
@@ -2873,6 +2941,8 @@ function ApplicationFormPage() {
           {applicationWindow.open ? 'Review application' : 'Applications Closed'}
         </button>
       </form>
+      </>
+      )}
       </main>
 
       {isReviewOpen && (
