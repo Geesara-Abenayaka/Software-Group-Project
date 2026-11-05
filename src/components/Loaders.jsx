@@ -1,7 +1,10 @@
 import { GraduationCap } from 'lucide-react';
+import useDelayedFlag from '../utils/useDelayedFlag';
 
-export function Skeleton({ className = '', style }) {
-  return <div className={`skeleton ${className}`} style={style} aria-hidden="true" />;
+// `as="span"` for a placeholder inside inline content.
+export function Skeleton({ as = 'div', className = '', style }) {
+  const Tag = as;
+  return <Tag className={`skeleton ${className}`} style={style} aria-hidden="true" />;
 }
 
 // Placeholder in the shape of a programme card on the home page.
@@ -23,6 +26,25 @@ export function ProgramCardSkeleton() {
   );
 }
 
+// Placeholder built from the admin programme card's own classes, so it has the same size.
+export function AdminProgramCardSkeleton() {
+  return (
+    <div className="program-card-admin skeleton-card" aria-hidden="true">
+      <div className="card-top-row">
+        <Skeleton style={{ width: '46px', height: '46px', borderRadius: '10px' }} />
+        <Skeleton className="skeleton-chip" style={{ width: '80px', marginRight: 0 }} />
+      </div>
+      <Skeleton className="skeleton-title" style={{ width: '70%', marginBottom: 0 }} />
+      <div>
+        <Skeleton className="skeleton-text" style={{ width: '95%' }} />
+        <Skeleton className="skeleton-text" style={{ width: '80%' }} />
+        <Skeleton className="skeleton-text" style={{ width: '55%', marginBottom: 0 }} />
+      </div>
+      <Skeleton className="skeleton-text" style={{ width: '130px', marginBottom: 0 }} />
+    </div>
+  );
+}
+
 // Placeholder rows; render inside a <tbody>.
 export function TableSkeleton({ rows = 6, columns = 5 }) {
   return (
@@ -40,9 +62,12 @@ export function TableSkeleton({ rows = 6, columns = 5 }) {
   );
 }
 
+// Takes its space at once but only appears after 200 ms, so quick loads don't flash it.
 export function PageLoader({ message = 'Loading…' }) {
+  const visible = useDelayedFlag(true);
+
   return (
-    <div className="page-loader" role="status" aria-live="polite">
+    <div className={`page-loader${visible ? '' : ' skeleton-wait'}`} role="status" aria-live="polite">
       <div className="page-loader__cap">
         <GraduationCap size={30} color="white" aria-hidden="true" />
       </div>

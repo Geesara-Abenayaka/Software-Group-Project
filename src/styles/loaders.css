@@ -56,6 +56,9 @@
    so a quick load doesn't flash them and a slow one doesn't make the page jump */
 .skeleton-wait { visibility: hidden; }
 
+/* A placeholder that reuses a real card's class shouldn't react to the mouse */
+.skeleton-card { pointer-events: none; }
+
 .skeleton-text { height: 12px; margin-bottom: 10px; }
 .skeleton-title { height: 22px; width: 60%; margin-bottom: 16px; }
 .skeleton-chip { display: inline-block; height: 24px; width: 96px; border-radius: var(--radius-pill); margin-right: 8px; }

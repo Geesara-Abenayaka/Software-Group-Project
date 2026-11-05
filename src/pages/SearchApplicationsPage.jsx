@@ -5,6 +5,11 @@ import '../styles/SearchApplicationsPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import { formatReference } from '../utils/applicationReference';
 import AdminLayout from '../components/AdminLayout';
+import { Skeleton, TableSkeleton } from '../components/Loaders';
+import useDelayedFlag from '../utils/useDelayedFlag';
+
+// Placeholder for a stat card's number (.stat-value is about 30 px tall)
+const STAT_SKELETON_STYLE = { display: 'inline-block', width: '48px', height: '30px', verticalAlign: 'top' };
 
 const fetchWithTimeout = async (url, timeoutMs = 8000) => {
   const controller = new AbortController();
@@ -24,6 +29,7 @@ function SearchApplicationsPage() {
   const [filteredApplications, setFilteredApplications] = useState([]);
   const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
+  const showSkeletons = useDelayedFlag(loading);
   const [currentPage, setCurrentPage] = useState(1);
   const [resultsPerPage, setResultsPerPage] = useState(25);
   const [searchText, setSearchText] = useState('');
@@ -368,18 +374,12 @@ function SearchApplicationsPage() {
             </div>
           </div>
 
-          {loading ? (
-            <div className="loading-container">
-              <div className="loading-spinner"></div>
-              <p>Loading applications...</p>
-            </div>
-          ) : (
-          <>
+          <div className={loading && !showSkeletons ? 'skeleton-wait' : undefined} aria-busy={loading}>
           <div className="stats-cards">
             <div className="stat-card">
               <div className="stat-info">
                 <span className="stat-label">Total Applications</span>
-                <span className="stat-value">{statusCounts.total}</span>
+                <span className="stat-value">{loading ? <Skeleton as="span" style={STAT_SKELETON_STYLE} /> : statusCounts.total}</span>
               </div>
               <div className="stat-icon-circle stat-icon-total">
                 <FileText size={22} />
@@ -389,7 +389,7 @@ function SearchApplicationsPage() {
             <div className="stat-card">
               <div className="stat-info">
                 <span className="stat-label">Pending</span>
-                <span className="stat-value">{statusCounts.pending}</span>
+                <span className="stat-value">{loading ? <Skeleton as="span" style={STAT_SKELETON_STYLE} /> : statusCounts.pending}</span>
               </div>
               <div className="stat-icon-circle stat-icon-pending">
                 <Clock size={22} />
@@ -399,7 +399,7 @@ function SearchApplicationsPage() {
             <div className="stat-card">
               <div className="stat-info">
                 <span className="stat-label">Approved</span>
-                <span className="stat-value">{statusCounts.approved}</span>
+                <span className="stat-value">{loading ? <Skeleton as="span" style={STAT_SKELETON_STYLE} /> : statusCounts.approved}</span>
               </div>
               <div className="stat-icon-circle stat-icon-approved">
                 <CheckCircle2 size={22} />
@@ -409,7 +409,7 @@ function SearchApplicationsPage() {
             <div className="stat-card">
               <div className="stat-info">
                 <span className="stat-label">Rejected</span>
-                <span className="stat-value">{statusCounts.rejected}</span>
+                <span className="stat-value">{loading ? <Skeleton as="span" style={STAT_SKELETON_STYLE} /> : statusCounts.rejected}</span>
               </div>
               <div className="stat-icon-circle stat-icon-rejected">
                 <XCircle size={22} />
@@ -444,7 +444,9 @@ function SearchApplicationsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredApplications.length === 0 ? (
+                {loading ? (
+                  <TableSkeleton rows={8} columns={8} />
+                ) : filteredApplications.length === 0 ? (
                   <tr>
                     <td colSpan="8" style={{ textAlign: 'center', padding: '2rem', color: '#6b7280' }}>
                       No applications found matching your search criteria.
@@ -503,7 +505,9 @@ function SearchApplicationsPage() {
 
             <div className="table-footer">
               <div className="table-info">
-                Showing {totalResults > 0 ? `${startIndex + 1}-${endIndex}` : '0'} of {totalResults} applications
+                {loading
+                  ? 'Loading applications…'
+                  : `Showing ${totalResults > 0 ? `${startIndex + 1}-${endIndex}` : '0'} of ${totalResults} applications`}
               </div>
               <div className="pagination">
                 <span className="page-info">Results per page:</span>
@@ -554,8 +558,7 @@ function SearchApplicationsPage() {
               </div>
             </div>
           </div>
-          </>
-          )}
+          </div>
         </main>
       </div>
     </AdminLayout>
