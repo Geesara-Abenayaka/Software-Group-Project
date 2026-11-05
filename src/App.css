@@ -970,3 +970,9 @@
 .retry-btn:hover {
   background-color: var(--brand-dark);
 }
+
+/* At least 24px tall to tap (it was a 19px line of text) */
+.forgot-password {
+  padding: 6px 0;
+}
+

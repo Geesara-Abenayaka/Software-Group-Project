@@ -15,3 +15,9 @@
   color: #111827;
   margin: 0;
 }
+
+/* At least 24px tall to tap */
+.view-applications-link {
+  min-height: 32px;
+}
+

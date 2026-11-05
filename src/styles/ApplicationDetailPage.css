@@ -750,3 +750,9 @@
     justify-content: center;
   }
 }
+
+/* At least 24px tall to tap */
+.detail-bulk-btn {
+  min-height: 32px;
+}
+

@@ -242,6 +242,9 @@ body {
 }
 
 .breadcrumbs a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
   border-radius: var(--radius-sm);
   color: var(--brand-text);
   font-weight: 500;

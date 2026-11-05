@@ -206,3 +206,9 @@
     flex-direction: column;
   }
 }
+
+/* At least 24px tall to tap */
+.select-link {
+  min-height: 28px;
+}
+
