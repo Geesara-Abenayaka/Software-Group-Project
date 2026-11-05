@@ -444,9 +444,8 @@
 
 /* Footer shared by the public pages */
 .site-footer {
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  color: var(--muted);
+  background: var(--brand);
+  color: var(--on-brand-muted);
   font-size: 14px;
 }
 
@@ -462,7 +461,7 @@
 
 .site-footer__heading {
   margin-bottom: var(--space-2);
-  color: var(--ink);
+  color: var(--on-brand);
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.5px;
@@ -477,7 +476,7 @@
 }
 
 .site-footer a {
-  color: var(--brand-text);
+  color: var(--on-brand);
   text-decoration: none;
 }
 
@@ -485,11 +484,16 @@
   text-decoration: underline;
 }
 
+.site-footer a:focus-visible {
+  outline: 2px solid var(--on-brand);
+  outline-offset: 2px;
+}
+
 .site-footer__copy {
   max-width: 1200px;
   margin: 0 auto;
   padding: var(--space-4) 30px;
-  border-top: 1px solid var(--border-subtle);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
   font-size: 13px;
 }
 

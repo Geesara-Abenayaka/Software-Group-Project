@@ -13,6 +13,7 @@
   --brand-tint-strong: #fee2e2;
   --brand-text: #8b1a1a;        /* links and maroon text */
   --on-brand: #ffffff;          /* text on maroon */
+  --on-brand-muted: rgba(255, 255, 255, 0.85); /* secondary text on maroon */
 
   /* Neutrals */
   --page: #f5f5f5;
