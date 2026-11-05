@@ -99,7 +99,7 @@ body {
   top: var(--space-2);
 }
 
-/* The skip link focuses <main>; no outline around the whole page content */
-main[tabindex='-1']:focus {
+/* The skip link focuses the page content (#main); no outline around all of it */
+#main:focus {
   outline: none;
 }
