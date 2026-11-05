@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { AlertTriangle, Calendar, Info, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { AlertTriangle, Calendar, Check, Info, Plus, RefreshCw, Trash2 } from 'lucide-react';
 import '../styles/ApplicationFormPage.css';
 import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
 import API_BASE_URL from '../utils/apiConfig';
-import { MAX_GPA, getErrorSummary, getSectionOfField, hasDocument, validateApplication, validateField } from '../utils/applicationValidation';
+import { MAX_GPA, getErrorSummary, getSectionCompletion, getSectionOfField, hasDocument, validateApplication, validateField } from '../utils/applicationValidation';
 import { loadDraft, mergeDraft, removeDraft, saveDraft } from '../utils/applicationDraft';
 import { formatReference } from '../utils/applicationReference';
 
@@ -106,6 +106,56 @@ function RequiredMark() {
   return <span className="required-mark" aria-hidden="true">*</span>;
 }
 
+// Smooth scrolling, unless the visitor asked the system for less motion.
+const scrollBehavior = () => (
+  window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
+);
+
+// Sticky bar over the form: ✓ complete, ● the section on screen, ○ not complete yet.
+// Each step shows its name too, so the state is never colour alone.
+function FormProgress({ sections, completion, currentKey, onSelect }) {
+  const doneCount = sections.filter((section) => completion[section.key]).length;
+  const currentIndex = Math.max(0, sections.findIndex((section) => section.key === currentKey));
+
+  return (
+    <nav className="form-progress" aria-label="Application progress">
+      <ol className="form-progress__steps">
+        {sections.map((section) => {
+          const done = completion[section.key];
+          const current = section.key === currentKey;
+          return (
+            <li key={section.key}>
+              <button
+                type="button"
+                className={`form-progress__step${done ? ' is-done' : ''}${current ? ' is-current' : ''}`}
+                aria-current={current ? 'step' : undefined}
+                onClick={() => onSelect(section.key)}
+              >
+                <span className="form-progress__marker" aria-hidden="true">
+                  {done && <Check size={12} strokeWidth={3} />}
+                </span>
+                {section.label}
+                <span className="sr-only">{done ? ', complete' : ', not complete yet'}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+
+      <p className="form-progress__phone">
+        Step {currentIndex + 1} of {sections.length} · {sections[currentIndex].label}
+      </p>
+
+      <div className="form-progress__meter">
+        <div className="form-progress__track" aria-hidden="true">
+          <div className="form-progress__fill" style={{ width: `${(doneCount / sections.length) * 100}%` }} />
+        </div>
+        <span className="form-progress__count">{doneCount} of {sections.length} complete</span>
+      </div>
+    </nav>
+  );
+}
+
 // "28 Oct, 3:15 pm" for the draft banner.
 const formatDraftTime = (timestamp) => {
   const date = new Date(timestamp);
@@ -177,12 +227,23 @@ function ApplicationFormPage() {
   const employerLetterInputRef = useRef(null);
   const transcriptInputRef = useRef(null);
   const paymentConfirmationInputRef = useRef(null);
+  const personalSectionRef = useRef(null);
   const qualificationsSectionRef = useRef(null);
   const membershipsSectionRef = useRef(null);
   const experiencesSectionRef = useRef(null);
   const documentsSectionRef = useRef(null);
   const declarationSectionRef = useRef(null);
   const captchaInputRef = useRef(null);
+  // The six sections in page order; the keys match getSectionCompletion.
+  const SECTIONS = [
+    { key: 'personal', label: 'Personal', ref: personalSectionRef },
+    { key: 'academic', label: 'Academic', ref: qualificationsSectionRef },
+    { key: 'memberships', label: 'Memberships', ref: membershipsSectionRef },
+    { key: 'work', label: 'Work', ref: experiencesSectionRef },
+    { key: 'documents', label: 'Documents', ref: documentsSectionRef },
+    { key: 'declaration', label: 'Declaration', ref: declarationSectionRef }
+  ];
+  const [currentSection, setCurrentSection] = useState('personal');
   const [submittedApplicationId, setSubmittedApplicationId] = useState('');
   const [applicationWindow, setApplicationWindow] = useState({ open: true, message: '' });
 
@@ -301,6 +362,52 @@ function ApplicationFormPage() {
   useEffect(() => {
     generateCaptcha();
   }, []);
+
+  // The progress bar marks the section in the band just under it as the one on screen.
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') {
+      return undefined;
+    }
+
+    const sectionByElement = new Map([
+      [personalSectionRef.current, 'personal'],
+      [qualificationsSectionRef.current, 'academic'],
+      [membershipsSectionRef.current, 'memberships'],
+      [experiencesSectionRef.current, 'work'],
+      [documentsSectionRef.current, 'documents'],
+      [declarationSectionRef.current, 'declaration']
+    ].filter(([element]) => element));
+    const visible = new Set();
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        const key = sectionByElement.get(entry.target);
+        if (entry.isIntersecting) {
+          visible.add(key);
+        } else {
+          visible.delete(key);
+        }
+      });
+      // The first section in page order wins, so a short section between two others still shows.
+      const first = [...sectionByElement.values()].find((key) => visible.has(key));
+      if (first) {
+        setCurrentSection(first);
+      }
+    }, { rootMargin: '-120px 0px -60% 0px', threshold: 0 });
+
+    sectionByElement.forEach((_, element) => observer.observe(element));
+    return () => observer.disconnect();
+  }, []);
+
+  // Clicking a step in the progress bar: scroll to that section and move focus there for keyboard users.
+  const goToSection = (key) => {
+    const section = SECTIONS.find((item) => item.key === key)?.ref.current;
+    if (!section) return;
+    section.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
+    section.focus({ preventScroll: true });
+  };
+
+  const sectionCompletion = getSectionCompletion(formData, { captchaValue });
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -1815,12 +1922,19 @@ function ApplicationFormPage() {
         </div>
       )}
 
+      <FormProgress
+        sections={SECTIONS}
+        completion={sectionCompletion}
+        currentKey={currentSection}
+        onSelect={goToSection}
+      />
+
       {/* noValidate: our own checks show the errors, not the browser's pop-ups */}
       <form onSubmit={handleSubmit} className="application-form" noValidate>
         <p className="required-note">Fields marked <span aria-hidden="true">*</span> are required.</p>
 
         {/* Personal Particulars */}
-        <fieldset className="form-section">
+        <fieldset className="form-section" ref={personalSectionRef} tabIndex={-1}>
           <legend className="section-legend"><h2 className="section-title">Personal Particulars</h2></legend>
 
           <div className="form-row form-row--title">
@@ -1993,7 +2107,7 @@ function ApplicationFormPage() {
         </fieldset>
 
         {/* Academic Qualifications */}
-        <fieldset className="form-section" ref={qualificationsSectionRef}>
+        <fieldset className="form-section" ref={qualificationsSectionRef} tabIndex={-1}>
           <legend className="section-legend"><h2 className="section-title">Academic Qualifications</h2></legend>
 
           {formData.qualifications.map((qual, index) => (
@@ -2150,7 +2264,7 @@ function ApplicationFormPage() {
         </fieldset>
 
         {/* Membership of Professional Organizations */}
-        <fieldset className="form-section" ref={membershipsSectionRef}>
+        <fieldset className="form-section" ref={membershipsSectionRef} tabIndex={-1}>
           <legend className="section-legend"><h2 className="section-title">Membership of Professional Organizations</h2></legend>
 
           {formData.memberships.map((membership, index) => (
@@ -2252,7 +2366,7 @@ function ApplicationFormPage() {
         </fieldset>
 
         {/* Work Experience */}
-        <fieldset className="form-section" ref={experiencesSectionRef}>
+        <fieldset className="form-section" ref={experiencesSectionRef} tabIndex={-1}>
           <legend className="section-legend"><h2 className="section-title">Work Experience (most recent first)</h2></legend>
 
           {formData.experiences.map((exp, index) => (
@@ -2397,7 +2511,7 @@ function ApplicationFormPage() {
         </fieldset>
 
         {/* Documents */}
-        <fieldset className="form-section" ref={documentsSectionRef}>
+        <fieldset className="form-section" ref={documentsSectionRef} tabIndex={-1}>
           <legend className="section-legend"><h2 className="section-title">Documents</h2></legend>
           <p className="document-note">
             * Please make sure each file is 4 MB or less (Please upload the files in PDF format). All documents are required.
@@ -2872,7 +2986,7 @@ function ApplicationFormPage() {
         </fieldset>
 
         {/* Declaration */}
-        <fieldset className="form-section" ref={declarationSectionRef}>
+        <fieldset className="form-section" ref={declarationSectionRef} tabIndex={-1}>
           <legend className="section-legend"><h2 className="section-title">Declaration</h2></legend>
           <div className="declaration-text">
             <p>

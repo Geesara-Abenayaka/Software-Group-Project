@@ -1209,3 +1209,163 @@ label.required::before {
     max-width: none;
   }
 }
+
+/* Sticky section progress (6.2) */
+.form-progress {
+  position: sticky;
+  top: var(--space-2);
+  z-index: 100;
+  margin: 0 0 var(--space-6);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.form-progress__steps {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-1);
+  margin: 0 0 var(--space-2);
+  padding: 0;
+  list-style: none;
+}
+
+.form-progress__step {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--ink-muted);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.form-progress__step:hover {
+  background: var(--surface-muted);
+  color: var(--ink);
+}
+
+.form-progress__step:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.form-progress__step.is-done {
+  color: var(--brand-text);
+}
+
+.form-progress__step.is-current {
+  color: var(--ink-strong);
+  font-weight: 700;
+}
+
+/* ○ not complete yet */
+.form-progress__marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border: 2px solid var(--border-strong);
+  border-radius: 50%;
+  background: var(--surface);
+}
+
+/* ● the section on screen */
+.form-progress__step.is-current .form-progress__marker {
+  border-color: var(--brand);
+  box-shadow: inset 0 0 0 3px var(--surface);
+  background: var(--brand);
+}
+
+/* ✓ complete */
+.form-progress__step.is-done .form-progress__marker {
+  border-color: var(--brand);
+  box-shadow: none;
+  background: var(--brand);
+  color: var(--on-brand);
+}
+
+.form-progress__meter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.form-progress__track {
+  flex: 1;
+  height: 6px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--border-strong);
+}
+
+.form-progress__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--brand);
+  transition: width var(--duration) var(--ease-out);
+}
+
+.form-progress__count {
+  flex-shrink: 0;
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.form-progress__phone {
+  display: none;
+  margin: 0 0 var(--space-2);
+  color: var(--ink-strong);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+/* The sticky bar must not cover a section title, or a field reached by Tab or an error link */
+.apply-page .form-section {
+  scroll-margin-top: 100px;
+}
+
+.apply-page .form-section:focus {
+  outline: none;
+}
+
+.apply-page .application-form input,
+.apply-page .application-form select,
+.apply-page .application-form textarea,
+.apply-page .application-form button {
+  scroll-margin-top: 130px;
+  scroll-margin-bottom: var(--space-6);
+}
+
+/* Not enough room for six names: show "Step 3 of 6 · Memberships" and the bar */
+@media (max-width: 860px) {
+  .form-progress__steps {
+    display: none;
+  }
+
+  .form-progress__phone {
+    display: block;
+  }
+
+  .apply-page .form-section {
+    scroll-margin-top: 90px;
+  }
+
+  .apply-page .application-form input,
+  .apply-page .application-form select,
+  .apply-page .application-form textarea,
+  .apply-page .application-form button {
+    scroll-margin-top: 110px;
+  }
+}
