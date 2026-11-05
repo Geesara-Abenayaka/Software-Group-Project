@@ -5,6 +5,7 @@ import API_BASE_URL from '../utils/apiConfig';
 import '../styles/AdminDashboard.css';
 import '../styles/ApplicationDetailPage.css';
 import AdminLayout from '../components/AdminLayout';
+import { toast } from '../utils/toast';
 import { TableSkeleton } from '../components/Loaders';
 import useDelayedFlag from '../utils/useDelayedFlag';
 
@@ -186,7 +187,7 @@ function ApplicationDetailPage() {
   };
 
   const handleExport = () => {
-    alert('Exporting applications data...');
+    toast.info("Export isn't available here yet. Use the Download tab to export applications.");
   };
 
   const getDefaultBulkTemplate = () => {
@@ -344,13 +345,13 @@ function ApplicationDetailPage() {
         const statusMessage = newStatus === 'approved' ? 'approved' : 
                             newStatus === 'rejected' ? 'rejected' : 
                             newStatus === 'under-review' ? 'marked as under review' : 'updated';
-        alert(`Application ${statusMessage} successfully!`);
+        toast.success(`Application ${statusMessage}`);
       } else {
-        alert('Failed to update application status: ' + result.message);
+        toast.error(`Couldn't update the status: ${result.message}`);
       }
     } catch (error) {
       console.error('Error updating application status:', error);
-      alert('Error updating application status');
+      toast.error("Couldn't update the status. Please try again.");
     }
   };
 
@@ -369,15 +370,15 @@ function ApplicationDetailPage() {
       const result = await response.json();
 
       if (result.success) {
-        alert('Application deleted successfully!');
+        toast.success('Application deleted');
         // Refresh the applications list
         fetchProgramAndApplications();
       } else {
-        alert('Failed to delete application: ' + result.message);
+        toast.error(`Couldn't delete the application: ${result.message}`);
       }
     } catch (error) {
       console.error('Error deleting application:', error);
-      alert('Error deleting application');
+      toast.error("Couldn't delete the application. Please try again.");
     }
   };
 
