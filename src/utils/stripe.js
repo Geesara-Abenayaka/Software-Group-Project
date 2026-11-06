@@ -14,25 +14,6 @@ export const getStripe = (publishableKey) => {
   return stripePromises.get(publishableKey);
 };
 
-// "Rs. 2,000", as the fee is written everywhere else on the site.
-export const formatRupees = (amount) => `Rs. ${Number(amount || 0).toLocaleString('en-US')}`;
-
-const CARD_BRANDS = {
-  visa: 'Visa',
-  mastercard: 'Mastercard',
-  amex: 'American Express',
-  discover: 'Discover',
-  diners: 'Diners Club',
-  jcb: 'JCB',
-  unionpay: 'UnionPay'
-};
-
-// "Visa •••• 4242"
-export const describeCard = ({ cardBrand, cardLast4 } = {}) => {
-  const brand = CARD_BRANDS[cardBrand] || (cardBrand ? cardBrand.charAt(0).toUpperCase() + cardBrand.slice(1) : 'Card');
-  return cardLast4 ? `${brand} •••• ${cardLast4}` : brand;
-};
-
 // The card form lives in Stripe's iframe and can't see our CSS, so it gets the same tokens as plain values.
 // Read from :root so the site's theme stays defined in one place (index.css).
 export const buildStripeAppearance = () => {

@@ -1,6 +1,6 @@
 import { AlertCircle, ArrowUp, CheckCircle2, CreditCard, ExternalLink, Landmark, Lock, ShieldCheck } from 'lucide-react';
 import { formatDate } from '../utils/formatDate';
-import { describeCard, formatRupees } from '../utils/stripe';
+import { describeCard, formatRupees } from '../utils/formatMoney';
 
 /**
  * "Application fee" on the application form: pay online by card (Stripe) or upload a bank receipt.

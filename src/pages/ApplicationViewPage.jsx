@@ -10,7 +10,7 @@ import StatusPill from '../components/StatusPill';
 import { toast } from '../utils/toast';
 import { formatDateTime } from '../utils/formatDate';
 import usePageTitle from '../utils/usePageTitle';
-import { describeCard, formatRupees } from '../utils/stripe';
+import { describeCard, formatRupees } from '../utils/formatMoney';
 
 const fetchWithTimeout = async (url, timeoutMs = 8000) => {
   const controller = new AbortController();
