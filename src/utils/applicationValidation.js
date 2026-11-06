@@ -90,11 +90,16 @@ export const DOCUMENT_LABELS = {
   membershipProofs: 'Membership proof',
   employerLetter: 'Employer consent letter',
   transcript: 'Transcript',
-  paymentConfirmation: 'Payment confirmation'
+  paymentConfirmation: 'Application fee'
 };
+
+const PAY_FEE_MESSAGE = 'Pay the application fee by card, or choose bank receipt and upload it';
 
 // A document slot holds a File, an array of Files, or nothing.
 export const hasDocument = (value) => (Array.isArray(value) ? value.length > 0 : Boolean(value));
+
+// The fee is paid when the card payment went through (formData.onlinePayment is only set then).
+export const isPaidOnline = (data) => data?.onlinePayment?.status === 'succeeded';
 
 // Returns '' when valid, otherwise the message to show.
 // `name` is a top-level field ('email') or a row field ('qualifications.0.gpa').
@@ -105,8 +110,9 @@ export const validateField = (name, value) => {
 };
 
 // Returns { 'email': 'message', 'qualifications.0.degree': 'message', ... } for every problem,
-// in the order the fields appear on the page. Pass `captchaValue` to also check the captcha text.
-export const validateApplication = (data, { captchaValue } = {}) => {
+// in the order the fields appear on the page. Pass `captchaValue` to also check the captcha text,
+// and `feeMethod` ('card' or 'receipt') for how the applicant is paying the application fee.
+export const validateApplication = (data, { captchaValue, feeMethod } = {}) => {
   const errors = {};
 
   PERSONAL_FIELDS.forEach((name) => {
@@ -125,6 +131,16 @@ export const validateApplication = (data, { captchaValue } = {}) => {
   });
 
   REQUIRED_DOCUMENTS.forEach((name) => {
+    // The fee is paid by card or with a bank receipt; only the chosen way counts.
+    if (name === 'paymentConfirmation') {
+      if (isPaidOnline(data)) return;
+      if (feeMethod === 'card') {
+        errors['documents.paymentConfirmation'] = PAY_FEE_MESSAGE;
+      } else if (!hasDocument(data.documents?.paymentConfirmation)) {
+        errors['documents.paymentConfirmation'] = 'Please upload this document';
+      }
+      return;
+    }
     if (!hasDocument(data.documents?.[name])) errors[`documents.${name}`] = 'Please upload this document';
   });
 
@@ -176,6 +192,7 @@ export const getErrorSummary = (fieldKey, message) => {
     return message === REQUIRED_MESSAGE ? `Please complete all fields in ${rowLabel}.` : `${rowLabel}: ${message}.`;
   }
 
+  if (message === PAY_FEE_MESSAGE) return 'Please pay the application fee before submitting.';
   if (listName === 'documents') return 'Please upload all required documents before submitting.';
   if (PERSONAL_LABELS[fieldKey] && message === REQUIRED_MESSAGE) return `Please fill ${PERSONAL_LABELS[fieldKey]}.`;
   return message;
