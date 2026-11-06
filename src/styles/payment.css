@@ -1,0 +1,606 @@
+/* Application fee: the card / bank receipt choice on the form, and the card payment window (Stripe). */
+
+/* ---------- On the form ---------- */
+.fee-card {
+  margin: var(--space-6) 0 var(--space-4);
+  padding: var(--space-6);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.fee-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.fee-card__title {
+  margin: 0;
+  color: var(--ink-strong);
+  font-size: var(--text-md);
+  font-weight: 700;
+}
+
+.fee-card__desc {
+  margin: var(--space-1) 0 0;
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.fee-card__amount {
+  flex-shrink: 0;
+  margin: 0;
+  color: var(--brand-text);
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.fee-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  min-width: 0;
+  margin: var(--space-4) 0;
+  padding: 0;
+  border: 0;
+}
+
+.fee-option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: 14px var(--space-4);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.fee-option:hover {
+  border-color: var(--border-strong);
+}
+
+.fee-option.is-selected {
+  border-color: var(--brand);
+  background: var(--brand-tint);
+  box-shadow: inset 0 0 0 1px var(--brand);
+}
+
+.fee-option:has(input:focus-visible) {
+  box-shadow: inset 0 0 0 1px var(--brand), var(--focus-ring);
+}
+
+.fee-option input[type='radio'] {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin: 9px 0 0;
+  accent-color: var(--brand);
+  cursor: pointer;
+}
+
+.fee-option input[type='radio']:focus-visible {
+  outline: none;
+}
+
+.fee-option__icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--surface-muted);
+  color: var(--brand-text);
+}
+
+.fee-option.is-selected .fee-option__icon {
+  background: var(--surface);
+}
+
+.fee-option__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.fee-option__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--ink-strong);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.fee-option__tag {
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--success-bg);
+  color: var(--success);
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+
+.fee-option__desc {
+  color: var(--ink-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.fee-pay__notice {
+  margin-bottom: var(--space-4);
+}
+
+.fee-pay__notice .form-alert__body p {
+  margin: 0;
+}
+
+.fee-pay__goto {
+  margin: var(--space-2) 0 0 -12px;
+  color: inherit;
+}
+
+.fee-pay__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3) var(--space-4);
+}
+
+.fee-pay__button {
+  min-width: 220px;
+  min-height: 48px;
+  font-size: var(--text-md);
+}
+
+.fee-pay__secure {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+.fee-pay__secure svg {
+  color: var(--success);
+}
+
+.fee-pay .field-error {
+  margin-top: var(--space-3);
+}
+
+.fee-paid {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--radius);
+  background: var(--success-bg);
+  animation: fade-in var(--duration) var(--ease-out);
+}
+
+.fee-paid:focus {
+  outline: none;
+}
+
+.fee-paid:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.fee-paid__icon {
+  flex-shrink: 0;
+  color: var(--success);
+}
+
+.fee-paid__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.fee-paid__title {
+  margin: 0;
+  color: var(--success);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.fee-paid__meta {
+  margin: 2px 0 0;
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+}
+
+.fee-paid__ref {
+  margin: 4px 0 0;
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+  overflow-wrap: anywhere;
+}
+
+.fee-paid__ref span {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.fee-paid__receipt {
+  flex-shrink: 0;
+}
+
+.fee-receipt {
+  margin-top: var(--space-2);
+}
+
+/* Success screen after submitting */
+.submission-success__fee {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: var(--space-4) auto 0;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--success-bg);
+  color: var(--success);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  text-align: left;
+}
+
+.submission-success__fee svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.submission-success__fee a {
+  color: inherit;
+  font-weight: 600;
+}
+
+/* ---------- Card payment window ---------- */
+.pay-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  background: rgba(17, 24, 39, 0.55);
+  animation: fade-in var(--duration) var(--ease-out);
+}
+
+.pay-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(480px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  border-top: 4px solid var(--brand);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
+  animation: fade-up var(--duration) var(--ease-out);
+}
+
+.pay-dialog:focus {
+  outline: none;
+}
+
+.pay-dialog--opening {
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+}
+
+.pay-dialog--opening .loading-spinner {
+  margin: 0;
+}
+
+.pay-dialog__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-6);
+  border-bottom: 1px solid var(--border);
+}
+
+.pay-dialog__heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.pay-dialog__badge {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--brand-tint);
+  color: var(--brand-text);
+}
+
+.pay-dialog__title {
+  margin: 0;
+  color: var(--ink-strong);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.pay-dialog__subtitle {
+  margin: 2px 0 0;
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+.pay-dialog__close {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+
+.pay-dialog__close:hover:not(:disabled) {
+  background: var(--surface-muted);
+  color: var(--ink);
+}
+
+.pay-dialog__close:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.pay-dialog__close:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pay-dialog__body {
+  padding: 20px var(--space-6) var(--space-6);
+}
+
+.pay-summary,
+.pay-details {
+  margin: 0 0 20px;
+  padding: 2px var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+}
+
+.pay-summary__row,
+.pay-details__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--text-sm);
+}
+
+.pay-summary__row:last-child,
+.pay-details__row:last-child {
+  border-bottom: none;
+}
+
+.pay-summary dt,
+.pay-details dt {
+  flex-shrink: 0;
+  color: var(--ink-muted);
+}
+
+.pay-summary dd,
+.pay-details dd {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 500;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.pay-summary__nic {
+  display: block;
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+  font-weight: 400;
+}
+
+.pay-summary__total dt {
+  color: var(--ink-strong);
+  font-weight: 600;
+}
+
+.pay-summary__total dd {
+  color: var(--ink-strong);
+  font-size: var(--text-lg);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.pay-dialog__element-loading {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.pay-skeleton--label { width: 30%; height: 14px; }
+.pay-skeleton--input { height: 44px; }
+.pay-skeleton--button { height: 48px; margin-top: var(--space-3); }
+
+.pay-skeleton-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.pay-dialog__error {
+  margin-top: var(--space-4);
+}
+
+.pay-dialog__pay {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 20px;
+  font-size: var(--text-md);
+}
+
+.pay-dialog__load-error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.pay-dialog__load-error .form-alert {
+  align-self: stretch;
+}
+
+.pay-dialog__footer {
+  display: flex;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 14px var(--space-6);
+  border-top: 1px solid var(--border);
+  background: var(--surface-muted);
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+  line-height: 1.5;
+}
+
+.pay-dialog__footer svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--success);
+}
+
+.pay-success {
+  text-align: center;
+}
+
+.pay-success__check {
+  display: block;
+  margin: var(--space-2) auto var(--space-3);
+}
+
+.pay-success__title {
+  margin: 0;
+  color: var(--ink-strong);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.pay-success__title:focus {
+  outline: none;
+}
+
+.pay-success__lead {
+  margin: 6px 0 20px;
+  color: var(--ink-soft);
+  font-size: 15px;
+}
+
+.pay-details {
+  text-align: left;
+}
+
+.pay-details__ref {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: var(--text-xs);
+}
+
+.pay-success__note {
+  margin: 0 0 20px;
+  color: var(--ink-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.pay-success__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.pay-success__actions .btn {
+  flex: 1 1 180px;
+}
+
+/* Phones: the payment window slides up as a sheet, the options stack */
+@media (max-width: 640px) {
+  .fee-card {
+    padding: var(--space-4);
+  }
+
+  .fee-options {
+    grid-template-columns: 1fr;
+  }
+
+  .fee-pay__button {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .fee-paid {
+    flex-wrap: wrap;
+  }
+
+  .fee-paid__receipt {
+    margin-left: 50px;
+  }
+
+  .pay-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  .pay-dialog {
+    width: 100%;
+    max-height: 94dvh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  }
+
+  .pay-dialog__header,
+  .pay-dialog__body,
+  .pay-dialog__footer {
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+}
+
+/* ---------- Admin application view ---------- */
+.view-payment svg {
+  flex-shrink: 0;
+  color: var(--success);
+}
+
+.view-payment__ref {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink-muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: var(--text-xs);
+  font-weight: 400;
+  overflow-wrap: anywhere;
+}

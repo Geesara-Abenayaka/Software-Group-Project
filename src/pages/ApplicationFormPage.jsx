@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { AlertCircle, AlertTriangle, ArrowLeft, Calendar, Check, CheckCircle2, Copy, Info, Loader2, Plus, RefreshCw, Trash2, XCircle } from 'lucide-react';
 import '../styles/ApplicationFormPage.css';
@@ -6,13 +6,18 @@ import SiteHeader from '../components/SiteHeader';
 import SiteFooter from '../components/SiteFooter';
 import UploadZone from '../components/UploadZone';
 import ReviewPanel from '../components/ReviewPanel';
+import FeePayment from '../components/FeePayment';
 import API_BASE_URL from '../utils/apiConfig';
-import { DOCUMENT_LABELS, MAX_GPA, getFieldLabel, getSectionCompletion, getSectionOfField, hasDocument, validateApplication, validateField } from '../utils/applicationValidation';
+import { DOCUMENT_LABELS, MAX_GPA, getFieldLabel, getSectionCompletion, getSectionOfField, hasDocument, isPaidOnline, validateApplication, validateField } from '../utils/applicationValidation';
 import { loadDraft, mergeDraft, removeDraft, saveDraft } from '../utils/applicationDraft';
 import { formatReference } from '../utils/applicationReference';
 import { toast } from '../utils/toast';
 import usePageTitle from '../utils/usePageTitle';
 import useDialogFocus from '../utils/useDialogFocus';
+import { describeCard, formatRupees } from '../utils/stripe';
+
+// Stripe's card form is only downloaded when the applicant opens the payment window.
+const PaymentDialog = lazy(() => import('../components/PaymentDialog'));
 
 // Shown in the submission modal; handleSubmit moves through them with setSubmissionStep.
 const SUBMISSION_STEPS = ['Checking your details', 'Uploading documents', 'Submitting application'];
@@ -58,6 +63,10 @@ const createEmptyFormData = (program) => ({
     transcript: null,
     paymentConfirmation: null
   },
+  // How the application fee is paid: 'card' or 'receipt' ('' = not chosen yet, card is offered first).
+  paymentMethod: '',
+  // The card payment once it has gone through (kept in the draft, so a paid fee survives a refresh).
+  onlinePayment: null,
   declaration: false,
   captcha: ''
 });
@@ -188,11 +197,25 @@ const buildReviewSections = (data) => [
     groups: [{
       rows: Object.entries(DOCUMENT_LABELS).map(([name, label]) => [
         label,
-        asFileList(data.documents[name]).map((file) => file.name).join(', ')
+        name === 'paymentConfirmation' && isPaidOnline(data)
+          ? `${formatRupees(data.onlinePayment.amount)} paid by card${data.onlinePayment.cardLast4 ? ` (${describeCard(data.onlinePayment)})` : ''}`
+          : asFileList(data.documents[name]).map((file) => file.name).join(', ')
       ])
     }]
   }
 ];
+
+// What the form keeps about a card payment (the server checks it again with Stripe on submit).
+const toOnlinePayment = (payment) => ({
+  paymentIntentId: payment.paymentIntentId,
+  status: payment.status,
+  amount: payment.amount,
+  currency: payment.currency,
+  cardBrand: payment.cardBrand || '',
+  cardLast4: payment.cardLast4 || '',
+  receiptUrl: payment.receiptUrl || '',
+  paidAt: payment.paidAt || null
+});
 
 // A document slot holds a File, an array of Files, or nothing; the upload zones want a list.
 const asFileList = (value) => (Array.isArray(value) ? value.filter(Boolean) : value ? [value] : []);
@@ -211,7 +234,7 @@ function VerificationNote({ status, children }) {
 }
 
 // Shown instead of the form once the application is saved: reference number, next steps, contact.
-function SubmissionSuccess({ reference, programName, email, onBack }) {
+function SubmissionSuccess({ reference, programName, email, payment, onBack }) {
   const headingRef = useRef(null);
   const referenceRef = useRef(null);
   const [copied, setCopied] = useState(false);
@@ -262,6 +285,19 @@ function SubmissionSuccess({ reference, programName, email, onBack }) {
         </span>
         <span className="sr-only" aria-live="polite">{copied ? 'Reference number copied' : ''}</span>
       </div>
+
+      {payment && (
+        <p className="submission-success__fee">
+          <CheckCircle2 size={18} aria-hidden="true" />
+          <span>
+            Application fee of {formatRupees(payment.amount)} paid by card
+            {payment.cardLast4 ? ` (${describeCard(payment)})` : ''}.
+            {payment.receiptUrl && (
+              <> <a href={payment.receiptUrl} target="_blank" rel="noopener noreferrer">View receipt<span className="sr-only"> (opens in a new tab)</span></a></>
+            )}
+          </span>
+        </p>
+      )}
 
       <h2 className="submission-success__subtitle">What happens next</h2>
       <ol className="next-steps">
@@ -458,6 +494,18 @@ function ApplicationFormPage() {
   const untouchedFormDataRef = useRef(formData);
   const hasChosenFiles = Object.values(formData.documents).some(hasDocument);
 
+  // Card payment of the application fee (Stripe). `enabled` turns false when the server has no Stripe keys,
+  // and the form then only asks for the bank receipt, as before.
+  const [cardPayment, setCardPayment] = useState({ enabled: true, amount: 2000 });
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  const paidOnline = isPaidOnline(formData);
+  const feeMethod = paidOnline ? 'card' : !cardPayment.enabled ? 'receipt' : formData.paymentMethod || 'card';
+  // Stripe records the payment under these, so they have to be filled in before paying.
+  const payerMissing = ['fullName', 'nicNo', 'email'].some((field) => validateField(field, formData[field]));
+  // One PaymentIntent per applicant while the page is open, so reopening the window doesn't start another.
+  const paymentIntentRef = useRef(null);
+  const restoredPaymentIdRef = useRef(formData.onlinePayment?.paymentIntentId || '');
+
   useEffect(() => {
     // After a successful submit the draft is no longer needed. Running this here, after the
     // cleanup below has cancelled any pending save, means a late save can't bring it back.
@@ -489,10 +537,16 @@ function ApplicationFormPage() {
     return () => window.removeEventListener('beforeunload', warnBeforeLeaving);
   }, [hasChosenFiles, submittedApplicationId]);
 
-  // "Start over" in the draft banner
+  // "Start over" in the draft banner. A fee already paid by card is kept: that money can't be "started over".
   const discardDraft = () => {
-    removeDraft(formData.program);
-    const emptyFormData = createEmptyFormData(formData.program);
+    const emptyFormData = paidOnline
+      ? { ...createEmptyFormData(formData.program), paymentMethod: 'card', onlinePayment: formData.onlinePayment }
+      : createEmptyFormData(formData.program);
+    if (paidOnline) {
+      saveDraft(emptyFormData);
+    } else {
+      removeDraft(formData.program);
+    }
     untouchedFormDataRef.current = emptyFormData;
     setFormData(emptyFormData);
     setDraftSavedAt(null);
@@ -521,6 +575,110 @@ function ApplicationFormPage() {
       })
       .catch(() => {}); // the form stays open; the server still refuses a closed submission
   }, [location.state]);
+
+  // Whether card payment is offered, and the fee. An old server without the payments route means receipt only.
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/payments/config`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then((result) => {
+        setCardPayment(result?.success
+          ? { enabled: Boolean(result.data.enabled), amount: result.data.amount }
+          : { enabled: false, amount: 2000 });
+      })
+      .catch(() => setCardPayment({ enabled: false, amount: 2000 }));
+  }, []);
+
+  // The server's view of a card payment: { paymentIntentId, status, amount, cardBrand, cardLast4, receiptUrl, paidAt, used }.
+  const checkPayment = useCallback(async (paymentIntentId) => {
+    const response = await fetch(`${API_BASE_URL}/payments/intent/${encodeURIComponent(paymentIntentId)}`);
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || !result.success) {
+      const error = new Error(result.message || 'Could not check the payment.');
+      error.status = response.status;
+      throw error;
+    }
+    return result.data;
+  }, []);
+
+  // A paid fee restored from the draft is checked again with Stripe: it may have been used by a submitted application.
+  useEffect(() => {
+    const paymentIntentId = restoredPaymentIdRef.current;
+    if (!paymentIntentId) return;
+
+    checkPayment(paymentIntentId)
+      .then((payment) => {
+        const stillValid = payment.status === 'succeeded' && !payment.used;
+        setFormData((prev) => (prev.onlinePayment?.paymentIntentId !== paymentIntentId ? prev : {
+          ...prev,
+          onlinePayment: stillValid ? toOnlinePayment(payment) : null
+        }));
+        if (payment.used) {
+          toast.info('Your earlier card payment was already used for a submitted application.');
+        }
+      })
+      .catch((error) => {
+        // Unknown payment: forget it. Network problems: keep it, the server checks it again on submit.
+        if (error.status === 404) {
+          setFormData((prev) => (prev.onlinePayment?.paymentIntentId !== paymentIntentId ? prev : { ...prev, onlinePayment: null }));
+        }
+      });
+  }, [checkPayment]);
+
+  // Starts the card payment on the server (it sets the amount), or reuses the one started earlier for this applicant.
+  const loadPaymentIntent = useCallback(() => {
+    const payer = {
+      program: formData.program,
+      fullName: formData.fullName.trim(),
+      nicNo: formData.nicNo.trim().toUpperCase(),
+      email: formData.email.trim()
+    };
+    const key = JSON.stringify(payer);
+    if (paymentIntentRef.current?.key === key) {
+      return paymentIntentRef.current.promise;
+    }
+
+    const promise = fetch(`${API_BASE_URL}/payments/intent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payer)
+    }).then(async (response) => {
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || 'Could not start the card payment. Please try again.');
+      }
+      return result.data;
+    });
+    paymentIntentRef.current = { key, promise };
+    promise.catch(() => {
+      if (paymentIntentRef.current?.promise === promise) paymentIntentRef.current = null;
+    });
+    return promise;
+  }, [formData.program, formData.fullName, formData.nicNo, formData.email]);
+
+  // After paying, the Pay button that opened the window is gone; focus goes to the "paid" summary instead.
+  const closePayment = () => {
+    setIsPaymentOpen(false);
+    setTimeout(() => {
+      const paidSummary = document.getElementById('fee-paid-summary');
+      if (paidSummary && !paidSummary.contains(document.activeElement)) {
+        paidSummary.focus({ preventScroll: true });
+        paidSummary.scrollIntoView({ behavior: scrollBehavior(), block: 'center' });
+      }
+    }, 0);
+  };
+
+  const handleFeeMethodChange = (method) => {
+    setFormData((prev) => ({ ...prev, paymentMethod: method }));
+    markFieldChanged('documents.paymentConfirmation');
+  };
+
+  const handlePaid = (payment) => {
+    paymentIntentRef.current = null;
+    setFormData((prev) => ({ ...prev, paymentMethod: 'card', onlinePayment: toOnlinePayment(payment) }));
+    markFieldChanged('documents.paymentConfirmation');
+    setSummaryKeys((prev) => prev.filter((key) => key !== 'documents.paymentConfirmation'));
+    toast.success('Payment successful. Your application fee is paid.');
+  };
 
   const resetDocumentVerification = (documentType) => {
     setDocumentVerification((prev) => ({
@@ -605,7 +763,7 @@ function ApplicationFormPage() {
     section.focus({ preventScroll: true });
   };
 
-  const sectionCompletion = getSectionCompletion(formData, { captchaValue });
+  const sectionCompletion = getSectionCompletion(formData, { captchaValue, feeMethod });
 
   const setFieldError = (key, message) => {
     setFieldErrors((prev) => {
@@ -1875,7 +2033,7 @@ function ApplicationFormPage() {
   // "Review application": the same checks as submit, then every answer on one screen before the real submit.
   const handleReview = (e) => {
     e.preventDefault();
-    const errors = validateApplication(formData, { captchaValue });
+    const errors = validateApplication(formData, { captchaValue, feeMethod });
     if (Object.keys(errors).length > 0) {
       showErrorSummary(errors);
       return;
@@ -1901,7 +2059,7 @@ function ApplicationFormPage() {
 
     // Problems the applicant can fix are shown next to their fields with a summary on top;
     // the modal below is only for the document checks and the server.
-    const errors = validateApplication(formData, { captchaValue });
+    const errors = validateApplication(formData, { captchaValue, feeMethod });
     if (Object.keys(errors).length > 0) {
       showErrorSummary(errors);
       return;
@@ -1967,7 +2125,7 @@ function ApplicationFormPage() {
       }
     }
 
-    if (formData.documents.paymentConfirmation && paymentReceiptVerification.status !== 'verified') {
+    if (feeMethod === 'receipt' && formData.documents.paymentConfirmation && paymentReceiptVerification.status !== 'verified') {
       const paymentVerified = await verifyPaymentReceiptDocument();
       if (!paymentVerified) {
         await showSubmissionModalError('Payment receipt does not match required account number or processing fee.');
@@ -2027,8 +2185,10 @@ function ApplicationFormPage() {
           nic: await convertFilesToBase64(formData.documents.nic),
           employerLetter: await convertFilesToBase64(formData.documents.employerLetter),
           transcript: await convertFilesToBase64(formData.documents.transcript),
-          paymentConfirmation: await convertFilesToBase64(formData.documents.paymentConfirmation)
-        }
+          // A fee paid by card needs no receipt; the server checks the payment with Stripe instead.
+          paymentConfirmation: feeMethod === 'receipt' ? await convertFilesToBase64(formData.documents.paymentConfirmation) : undefined
+        },
+        onlinePayment: paidOnline ? { paymentIntentId: formData.onlinePayment.paymentIntentId } : undefined
       };
 
       // Fetch with 2-minute timeout for large file handling
@@ -2058,6 +2218,11 @@ function ApplicationFormPage() {
         setDraftSavedAt(null);
         return;
       } else {
+        // 402: Stripe doesn't accept the card payment (not found, not paid, already used), so it can be paid again.
+        if (response.status === 402) {
+          setFormData((prev) => ({ ...prev, onlinePayment: null }));
+          scrollToSection(documentsSectionRef);
+        }
         setSubmissionStatus('error');
         setSubmissionMessage(result.message || 'Failed to submit application. Please try again.');
         await new Promise((resolve) => setTimeout(resolve, 2200));
@@ -2132,6 +2297,7 @@ function ApplicationFormPage() {
           reference={formatReference(submittedApplicationId)}
           programName={location.state?.programName}
           email={formData.email}
+          payment={isPaidOnline(formData) ? formData.onlinePayment : null}
           onBack={() => navigate('/')}
         />
       ) : (
@@ -2861,6 +3027,29 @@ function ApplicationFormPage() {
               error={documentError('transcript')}
             />
 
+          </div>
+
+          {documentVerification.error && (
+            <div className="form-alert form-alert--error document-check-error" role="alert">
+              <AlertTriangle size={18} aria-hidden="true" />
+              <p className="form-alert__body">{documentVerification.error}</p>
+            </div>
+          )}
+
+          <FeePayment
+            amount={cardPayment.amount}
+            cardAvailable={cardPayment.enabled}
+            method={feeMethod}
+            onMethodChange={handleFeeMethodChange}
+            payment={formData.onlinePayment}
+            payerMissing={payerMissing}
+            onGoToPersonal={() => goToSection('personal')}
+            onPay={() => setIsPaymentOpen(true)}
+            isOpening={isPaymentOpen}
+            disabled={!applicationWindow.open}
+            payButtonId={fieldId('documents.paymentConfirmation')}
+            error={feeMethod === 'card' ? documentError('paymentConfirmation') : ''}
+          >
             <UploadZone
               id={fieldId('documents.paymentConfirmation')}
               label="Payment Confirmation / Bank Receipt"
@@ -2873,31 +3062,23 @@ function ApplicationFormPage() {
               error={documentError('paymentConfirmation')}
               verification={paymentReceiptVerification}
             />
-          </div>
-
-          {documentVerification.error && (
-            <div className="form-alert form-alert--error document-check-error" role="alert">
-              <AlertTriangle size={18} aria-hidden="true" />
-              <p className="form-alert__body">{documentVerification.error}</p>
-            </div>
-          )}
-
-          {(paymentReceiptVerification.extracted?.accountNumbers?.length > 0
-            || paymentReceiptVerification.extracted?.amounts?.length > 0) && (
-            <div className="extracted-details">
-              <p className="extracted-details__title">Extracted from Payment Receipt</p>
-              {paymentReceiptVerification.extracted.accountNumbers?.length > 0 && (
-                <p>Account Numbers: {paymentReceiptVerification.extracted.accountNumbers.join(' | ')}</p>
-              )}
-              {paymentReceiptVerification.extracted.amounts?.length > 0 && (
-                <p>Amounts: {paymentReceiptVerification.extracted.amounts.map((amount) => `Rs. ${amount}`).join(' | ')}</p>
-              )}
-            </div>
-          )}
+            {(paymentReceiptVerification.extracted?.accountNumbers?.length > 0
+              || paymentReceiptVerification.extracted?.amounts?.length > 0) && (
+              <div className="extracted-details">
+                <p className="extracted-details__title">Extracted from Payment Receipt</p>
+                {paymentReceiptVerification.extracted.accountNumbers?.length > 0 && (
+                  <p>Account Numbers: {paymentReceiptVerification.extracted.accountNumbers.join(' | ')}</p>
+                )}
+                {paymentReceiptVerification.extracted.amounts?.length > 0 && (
+                  <p>Amounts: {paymentReceiptVerification.extracted.amounts.map((amount) => `Rs. ${amount}`).join(' | ')}</p>
+                )}
+              </div>
+            )}
+          </FeePayment>
 
           <p className="document-info">
             ** The application processing fee of Rs. 2,000/- (Per subject for LLB/University Repeat) will be paid either to University Receipt or as a bank or 
-            Genie transfer in the credit of University of Moratuwa—Acc No. 0043618. You may also make an online transfer to the same account.
+            Genie transfer in the credit of University of Moratuwa—Acc No. 0043618. You may also make an online transfer to the same account{cardPayment.enabled ? ', or pay by card above' : ''}.
           </p>
         </fieldset>
 
@@ -2959,6 +3140,28 @@ function ApplicationFormPage() {
       </>
       )}
       </main>
+
+      {isPaymentOpen && (
+        <Suspense
+          fallback={(
+            <div className="pay-overlay">
+              <div className="pay-dialog pay-dialog--opening" role="status" aria-label="Opening the payment window">
+                <span className="loading-spinner" aria-hidden="true" />
+              </div>
+            </div>
+          )}
+        >
+          <PaymentDialog
+            amount={cardPayment.amount}
+            programName={location.state?.programName || formData.program}
+            payer={{ fullName: formData.fullName.trim(), nicNo: formData.nicNo.trim().toUpperCase(), email: formData.email.trim() }}
+            loadIntent={loadPaymentIntent}
+            checkPayment={checkPayment}
+            onPaid={handlePaid}
+            onClose={closePayment}
+          />
+        </Suspense>
+      )}
 
       {isReviewOpen && (
         <ReviewPanel

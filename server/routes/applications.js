@@ -11,6 +11,7 @@ import {
 } from '../utils/gridfsService.js';
 import { parseGpa, isValidGpa, withGpaCategory, MAX_GPA } from '../utils/gpaCategory.js';
 import { getApplicationWindow } from '../utils/applicationWindow.js';
+import { isStripeConfigured, markPaymentUsed, verifyApplicationFeePayment } from '../utils/stripePayments.js';
 
 const router = express.Router();
 
@@ -34,7 +35,9 @@ const ADMIN_LIST_FIELDS = [
   'graduationDate',
   'submittedAt',
   'createdAt',
-  'updatedAt'
+  'updatedAt',
+  'payment.method',
+  'payment.status'
 ].join(' ');
 
 const APPLICATION_SUMMARY_FIELDS = [
@@ -101,7 +104,34 @@ router.post('/', async (req, res) => {
         message: 'This NIC has already submitted an application for the selected program.'
       });
     }
-    
+
+    // A card payment is only trusted after Stripe confirms it; the browser can't set `payment` itself.
+    const paymentIntentId = String(applicationData.onlinePayment?.paymentIntentId || '').trim();
+    delete applicationData.onlinePayment;
+    delete applicationData.paymentMethod;
+    delete applicationData.payment;
+
+    if (paymentIntentId) {
+      if (!isStripeConfigured()) {
+        return res.status(503).json({ success: false, message: 'Card payments cannot be checked right now. Please try again later.' });
+      }
+
+      const paymentCheck = await verifyApplicationFeePayment(paymentIntentId, applicationData.program);
+      const usedBefore = paymentCheck.ok && await Application.exists({ 'payment.stripePaymentIntentId': paymentIntentId });
+      if (!paymentCheck.ok || usedBefore) {
+        return res.status(402).json({
+          success: false,
+          message: paymentCheck.message || 'This card payment has already been used for another application.'
+        });
+      }
+
+      applicationData.payment = paymentCheck.payment;
+      // The card payment replaces the bank receipt.
+      if (applicationData.documents) {
+        delete applicationData.documents.paymentConfirmation;
+      }
+    }
+
     // Process and save files to GridFS
     if (applicationData.documents) {
       const processedDocuments = {
@@ -221,7 +251,13 @@ router.post('/', async (req, res) => {
     await application.save();
     
     console.log(`✅ Application saved successfully with ID: ${application._id}`);
-    
+
+    if (application.payment?.stripePaymentIntentId) {
+      // Not awaited: the application is saved either way, and the database check above also stops reuse.
+      markPaymentUsed(application.payment.stripePaymentIntentId, application._id)
+        .catch((error) => console.error('Could not link the payment to the application in Stripe:', error.message));
+    }
+
     res.status(201).json({
       success: true,
       message: 'Application submitted successfully',
@@ -488,7 +524,8 @@ router.get('/:id/view', async (req, res) => {
         'status',
         'submittedAt',
         'createdAt',
-        'documents'
+        'documents',
+        'payment'
       ].join(' '))
       .lean();
 

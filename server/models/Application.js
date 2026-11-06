@@ -92,7 +92,21 @@ const applicationSchema = new mongoose.Schema({
     transcript: mongoose.Schema.Types.ObjectId,            // Single file
     paymentConfirmation: mongoose.Schema.Types.ObjectId    // Single file
   },
-  
+
+  // Application fee paid online by card (Stripe). Set by the server after checking the payment with Stripe;
+  // applications paid at the bank have no `payment` and a paymentConfirmation receipt instead.
+  payment: {
+    method: { type: String, enum: ['card'] },
+    status: String,
+    stripePaymentIntentId: String,
+    amount: Number,        // in rupees, e.g. 2000
+    currency: String,      // 'LKR'
+    cardBrand: String,     // 'visa', 'mastercard', ...
+    cardLast4: String,
+    receiptUrl: String,
+    paidAt: Date
+  },
+
   // Declaration
   declaration: {
     type: Boolean,

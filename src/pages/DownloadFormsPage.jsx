@@ -108,7 +108,7 @@ function DownloadFormsPage() {
       'NIC Document Status': app.documents?.nic ? 'Uploaded' : 'Not Uploaded',
       'Employer Letter Status': app.documents?.employerLetter ? 'Uploaded' : 'Not Uploaded',
       'Transcript Status': app.documents?.transcript ? 'Uploaded' : 'Not Uploaded',
-      'Payment Confirmation Status': app.documents?.paymentConfirmation ? 'Uploaded' : 'Not Uploaded',
+      'Payment Confirmation Status': app.payment?.method === 'card' ? 'Paid by card' : app.documents?.paymentConfirmation ? 'Uploaded' : 'Not Uploaded',
       'Program': programs.find(p => p.shortCode === app.program)?.title || app.program,
       'Status': app.status.charAt(0).toUpperCase() + app.status.slice(1).replace('-', ' '),
       'Submission Date': new Date(app.submittedAt).toLocaleDateString(),
@@ -389,7 +389,9 @@ function DownloadFormsPage() {
         { label: 'NIC', status: app.documents?.nic },
         { label: 'Employer Letter', status: app.documents?.employerLetter },
         { label: 'Transcript', status: app.documents?.transcript },
-        { label: 'Payment Confirmation', status: app.documents?.paymentConfirmation }
+        app.payment?.method === 'card'
+          ? { label: 'Payment Confirmation', status: true, text: 'Paid by card' }
+          : { label: 'Payment Confirmation', status: app.documents?.paymentConfirmation }
       ];
       
       docs.forEach((docItem) => {
@@ -398,7 +400,7 @@ function DownloadFormsPage() {
         doc.setFont(undefined, 'normal');
         if (docItem.status) {
           doc.setTextColor(34, 139, 34); // Green
-          doc.text('Uploaded', margin + 50, y);
+          doc.text(docItem.text || 'Uploaded', margin + 50, y);
         } else {
           doc.setTextColor(220, 53, 69); // Red
           doc.text('Not uploaded', margin + 50, y);
