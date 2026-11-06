@@ -193,6 +193,12 @@ body {
   margin: 0;
 }
 
+.form-alert a {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
 .form-alert--error { background: var(--danger-bg); color: var(--danger); }
 .form-alert--success { background: var(--success-bg); color: var(--success); }
 .form-alert--info { background: var(--info-bg); color: var(--info); }

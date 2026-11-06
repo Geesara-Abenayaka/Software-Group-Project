@@ -1,11 +1,16 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import { AlertCircle, ArrowLeft, Lock } from 'lucide-react'
 import '../App.css'
 import API_BASE_URL from '../utils/apiConfig'
 import SiteHeader from '../components/SiteHeader'
 import SiteFooter from '../components/SiteFooter'
 import { ButtonSpinner } from '../components/Loaders'
+import PasswordInput from '../components/PasswordInput'
+
+// Wrong email or password: shown with a link to reset the password
+const WRONG_DETAILS = 'wrong-details'
 
 function LoginPage() {
   const [email, setEmail] = useState('')
@@ -32,7 +37,14 @@ function LoginPage() {
         navigate('/admin/dashboard')
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed')
+      // Say what went wrong and what to do next
+      if (!err.response) {
+        setError("We couldn't reach the server. Check your connection and try again.")
+      } else if (err.response.status === 401) {
+        setError(WRONG_DETAILS)
+      } else {
+        setError(err.response.data?.message || 'Sign in failed. Please try again.')
+      }
     } finally {
       setLoading(false)
     }
@@ -42,49 +54,65 @@ function LoginPage() {
     <div className="app">
       <SiteHeader subtitle="Admin Portal" />
 
-      <main className="content-area" id="main" tabIndex={-1}>
-        <button className="back-button" onClick={() => navigate('/')}>
-          <span className="back-arrow">←</span>
-          <span>Back to Home</span>
-        </button>
-
+      <main className="content-area auth-page" id="main" tabIndex={-1}>
         <div className="login-card">
           <div className="lock-icon-circle">
-            <div className="lock-icon">🔒</div>
+            <Lock size={28} className="lock-icon" aria-hidden="true" />
           </div>
 
           <h1 className="login-title">Admin Login</h1>
-          <p className="login-subtitle">Enter your credentials to access the admin panel</p>
+          <p className="login-subtitle">Sign in to manage programs and applications</p>
 
           <form className="login-form" onSubmit={handleSubmit}>
             <div className="form-group">
-              <label className="form-label">Email Address</label>
-              <input 
-                type="email" 
-                className="form-input" 
+              <label className="form-label" htmlFor="login-email">Email address</label>
+              <input
+                id="login-email"
+                type="email"
+                className="form-input"
                 placeholder="admin@university.ac.lk"
+                autoComplete="username"
+                autoFocus
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value)
+                  setError('')
+                }}
                 required
               />
             </div>
 
             <div className="form-group">
-              <label className="form-label">Password</label>
-              <input 
-                type="password" 
-                className="form-input" 
+              <label className="form-label" htmlFor="login-password">Password</label>
+              <PasswordInput
+                id="login-password"
                 placeholder="••••••••"
+                autoComplete="current-password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value)
+                  setError('')
+                }}
                 required
               />
             </div>
 
-            {error && <p style={{color: 'red', fontSize: '14px', marginBottom: '10px'}}>{error}</p>}
+            {error && (
+              <div className="form-alert form-alert--error" role="alert">
+                <AlertCircle size={16} aria-hidden="true" />
+                <p className="form-alert__body">
+                  {error === WRONG_DETAILS ? (
+                    <>
+                      Incorrect email or password. Check them, or{' '}
+                      <Link to="/reset-password">reset your password</Link>.
+                    </>
+                  ) : error}
+                </p>
+              </div>
+            )}
 
             <button type="submit" className="sign-in-button" disabled={loading}>
-              {loading ? <><ButtonSpinner />Signing in…</> : 'Sign In'}
+              {loading ? <><ButtonSpinner />Signing in…</> : 'Sign in'}
             </button>
 
             <Link to="/reset-password" className="forgot-password">
@@ -92,6 +120,11 @@ function LoginPage() {
             </Link>
           </form>
         </div>
+
+        <Link to="/" className="auth-back-link">
+          <ArrowLeft size={16} aria-hidden="true" />
+          Back to programs
+        </Link>
       </main>
       <SiteFooter />
     </div>
