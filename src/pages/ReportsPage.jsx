@@ -2,7 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { AlertTriangle, Inbox, RefreshCw } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
+import BreakdownBars from '../components/reports/BreakdownBars';
 import DailyChart from '../components/reports/DailyChart';
+import PaymentList from '../components/reports/PaymentList';
 import PaymentSplit from '../components/reports/PaymentSplit';
 import ProgramTable from '../components/reports/ProgramTable';
 import ReportFilters from '../components/reports/ReportFilters';
@@ -18,16 +20,9 @@ import {
   resolvePeriod,
   todayInSriLanka
 } from '../utils/reportPeriods';
+import { errorMessage, readJson } from '../utils/readJson';
+import { categoryItems, statusItems } from '../utils/reportRows';
 import useDelayedFlag from '../utils/useDelayedFlag';
-
-// Reads a JSON response, or throws with the server's message.
-const readJson = async (response, fallbackMessage) => {
-  const body = await response.json().catch(() => ({}));
-  if (!response.ok || !body.success) {
-    throw new Error(body.message || fallbackMessage);
-  }
-  return body;
-};
 
 /**
  * Admin Reports: how many applied, how many paid the fee, and how much the fees brought in.
@@ -100,7 +95,7 @@ function ReportsPage() {
       .then((body) => setResult({ key: requestKey, data: body.data, error: '' }))
       .catch((error) => {
         if (error.name === 'AbortError') return;
-        const message = error instanceof TypeError ? "Couldn't reach the server." : error.message;
+        const message = errorMessage(error, "Couldn't load the report.");
         setResult((previous) => ({ key: requestKey, data: previous.data, error: message }));
       });
 
@@ -225,7 +220,20 @@ function ReportsPage() {
                   <DailyChart byDay={report.byDay} from={range.from} to={range.to} today={today} />
                 </div>
                 <ProgramTable byProgram={report.byProgram} totals={totals} />
+                <div className="report-grid">
+                  <BreakdownBars id="report-status-title" title="Status" items={statusItems(totals.status)} />
+                  <BreakdownBars
+                    id="report-category-title"
+                    title="GPA category"
+                    items={categoryItems(report.categories)}
+                    note="From the best GPA among each applicant's qualifications."
+                  />
+                </div>
               </>
+            )}
+
+            {report && totals.applications > 0 && (
+              <PaymentList baseQuery={query} refreshKey={reloadCount} liveMode={report.stripeMode === 'live'} />
             )}
 
             {isEmpty && (
