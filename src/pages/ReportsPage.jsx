@@ -10,6 +10,7 @@ import PaymentSplit from '../components/reports/PaymentSplit';
 import ProgramTable from '../components/reports/ProgramTable';
 import ReportFilters from '../components/reports/ReportFilters';
 import ReportTiles from '../components/reports/ReportTiles';
+import StripeCheck from '../components/reports/StripeCheck';
 import API_BASE_URL from '../utils/apiConfig';
 import { formatDateTime } from '../utils/formatDate';
 import { formatCount } from '../utils/formatMoney';
@@ -296,6 +297,7 @@ function ReportsPage() {
                   <PaymentSplit totals={totals} />
                   <DailyChart byDay={report.byDay} from={range.from} to={range.to} today={today} />
                 </div>
+                <StripeCheck baseQuery={query} />
                 <ProgramTable byProgram={report.byProgram} totals={totals} />
                 <div className="report-grid">
                   <BreakdownBars id="report-status-title" title="Status" items={statusItems(totals.status)} />
