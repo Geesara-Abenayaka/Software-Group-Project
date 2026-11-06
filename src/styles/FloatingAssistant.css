@@ -1,7 +1,9 @@
+/* Course Advisor (FloatingAssistant.jsx). The round button stays gold (--accent, the user's choice on
+   5 Nov 2026) so it stands out on the white page and the maroon footer; the panel header is the brand maroon. */
 .floating-assistant-wrapper {
   position: fixed;
-  right: 20px;
-  bottom: 20px;
+  right: var(--space-4);
+  bottom: var(--space-4);
   z-index: 1400;
   display: flex;
   flex-direction: column;
@@ -10,6 +12,7 @@
   font-family: inherit;
 }
 
+/* ---- Round button ---- */
 .floating-assistant-toggle {
   position: relative;
   display: inline-flex;
@@ -25,7 +28,8 @@
   box-shadow: 0 16px 30px rgba(201, 138, 6, 0.3);
   cursor: pointer;
   font-weight: 700;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out);
   overflow: visible;
 }
 
@@ -35,8 +39,14 @@
   box-shadow: 0 20px 34px rgba(201, 138, 6, 0.38);
 }
 
+/* Open: stays gold and shows a cross (it used to turn into a grey gradient) */
 .floating-assistant-toggle.open {
-  background: linear-gradient(135deg, #4b5563, #374151);
+  background: var(--accent-dark);
+}
+
+.floating-assistant-toggle:focus-visible {
+  outline: 3px solid var(--brand-text);
+  outline-offset: 3px;
 }
 
 .assistant-icon {
@@ -50,10 +60,15 @@
   color: var(--brand);
 }
 
+.floating-assistant-toggle.open .assistant-icon {
+  color: var(--on-brand);
+}
+
+/* "Advisor" tooltip opens to the LEFT of the button, so it is never cut off by the screen edge */
 .assistant-label {
   position: absolute;
   top: 50%;
-  left: calc(100% + 10px);
+  right: calc(100% + 10px);
   transform: translateY(-50%);
   opacity: 0;
   visibility: hidden;
@@ -65,36 +80,30 @@
   background: rgba(18, 18, 18, 0.9);
   color: #ffffff;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.18);
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition: opacity var(--duration) var(--ease-out), transform var(--duration) var(--ease-out);
   pointer-events: none;
 }
 
 .floating-assistant-toggle:hover .assistant-label,
-.floating-assistant-toggle.open .assistant-label {
+.floating-assistant-toggle:focus-visible .assistant-label {
   opacity: 1;
   visibility: visible;
-  transform: translateY(-50%) translateX(4px);
+  transform: translateY(-50%) translateX(-4px);
 }
 
+/* ---- Panel ---- */
 .floating-assistant-panel {
-  width: 360px;
+  width: 380px;
   max-width: calc(100vw - 32px);
+  height: min(600px, 75vh);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 20px;
-  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.18);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  max-height: min(70vh, 560px);
-  animation: assistant-pop 180ms ease-out;
-}
-
-.assistant-content {
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  overflow: hidden;
+  animation: assistant-pop var(--duration) var(--ease-out);
 }
 
 @keyframes assistant-pop {
@@ -110,83 +119,144 @@
 
 .floating-assistant-header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
-  padding: 16px 16px 12px;
-  background: linear-gradient(135deg, var(--brand), #b91c1c);
+  padding: 12px 8px 12px 16px;
+  background: var(--brand);
   color: var(--on-brand);
 }
 
-.floating-assistant-header h3 {
+.floating-assistant-heading {
+  flex: 1;
+  min-width: 0;
+}
+
+.floating-assistant-header h2 {
   margin: 0;
   font-size: 16px;
+  font-weight: 700;
 }
 
 .floating-assistant-header p {
-  margin: 4px 0 0;
+  margin: 2px 0 0;
+  color: var(--on-brand-muted);
   font-size: 12px;
-  opacity: 0.92;
 }
 
 .floating-assistant-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
   border: none;
-  background: rgba(255, 255, 255, 0.16);
-  color: var(--on-brand);
-  width: 30px;
-  height: 30px;
   border-radius: 50%;
-  font-size: 18px;
+  background: transparent;
+  color: var(--on-brand);
   cursor: pointer;
 }
 
+.floating-assistant-close:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.floating-assistant-close:focus-visible {
+  outline: 2px solid var(--on-brand);
+  outline-offset: -4px;
+}
+
+/* GraduationCap in a circle: white tint in the header, maroon tint next to bot messages */
+.assistant-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--brand-tint);
+  color: var(--brand-text);
+}
+
+.assistant-avatar.is-spacer {
+  background: transparent;
+}
+
+.assistant-avatar--header {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--on-brand);
+}
+
+.assistant-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ---- Messages ---- */
 .floating-assistant-messages {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
-  padding: 16px;
+  padding: 16px 12px;
   display: flex;
   flex-direction: column;
   gap: 12px;
   background: var(--surface-muted);
 }
 
-.assistant-recommendations {
-  width: 100%;
-  padding: 12px 0 16px;
-  box-sizing: border-box;
+.assistant-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.assistant-row.user {
+  justify-content: flex-end;
+}
+
+.assistant-bubble-column {
+  display: flex;
+  flex-direction: column;
+  max-width: 85%;
+  min-width: 0;
+}
+
+.assistant-row.user .assistant-bubble-column {
+  align-items: flex-end;
 }
 
 .assistant-message {
-  max-width: 88%;
-  padding: 12px 14px;
+  padding: 10px 14px;
   border-radius: 16px;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .assistant-message.user {
-  align-self: flex-end;
   background: var(--brand);
   color: var(--on-brand);
+  border-bottom-right-radius: 4px;
 }
 
 .assistant-message.bot {
-  align-self: flex-start;
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--ink-strong);
-}
-
-.assistant-message-meta {
-  margin-top: 8px;
-  display: flex;
-  gap: 8px;
-  font-size: 11px;
-  color: var(--muted);
+  border-top-left-radius: 4px;
 }
 
 /* Formatted bot replies: paragraphs and "- " lists */
+.assistant-message p {
+  margin: 0;
+}
+
 .assistant-message p + p,
 .assistant-message p + ul,
 .assistant-message ul + p {
@@ -194,6 +264,7 @@
 }
 
 .assistant-message ul {
+  margin: 0;
   padding-left: 18px;
 }
 
@@ -201,49 +272,91 @@
   margin-top: 4px;
 }
 
+/* Time, offline tag and feedback under each bubble (on the grey area, so --ink-muted) */
+.assistant-message-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  color: var(--ink-muted);
+  font-size: 11px;
+}
+
+.assistant-offline-tag {
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink-muted);
+}
+
 .assistant-feedback {
   display: inline-flex;
-  gap: 8px;
-  margin-left: auto;
+  align-items: center;
+  gap: 2px;
 }
 
 .assistant-feedback button {
-  border: none;
-  background: none;
-  padding: 0;
-  font: inherit;
-  color: inherit;
-  cursor: pointer;
-}
-
-.assistant-feedback button:hover,
-.assistant-feedback button[aria-pressed='true'] {
-  color: var(--brand);
-  font-weight: 700;
-}
-
-.typing-indicator {
-  width: 90px;
-  display: flex;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-muted);
+  cursor: pointer;
+  transition: opacity var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
+}
+
+.assistant-feedback button:hover {
+  background: var(--border-subtle);
+  color: var(--ink);
+}
+
+.assistant-feedback button.is-selected {
+  color: var(--brand-text);
+}
+
+.assistant-feedback.has-choice button:not(.is-selected) {
+  opacity: 0.4;
+}
+
+.assistant-feedback button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.assistant-thanks {
+  margin-left: 2px;
+  color: var(--brand-text);
+  font-weight: 600;
+}
+
+/* Typing: three dots in a bot bubble */
+.typing-indicator {
+  display: flex;
   align-items: center;
   gap: 6px;
-  padding: 10px 14px;
+  padding: 14px 16px;
 }
 
-.typing-indicator span {
+.typing-indicator span[aria-hidden='true'] {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--muted);
+  background: var(--brand);
+  opacity: 0.6;
   animation: assistant-bounce 1s infinite ease-in-out;
 }
 
-.typing-indicator span:nth-child(2) {
+.typing-indicator span[aria-hidden='true']:nth-child(2) {
   animation-delay: 0.1s;
 }
 
-.typing-indicator span:nth-child(3) {
+.typing-indicator span[aria-hidden='true']:nth-child(3) {
   animation-delay: 0.2s;
 }
 
@@ -254,60 +367,198 @@
   }
   30% {
     transform: translateY(-4px);
-    opacity: 1;
+    opacity: 0.6;
   }
 }
 
-.recommendation-card {
-  width: 100%;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  border-radius: 14px;
-  padding: 12px 14px;
-  margin-bottom: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  cursor: pointer;
-  color: inherit;
-  transition: border-color 0.2s ease, transform 0.2s ease;
-}
-
-.recommendation-card:hover {
-  border-color: var(--brand);
-  transform: translateY(-1px);
-}
-
-.recommendation-card strong {
-  display: block;
-  font-size: 14px;
-  margin-bottom: 4px;
-}
-
-.recommendation-card p {
-  margin: 0;
-  font-size: 12px;
+/* ---- "Find my programme" quiz ---- */
+.assistant-quiz-step {
+  margin: 0 0 4px;
   color: var(--ink-muted);
-}
-
-.recommendation-card span {
-  color: var(--brand);
   font-size: 12px;
-  font-weight: 700;
-  align-self: center;
-}
-
-.recommendation-card .recommendation-reason {
-  margin-top: 4px;
-  color: var(--brand);
   font-weight: 600;
 }
 
-.recommendation-actions {
+.assistant-quiz-options {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.assistant-quiz-option {
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-family: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color var(--duration-fast) var(--ease-out), border-color var(--duration-fast) var(--ease-out);
+}
+
+.assistant-quiz-option:hover:not(:disabled) {
+  border-color: var(--brand);
+  background: var(--brand-tint);
+}
+
+.assistant-quiz-option.is-picked {
+  border-color: var(--brand);
+  background: var(--brand);
+  color: var(--on-brand);
+}
+
+.assistant-quiz-option:disabled {
+  cursor: default;
+}
+
+.assistant-quiz-option:focus-visible,
+.assistant-quiz-cancel:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.assistant-quiz-cancel {
+  align-self: flex-start;
+  min-height: 32px;
+  margin-top: 4px;
+  padding: 4px 6px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--ink-muted);
+  font-family: inherit;
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ---- Recommendation cards ---- */
+.assistant-recommendations {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 0 8px 36px;
+}
+
+.assistant-recommendations__title {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.recommendation-card {
+  padding: 12px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--brand);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.recommendation-card__title {
+  margin: 0;
+  color: var(--ink-strong);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.recommendation-card__meta {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.recommendation-card__description {
+  display: -webkit-box;
+  margin: 6px 0 0;
+  overflow: hidden;
+  color: var(--ink-muted);
+  font-size: 13px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+.recommendation-card__reason {
+  margin: 6px 0 0;
+  color: var(--brand-text);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.recommendation-card__actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.recommendation-card__pdf {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-left: auto;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.recommendation-card__pdf:hover {
+  border-color: var(--brand);
+  color: var(--brand-text);
+}
+
+.recommendation-card__pdf:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* ---- Suggestion chips: one row that scrolls sideways ---- */
+.assistant-quick-actions {
   display: flex;
   gap: 8px;
-  margin: -4px 0 12px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  scrollbar-width: none;
+}
+
+.assistant-quick-actions::-webkit-scrollbar {
+  display: none;
+}
+
+.assistant-quick-btn {
+  flex-shrink: 0;
+  min-height: 32px;
+  padding: 6px 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-family: inherit;
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-out), background-color var(--duration-fast) var(--ease-out);
+}
+
+.assistant-quick-btn:hover:not(:disabled) {
+  border-color: var(--brand);
+  background: var(--brand-tint);
 }
 
 .assistant-quick-btn:disabled {
@@ -315,79 +566,119 @@
   cursor: not-allowed;
 }
 
-.assistant-quick-actions {
-  padding: 0 16px 10px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+.assistant-quick-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
-.assistant-quick-btn {
-  border: 1px solid var(--border-strong);
-  background: var(--surface);
-  color: var(--ink);
-  border-radius: 999px;
-  padding: 8px 12px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: border-color 0.2s ease, color 0.2s ease;
-}
-
-.assistant-quick-btn:hover {
-  border-color: var(--brand);
-  color: var(--brand);
-}
-
+/* ---- Question box ---- */
 .assistant-input-row {
-  display: flex;
-  gap: 8px;
-  padding: 12px 16px 16px;
+  padding: 10px 12px 12px;
   border-top: 1px solid var(--border);
   background: var(--surface);
 }
 
+.assistant-quick-actions + .assistant-input-row {
+  border-top: none;
+  padding-top: 0;
+}
+
+.assistant-input-line {
+  display: flex;
+  gap: 8px;
+}
+
 .assistant-input-row input {
   flex: 1;
-  border: 1px solid var(--border-strong);
-  border-radius: 999px;
+  min-width: 0;
+  min-height: 44px;
   padding: 10px 14px;
-  font-size: 13px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-pill);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.assistant-input-row input::placeholder {
+  color: var(--muted);
 }
 
 .assistant-input-row input:focus {
   outline: none;
-  border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(139, 26, 26, 0.12);
+  border-color: var(--input-focus-border);
+  box-shadow: var(--focus-ring);
 }
 
-.assistant-input-row button {
+.assistant-send {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
   border: none;
+  border-radius: 50%;
   background: var(--brand);
   color: var(--on-brand);
-  border-radius: 999px;
-  padding: 10px 16px;
-  font-size: 13px;
-  font-weight: 700;
   cursor: pointer;
 }
 
-.assistant-input-row button:disabled {
+.assistant-send:hover:not(:disabled) {
+  background: var(--brand-dark);
+}
+
+.assistant-send:disabled {
   background: var(--subtle);
   cursor: not-allowed;
 }
 
-@media (max-width: 820px) {
+.assistant-send:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.assistant-privacy {
+  margin: 6px 4px 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+/* The programme page's sticky "Apply Now" bar is at the bottom up to 960px: sit above it */
+@media (max-width: 960px) {
+  body:has(.apply-bar) .floating-assistant-wrapper {
+    bottom: 88px;
+  }
+}
+
+/* Phones: the panel takes the whole screen (and is modal); its ✕ closes it */
+@media (max-width: 480px) {
   .floating-assistant-wrapper {
     right: 12px;
-    left: 12px;
-    align-items: stretch;
+    bottom: 12px;
   }
 
   .floating-assistant-panel {
+    position: fixed;
+    inset: 0;
     width: 100%;
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    border: none;
+    border-radius: 0;
   }
 
-  .floating-assistant-toggle {
-    justify-content: center;
+  .floating-assistant-wrapper.is-open .floating-assistant-toggle {
+    display: none;
+  }
+
+  .assistant-quiz-options {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* 16px so iOS doesn't zoom in when the box gets focus */
+  .assistant-input-row input {
+    font-size: 16px;
   }
 }
