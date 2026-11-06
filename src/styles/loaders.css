@@ -129,7 +129,7 @@
   left: 0;
   right: 0;
   height: 3px;
-  z-index: 2000;
+  z-index: var(--z-progress);
   overflow: hidden;
   pointer-events: none;
 }

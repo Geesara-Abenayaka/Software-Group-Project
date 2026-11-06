@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Check, Eye, FileText, X } from 'lucide-react';
 import '../styles/ApplicationViewPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import { PageLoader } from '../components/Loaders';
@@ -7,6 +8,8 @@ import Breadcrumbs from '../components/Breadcrumbs';
 import { formatReference } from '../utils/applicationReference';
 import StatusPill from '../components/StatusPill';
 import { toast } from '../utils/toast';
+import { formatDateTime } from '../utils/formatDate';
+import usePageTitle from '../utils/usePageTitle';
 
 const fetchWithTimeout = async (url, timeoutMs = 8000) => {
   const controller = new AbortController();
@@ -25,6 +28,7 @@ function ApplicationViewPage() {
   const { applicationId } = useParams();
   const [user, setUser] = useState(null);
   const [application, setApplication] = useState(null);
+  usePageTitle(application ? `Admin · Application ${formatReference(application._id)}` : 'Admin · Application');
   const [program, setProgram] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -164,7 +168,7 @@ function ApplicationViewPage() {
 
       {/* Form Header */}
       <div className="form-header">
-        <h3>APPLICATION FOR POSTGRADUATE STUDIES</h3>
+        <h1 className="view-form-title">APPLICATION FOR POSTGRADUATE STUDIES</h1>
         {program && (
           <p style={{ marginTop: '10px', fontSize: '16px', fontWeight: '600' }}>
             Program: {program.title}
@@ -174,7 +178,7 @@ function ApplicationViewPage() {
           Application ID: {application._id}
         </p>
         <p style={{ marginTop: '5px', fontSize: '13px' }}>
-          Submitted: {new Date(application.submittedAt).toLocaleString()}
+          Submitted: {formatDateTime(application.submittedAt)}
         </p>
       </div>
 
@@ -182,7 +186,7 @@ function ApplicationViewPage() {
       <div className="application-form">
         {/* Personal Particulars */}
         <div className="form-section">
-          <h3 className="section-title">Personal Particulars</h3>
+          <h2 className="section-title">Personal Particulars</h2>
           
           <div className="form-group view-only">
             <label>Title</label>
@@ -229,7 +233,7 @@ function ApplicationViewPage() {
 
         {/* Academic Qualifications */}
         <div className="form-section">
-          <h3 className="section-title">Academic Qualifications</h3>
+          <h2 className="section-title">Academic Qualifications</h2>
           
           {application.qualifications && application.qualifications.length > 0 ? (
             application.qualifications.map((qual, index) => (
@@ -277,7 +281,7 @@ function ApplicationViewPage() {
 
         {/* Membership of Professional Organizations */}
         <div className="form-section">
-          <h3 className="section-title">Membership of Professional Organizations</h3>
+          <h2 className="section-title">Membership of Professional Organizations</h2>
           
           {application.memberships && application.memberships.length > 0 ? (
             application.memberships.map((membership, index) => (
@@ -308,7 +312,7 @@ function ApplicationViewPage() {
 
         {/* Work Experience */}
         <div className="form-section">
-          <h3 className="section-title">Work Experience (most recent first)</h3>
+          <h2 className="section-title">Work Experience (most recent first)</h2>
           
           {application.experiences && application.experiences.length > 0 ? (
             application.experiences.map((exp, index) => (
@@ -353,7 +357,7 @@ function ApplicationViewPage() {
 
         {/* Documents */}
         <div className="form-section">
-          <h3 className="section-title">Documents</h3>
+          <h2 className="section-title">Documents</h2>
           <p className="document-note">
             * Please make sure each file is 4 MB or less (Please upload the files in PDF format). All documents are required.
           </p>
@@ -364,7 +368,7 @@ function ApplicationViewPage() {
               <div className="file-list">
                 {application.documents.degreeCertificate.map((file, idx) => (
                   <div key={idx} className="file-item-with-actions">
-                    <span className="file-name">📄 {file.fileName}</span>
+                    <span className="file-name"><FileText size={16} aria-hidden="true" /> {file.fileName}</span>
                     <div className="file-actions">
                       <a 
                         href={`${API_BASE_URL}/applications/${applicationId}/file/${file.fileId}`} 
@@ -373,14 +377,14 @@ function ApplicationViewPage() {
                         className="file-action-btn view-btn"
                         title="Open in new tab"
                       >
-                        👁️ View
+                        <Eye size={16} aria-hidden="true" /> View
                       </a>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="document-status not-uploaded">✗ Not Uploaded</div>
+              <div className="document-status not-uploaded"><X size={16} aria-hidden="true" /> Not Uploaded</div>
             )}
           </div>
 
@@ -388,7 +392,7 @@ function ApplicationViewPage() {
             <label>NIC</label>
             {application.documents?.nic ? (
               <div className="file-item-with-actions">
-                <span className="file-name">📄 {application.documents.nic.fileName}</span>
+                <span className="file-name"><FileText size={16} aria-hidden="true" /> {application.documents.nic.fileName}</span>
                 <div className="file-actions">
                   <a 
                     href={`${API_BASE_URL}/applications/${applicationId}/file/${application.documents.nic.fileId}`} 
@@ -397,12 +401,12 @@ function ApplicationViewPage() {
                     className="file-action-btn view-btn"
                     title="Open in new tab"
                   >
-                    👁️ View
+                    <Eye size={16} aria-hidden="true" /> View
                   </a>
                 </div>
               </div>
             ) : (
-              <div className="document-status not-uploaded">✗ Not Uploaded</div>
+              <div className="document-status not-uploaded"><X size={16} aria-hidden="true" /> Not Uploaded</div>
             )}
           </div>
 
@@ -412,7 +416,7 @@ function ApplicationViewPage() {
               <div className="file-list">
                 {application.documents.employerLetter.map((file, idx) => (
                   <div key={idx} className="file-item-with-actions">
-                    <span className="file-name">📄 {file.fileName}</span>
+                    <span className="file-name"><FileText size={16} aria-hidden="true" /> {file.fileName}</span>
                     <div className="file-actions">
                       <a 
                         href={`${API_BASE_URL}/applications/${applicationId}/file/${file.fileId}`} 
@@ -421,14 +425,14 @@ function ApplicationViewPage() {
                         className="file-action-btn view-btn"
                         title="Open in new tab"
                       >
-                        👁️ View
+                        <Eye size={16} aria-hidden="true" /> View
                       </a>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="document-status not-uploaded">✗ Not Uploaded</div>
+              <div className="document-status not-uploaded"><X size={16} aria-hidden="true" /> Not Uploaded</div>
             )}
           </div>
 
@@ -436,7 +440,7 @@ function ApplicationViewPage() {
             <label>Transcript(s)</label>
             {application.documents?.transcript ? (
               <div className="file-item-with-actions">
-                <span className="file-name">📄 {application.documents.transcript.fileName}</span>
+                <span className="file-name"><FileText size={16} aria-hidden="true" /> {application.documents.transcript.fileName}</span>
                 <div className="file-actions">
                   <a 
                     href={`${API_BASE_URL}/applications/${applicationId}/file/${application.documents.transcript.fileId}`} 
@@ -445,12 +449,12 @@ function ApplicationViewPage() {
                     className="file-action-btn view-btn"
                     title="Open in new tab"
                   >
-                    👁️ View
+                    <Eye size={16} aria-hidden="true" /> View
                   </a>
                 </div>
               </div>
             ) : (
-              <div className="document-status not-uploaded">✗ Not Uploaded</div>
+              <div className="document-status not-uploaded"><X size={16} aria-hidden="true" /> Not Uploaded</div>
             )}
           </div>
 
@@ -458,7 +462,7 @@ function ApplicationViewPage() {
             <label>Payment Confirmation / Bank Receipt</label>
             {application.documents?.paymentConfirmation ? (
               <div className="file-item-with-actions">
-                <span className="file-name">📄 {application.documents.paymentConfirmation.fileName}</span>
+                <span className="file-name"><FileText size={16} aria-hidden="true" /> {application.documents.paymentConfirmation.fileName}</span>
                 <div className="file-actions">
                   <a 
                     href={`${API_BASE_URL}/applications/${applicationId}/file/${application.documents.paymentConfirmation.fileId}`} 
@@ -467,12 +471,12 @@ function ApplicationViewPage() {
                     className="file-action-btn view-btn"
                     title="Open in new tab"
                   >
-                    👁️ View
+                    <Eye size={16} aria-hidden="true" /> View
                   </a>
                 </div>
               </div>
             ) : (
-              <div className="document-status not-uploaded">✗ Not Uploaded</div>
+              <div className="document-status not-uploaded"><X size={16} aria-hidden="true" /> Not Uploaded</div>
             )}
           </div>
 
@@ -484,7 +488,7 @@ function ApplicationViewPage() {
 
         {/* Declaration */}
         <div className="form-section">
-          <h3 className="section-title">Declaration</h3>
+          <h2 className="section-title">Declaration</h2>
           <div className="declaration-text">
             <p>
               I affirm that all statements made/entered by me on this form are correct. I understand that any inaccurate or false information for 
@@ -501,7 +505,7 @@ function ApplicationViewPage() {
           {application.captcha && (
             <div className="form-group view-only">
               <label>Captcha Verified</label>
-              <div className="view-value">✓ Verified</div>
+              <div className="view-value"><Check size={16} aria-hidden="true" /> Verified</div>
             </div>
           )}
         </div>

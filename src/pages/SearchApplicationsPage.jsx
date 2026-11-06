@@ -300,7 +300,7 @@ function SearchApplicationsPage() {
       <div className="admin-content-full">
         <main id="main" tabIndex={-1} className="admin-main-full">
           <div className="search-header">
-            <h2 className="search-title">Search Applications</h2>
+            <h1 className="search-title">Search Applications</h1>
             <p className="search-subtitle">View and manage all postgraduate applications across programs</p>
           </div>
 
@@ -328,14 +328,15 @@ function SearchApplicationsPage() {
                 <div className="autocomplete-dropdown">
                   <div className="autocomplete-header">Available Programs/Courses:</div>
                   {getFilteredProgramSuggestions().map((program) => (
-                    <div
+                    <button
+                      type="button"
                       key={program.shortCode}
-                      className="autocomplete-item"
+                      className="autocomplete-item btn-reset"
                       onClick={() => handleSuggestionClick(program.title)}
                     >
-                      <div className="autocomplete-program-name">{program.title}</div>
-                      <div className="autocomplete-program-code">{program.shortCode}</div>
-                    </div>
+                      <span className="autocomplete-program-name">{program.title}</span>
+                      <span className="autocomplete-program-code">{program.shortCode}</span>
+                    </button>
                   ))}
                 </div>
               )}

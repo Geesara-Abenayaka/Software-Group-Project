@@ -5,7 +5,7 @@
 .admin-header-fixed {
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: var(--z-sticky);
   background: white;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   padding: 1rem 2rem;
@@ -21,7 +21,7 @@
 
 .back-btn-header {
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, var(--brand) 0%, #a00000 100%);
+  background: var(--brand);
   color: white;
   border: none;
   border-radius: 6px;
@@ -323,4 +323,25 @@
   .status-select-header {
     width: 100%;
   }
+}
+
+/* lucide icons next to the text (they replaced emoji) */
+.document-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.view-value svg {
+  margin-right: 4px;
+  vertical-align: -3px;
+  color: var(--success);
+}
+
+/* The page's one <h1> (it was an <h3>); same look as before */
+.form-header .view-form-title {
+  margin: 15px 0 0;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 1px;
 }

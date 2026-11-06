@@ -76,7 +76,7 @@
   color: rgba(255, 255, 255, 0.9);
   font-size: 13px;
   margin: 0;
-  font-weight: 300;
+  font-weight: 400; /* 300 was thin and hard to read on maroon */
 }
 
 .admin-login-btn {
@@ -970,3 +970,9 @@
 .retry-btn:hover {
   background-color: var(--brand-dark);
 }
+
+/* At least 24px tall to tap (it was a 19px line of text) */
+.forgot-password {
+  padding: 6px 0;
+}
+

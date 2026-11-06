@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User } from 'lucide-react';
 import uomLogo from '../assets/uom-logo.png';
 import '../styles/AdminDashboard.css';
 import '../styles/admin-tables.css';
+import usePageTitle from '../utils/usePageTitle';
 
 const NAV_ITEMS = [
   { to: '/admin/dashboard', label: 'Programs', icon: GraduationCap },
@@ -21,6 +22,14 @@ function AdminLayout({ children, onClick }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [user] = useState(() => JSON.parse(localStorage.getItem('user') || 'null'));
+  // "Admin · Search · UoM CSE Postgraduate": the tab that is active for this address
+  const activeItem = NAV_ITEMS.find((item) => pathname === item.to || pathname.startsWith(`${item.to}/`));
+  usePageTitle(`Admin · ${activeItem?.label || 'Portal'}`);
+  // On narrow screens the tab bar scrolls sideways; bring the current tab into view
+  const activeTabRef = useRef(null);
+  useEffect(() => {
+    activeTabRef.current?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }, [pathname]);
 
   useEffect(() => {
     if (!localStorage.getItem('user')) {
@@ -37,13 +46,25 @@ function AdminLayout({ children, onClick }) {
 
   return (
     <div className="admin-app" onClick={onClick}>
-      <a href="#main" className="skip-link">Skip to main content</a>
+      <a
+        href="#main"
+        className="skip-link"
+        onClick={(event) => {
+          // Focus the content without adding a #main history entry
+          const main = document.getElementById('main');
+          if (!main) return;
+          event.preventDefault();
+          main.focus();
+        }}
+      >
+        Skip to main content
+      </a>
       <header className="admin-header" onClick={stopClick}>
         <div className="admin-header-content">
           <div className="header-left">
             <img src={uomLogo} alt="" className="uom-logo" />
             <div className="header-text">
-              <h1 className="university-name">University of Moratuwa</h1>
+              <span className="university-name">University of Moratuwa</span>
               <p className="portal-subtitle">Postgraduate Management Information System</p>
             </div>
           </div>
@@ -74,6 +95,7 @@ function AdminLayout({ children, onClick }) {
             return (
               <button
                 key={item.to}
+                ref={isActive ? activeTabRef : undefined}
                 className={isActive ? 'navbar-btn active' : 'navbar-btn'}
                 aria-current={isActive ? 'page' : undefined}
                 onClick={pathname === item.to ? undefined : () => navigate(item.to)}

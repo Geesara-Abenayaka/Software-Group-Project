@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   User,
@@ -11,6 +11,7 @@ import API_BASE_URL from '../utils/apiConfig';
 import AdminLayout from '../components/AdminLayout';
 import AdminSummary from '../components/AdminSummary';
 import ProgramFormFields from '../components/ProgramFormFields';
+import useDialogFocus from '../utils/useDialogFocus';
 import useConfirm from '../utils/useConfirm';
 import { toast } from '../utils/toast';
 import { PageLoader } from '../components/Loaders';
@@ -81,6 +82,8 @@ function AdminDashboard() {
   const [newProgram, setNewProgram] = useState(createEmptyProgram);
   // Field errors in the Add / Edit modal, e.g. { shortCode: 'Another program already uses this code' }
   const [programErrors, setProgramErrors] = useState({});
+  const editModalRef = useRef(null);
+  const addModalRef = useRef(null);
 
   useEffect(() => {
     fetchPrograms();
@@ -175,6 +178,10 @@ function AdminDashboard() {
     setNewProgram(createEmptyProgram());
     setProgramErrors({});
   };
+
+  // Esc closes the modals, Tab stays inside, focus returns to Edit / Add New Program
+  useDialogFocus(editModalRef, handleCloseModal, showEditModal && Boolean(editingProgram));
+  useDialogFocus(addModalRef, handleCloseAddModal, showAddModal);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -382,7 +389,7 @@ function AdminDashboard() {
         <main id="main" tabIndex={-1} className="admin-main-full programs-management-main">
           <div className="programs-header-admin">
             <div>
-              <h2 className="programs-title-admin">Postgraduate Programs</h2>
+              <h1 className="programs-title-admin">Postgraduate Programs</h1>
               <p className="programs-subtitle-admin">Manage course details, deadlines, and available resources.</p>
             </div>
           </div>
@@ -432,7 +439,7 @@ function AdminDashboard() {
                     </div>
                   </div>
 
-                  <h3 className="card-title-admin">{program.title}</h3>
+                  <h2 className="card-title-admin">{program.title}</h2>
 
                   <p className="card-description-admin">{program.description}</p>
 
@@ -487,15 +494,15 @@ function AdminDashboard() {
               )})}
 
               {/* Add New Program Tile */}
-              <div className="add-program-card" onClick={handleOpenAddModal}>
-                <div className="add-program-card-inner">
-                  <div className="add-program-icon-circle">
-                    <PlusCircle size={48} className="add-program-plus-icon" />
-                  </div>
-                  <h3 className="add-program-card-title">Add New Program</h3>
-                  <p className="add-program-card-subtitle">Click to create a new postgraduate program</p>
-                </div>
-              </div>
+              <button type="button" className="add-program-card btn-reset" onClick={handleOpenAddModal}>
+                <span className="add-program-card-inner">
+                  <span className="add-program-icon-circle">
+                    <PlusCircle size={48} className="add-program-plus-icon" aria-hidden="true" />
+                  </span>
+                  <span className="add-program-card-title">Add New Program</span>
+                  <span className="add-program-card-subtitle">Click to create a new postgraduate program</span>
+                </span>
+              </button>
             </div>
           )}
         </main>
@@ -509,6 +516,7 @@ function AdminDashboard() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="edit-program-heading"
+            ref={editModalRef}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-header">
@@ -548,6 +556,7 @@ function AdminDashboard() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="add-program-heading"
+            ref={addModalRef}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-header">

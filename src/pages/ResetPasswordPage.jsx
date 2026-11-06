@@ -7,6 +7,7 @@ import SiteHeader from '../components/SiteHeader'
 import SiteFooter from '../components/SiteFooter'
 import { ButtonSpinner } from '../components/Loaders'
 import PasswordInput from '../components/PasswordInput'
+import usePageTitle from '../utils/usePageTitle'
 
 const ADMIN_RECOVERY_EMAIL = 'admin@uom.lk'
 // The server (server/routes/auth.js) only asks for 8 characters, so that is the only rule shown.
@@ -26,6 +27,7 @@ function FormAlert({ type, children }) {
 }
 
 function ResetPasswordPage() {
+  usePageTitle('Reset password')
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [verificationCode, setVerificationCode] = useState('')

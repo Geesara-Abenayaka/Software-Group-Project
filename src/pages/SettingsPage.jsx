@@ -3,6 +3,7 @@ import axios from 'axios';
 import '../styles/SettingsPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import AdminLayout from '../components/AdminLayout';
+import { formatDateTime } from '../utils/formatDate';
 import useConfirm from '../utils/useConfirm';
 
 const FEEDBACK_FILTERS = [
@@ -275,13 +276,16 @@ function SettingsPage() {
       const isInRange = selectedDates.length === 2 && dateStr >= selectedDates[0] && dateStr <= selectedDates[1];
       
       days.push(
-        <div
+        <button
+          type="button"
           key={day}
-          className={`calendar-day ${isSelected ? 'selected' : ''} ${isInRange ? 'in-range' : ''}`}
+          className={`calendar-day btn-reset ${isSelected ? 'selected' : ''} ${isInRange ? 'in-range' : ''}`}
           onClick={() => handleDateClick(dateStr)}
+          aria-pressed={isSelected}
+          aria-label={new Date(year, month, day).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
         >
           {day}
-        </div>
+        </button>
       );
     }
 
@@ -318,6 +322,7 @@ function SettingsPage() {
     <AdminLayout>
       <div className="admin-content-full">
         <main id="main" tabIndex={-1} className="admin-main-full settings-main">
+          <h1 className="sr-only">Settings</h1>
           <div className="settings-section">
             <h2 className="settings-title">Set Date Range</h2>
             <p className="current-range">
@@ -449,10 +454,10 @@ function SettingsPage() {
           <div className="settings-section">
             <h2 className="settings-title">Course Advisor Facts</h2>
             <p className="current-deadline">
-              The chatbot answers from the programme data and these facts (contact, application fee, documents, how to apply).{' '}
+              The chatbot answers from the program data and these facts (contact, application fee, documents, how to apply).{' '}
               {factsStatus.isDefault
                 ? 'This is the default text.'
-                : <>Last saved: <strong>{new Date(factsStatus.updatedAt).toLocaleString()}</strong></>}
+                : <>Last saved: <strong>{formatDateTime(factsStatus.updatedAt)}</strong></>}
             </p>
 
             <form onSubmit={handleSaveFacts}>
@@ -521,7 +526,7 @@ function SettingsPage() {
                   <tbody>
                     {assistantFeedback.map((item) => (
                       <tr key={item._id}>
-                        <td>{new Date(item.updatedAt).toLocaleString()}</td>
+                        <td>{formatDateTime(item.updatedAt)}</td>
                         <td>
                           {getFeedbackLabel(item)}
                           {item.source === 'fallback' && <span className="feedback-source"> (offline)</span>}

@@ -11,6 +11,8 @@ import { DOCUMENT_LABELS, MAX_GPA, getFieldLabel, getSectionCompletion, getSecti
 import { loadDraft, mergeDraft, removeDraft, saveDraft } from '../utils/applicationDraft';
 import { formatReference } from '../utils/applicationReference';
 import { toast } from '../utils/toast';
+import usePageTitle from '../utils/usePageTitle';
+import useDialogFocus from '../utils/useDialogFocus';
 
 // Shown in the submission modal; handleSubmit moves through them with setSubmissionStep.
 const SUBMISSION_STEPS = ['Checking your details', 'Uploading documents', 'Submitting application'];
@@ -368,6 +370,7 @@ const removeIndexedError = (errors, index) => {
 function ApplicationFormPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  usePageTitle(location.state?.programName ? `Apply: ${location.state.programName}` : 'Apply');
   const [mobileError, setMobileError] = useState('');
   const [telephoneError, setTelephoneError] = useState('');
   const [nicError, setNicError] = useState('');
@@ -413,6 +416,9 @@ function ApplicationFormPage() {
   const [submissionStatus, setSubmissionStatus] = useState('submitting');
   const [submissionMessage, setSubmissionMessage] = useState('Your application is submitting...');
   const [submissionStep, setSubmissionStep] = useState(0); // index in SUBMISSION_STEPS
+  const submissionModalRef = useRef(null);
+  // The progress dialog takes focus and keeps it (it closes by itself, so no Esc)
+  useDialogFocus(submissionModalRef, null, isSubmitting);
   const autoVerificationKeyRef = useRef('');
   const membershipExtractionKeyRef = useRef('');
   const workExperienceVerificationKeyRef = useRef('');
@@ -2080,7 +2086,15 @@ function ApplicationFormPage() {
     <div className="application-form-page apply-page">
       {isSubmitting && (
         <div className="submission-modal-overlay">
-          <div className="submission-modal" role="dialog" aria-modal="true" aria-live="polite">
+          <div
+            className="submission-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Submitting your application"
+            aria-live="polite"
+            tabIndex={-1}
+            ref={submissionModalRef}
+          >
             {submissionStatus === 'submitting' ? (
               <div className="submission-spinner"></div>
             ) : (

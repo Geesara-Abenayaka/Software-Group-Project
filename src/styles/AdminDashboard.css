@@ -211,7 +211,7 @@
 
 .add-program-btn {
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, var(--brand) 0%, #a30000 100%);
+  background: var(--brand);
   color: white;
   border: none;
   border-radius: 8px;
@@ -226,7 +226,7 @@
 }
 
 .add-program-btn:hover {
-  background: linear-gradient(135deg, #a30000 0%, var(--brand) 100%);
+  background: var(--brand-dark);
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(139, 26, 26, 0.3);
 }
@@ -516,7 +516,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: var(--z-modal);
   padding: 1rem;
 }
 
@@ -672,7 +672,7 @@
 
 .save-btn {
   padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, var(--brand) 0%, #a30000 100%);
+  background: var(--brand);
   color: white;
   border: none;
   border-radius: 6px;
@@ -683,7 +683,7 @@
 }
 
 .save-btn:hover {
-  background: linear-gradient(135deg, #a30000 0%, var(--brand) 100%);
+  background: var(--brand-dark);
   box-shadow: 0 4px 8px rgba(139, 26, 26, 0.3);
 }
 
@@ -1165,5 +1165,58 @@
 @media (max-width: 640px) {
   .program-form-row {
     grid-template-columns: 1fr;
+  }
+}
+
+/* The Add New Program tile is a button; its parts are spans that keep the old layout */
+button.add-program-card {
+  width: 100%;
+  min-height: 100%;
+  border: 2.5px dashed var(--border-strong);
+}
+
+.add-program-card-title,
+.add-program-card-subtitle {
+  display: block;
+}
+
+/* Phones and tablets: the six tabs don't fit, so they scroll sideways inside the bar
+   instead of making the whole page scroll sideways */
+@media (max-width: 1024px) {
+  .navbar-content {
+    overflow-x: auto;
+    padding: 0 1rem;
+    scrollbar-width: none;
+  }
+
+  .navbar-content::-webkit-scrollbar {
+    display: none;
+  }
+
+  .navbar-btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .navbar-btn:focus-visible {
+    outline-offset: -3px;
+  }
+}
+
+/* The long subtitle wraps instead of pushing the header wider than the screen */
+@media (max-width: 768px) {
+  .admin-header-content {
+    padding: 0 1rem;
+  }
+
+  .header-left {
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  .admin-header .header-text {
+    flex: 1 1 auto;
+    min-width: 0;
+    text-align: left;
   }
 }

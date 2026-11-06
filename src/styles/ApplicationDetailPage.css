@@ -355,7 +355,7 @@
 .bulk-email-overlay {
   position: fixed;
   inset: 0;
-  z-index: 1200;
+  z-index: var(--z-modal);
   background: rgba(17, 24, 39, 0.55);
   display: flex;
   align-items: center;
@@ -750,3 +750,9 @@
     justify-content: center;
   }
 }
+
+/* At least 24px tall to tap */
+.detail-bulk-btn {
+  min-height: 32px;
+}
+

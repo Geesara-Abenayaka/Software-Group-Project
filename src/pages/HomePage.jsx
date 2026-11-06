@@ -8,6 +8,7 @@ import DeadlineBadge from '../components/DeadlineBadge';
 import { ProgramCardSkeleton, TopProgressBar } from '../components/Loaders';
 import useDelayedFlag from '../utils/useDelayedFlag';
 import { getDaysLeft, getToday } from '../utils/deadline';
+import usePageTitle from '../utils/usePageTitle';
 
 const VISIBLE_SPECIALIZATIONS = 3;
 
@@ -19,6 +20,7 @@ const getDeadlineRank = (program, today) => {
 };
 
 function HomePage() {
+  usePageTitle();
   const navigate = useNavigate();
   const location = useLocation();
   

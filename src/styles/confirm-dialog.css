@@ -1,8 +1,8 @@
-/* Confirm dialog (ConfirmDialog.jsx), above every other modal */
+/* Confirm dialog (ConfirmDialog.jsx): the modal level; pages render it after their other modals, so it is on top */
 .confirm-overlay {
   position: fixed;
   inset: 0;
-  z-index: 1550;
+  z-index: var(--z-modal);
   display: flex;
   align-items: center;
   justify-content: center;

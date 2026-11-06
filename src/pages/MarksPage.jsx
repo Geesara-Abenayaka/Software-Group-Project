@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Inbox } from 'lucide-react';
+import { Check, Inbox, Trash2 } from 'lucide-react';
 import '../styles/MarksPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import AdminLayout from '../components/AdminLayout';
@@ -431,6 +431,7 @@ function MarksPage() {
     <AdminLayout onClick={handleDeselectRow}>
       <div className="admin-content-full">
         <main id="main" tabIndex={-1} className="admin-main-full marks-main">
+          <h1 className="sr-only">Marks</h1>
           <div className="marks-controls" onClick={(e) => e.stopPropagation()}>
             <div className="search-wrapper">
               <input
@@ -533,6 +534,15 @@ function MarksPage() {
                         }}
                         className={selectedApplication === originalIndex ? 'selected-row' : ''}
                         style={{ cursor: 'pointer' }}
+                        // A row is picked with Enter or Space too, not only the mouse
+                        tabIndex={0}
+                        aria-selected={selectedApplication === originalIndex}
+                        onKeyDown={(e) => {
+                          if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
+                            e.preventDefault();
+                            e.currentTarget.click();
+                          }
+                        }}
                       >
                         <td>{app.program || '-'}</td>
                         <td><StatusPill status={app.status} /></td>
@@ -548,8 +558,9 @@ function MarksPage() {
                             className="delete-icon-btn"
                             onClick={(e) => handleDelete(app._id, e)}
                             title="Delete application"
+                            aria-label="Delete application"
                           >
-                            🗑️
+                            <Trash2 size={16} aria-hidden="true" />
                           </button>
                         </td>
                       </tr>
@@ -655,20 +666,26 @@ function MarksPage() {
                   <button
                     className={`status-btn ${formData.applicationStatus === 'Pending' ? 'active' : ''}`}
                     onClick={() => handleStatusChange('Pending')}
+                    aria-pressed={formData.applicationStatus === 'Pending'}
                   >
-                    ✓ Pending
+                    {formData.applicationStatus === 'Pending' && <Check size={14} aria-hidden="true" />}
+                    Pending
                   </button>
                   <button
                     className={`status-btn ${formData.applicationStatus === 'Approved' ? 'active' : ''}`}
                     onClick={() => handleStatusChange('Approved')}
+                    aria-pressed={formData.applicationStatus === 'Approved'}
                   >
-                    ✓ Approved
+                    {formData.applicationStatus === 'Approved' && <Check size={14} aria-hidden="true" />}
+                    Approved
                   </button>
                   <button
                     className={`status-btn ${formData.applicationStatus === 'Rejected' ? 'active' : ''}`}
                     onClick={() => handleStatusChange('Rejected')}
+                    aria-pressed={formData.applicationStatus === 'Rejected'}
                   >
-                    ✓ Rejected
+                    {formData.applicationStatus === 'Rejected' && <Check size={14} aria-hidden="true" />}
+                    Rejected
                   </button>
                 </div>
               </div>
