@@ -1,8 +1,10 @@
 import express from 'express';
+import mongoose from 'mongoose';
 import Application from '../models/Application.js';
 import Program from '../models/Program.js';
 import { isDateString } from '../utils/applicationWindow.js';
-import { APPLICATION_FEE } from '../utils/stripePayments.js';
+import { APPLICATION_FEE, getApplicationFeePayment, isStripeConfigured } from '../utils/stripePayments.js';
+import { classifyStripePayments, searchApplicationFeePayments } from '../utils/stripeCheck.js';
 import { buildReport, PAYMENT_KEYS, reportPaymentKind } from '../utils/reportBuilder.js';
 import { loadReceiptMatches } from '../utils/receiptMatches.js';
 import { getStripeMode, toDateRange, toReference } from '../utils/reportRules.js';
@@ -206,6 +208,136 @@ router.get('/payments', async (req, res) => {
   } catch (error) {
     console.error('Error listing report payments:', error);
     return res.status(500).json({ success: false, message: 'Could not load the payment list. Please try again.' });
+  }
+});
+
+// How many database card payments missing from Stripe's search are looked up one by one.
+const MAX_LOOKUPS = 25;
+
+const dashboardUrl = (paymentIntentId, stripeMode) => (
+  `https://dashboard.stripe.com/${stripeMode === 'live' ? '' : 'test/'}payments/${paymentIntentId}`
+);
+
+// Compares the card payments in Stripe with the applications in the database: payments with no application,
+// payments whose application was deleted, refunds and disputes, and database card payments this Stripe
+// account doesn't have. It calls Stripe, so the page runs it when asked, not on every load.
+// GET /api/reports/stripe-check?from&to&program&hideDemo
+router.get('/stripe-check', async (req, res) => {
+  const filters = readFilters(req.query);
+  if (filters.error) {
+    return res.status(400).json({ success: false, message: filters.error });
+  }
+  if (!isStripeConfigured()) {
+    return res.json({ success: true, data: { configured: false } });
+  }
+
+  try {
+    const stripeMode = getStripeMode();
+    const { allPrograms } = await buildQuery(filters);
+    const programTitles = new Map(allPrograms.map((program) => [program.shortCode, program.title]));
+    const demoCodes = allPrograms.filter((program) => program.isProposed).map((program) => program.shortCode);
+    const inScope = (code) => (filters.program ? code === filters.program : !(filters.hideDemo && demoCodes.includes(code)));
+
+    const { start, end } = toDateRange(filters.from, filters.to);
+    const toSeconds = (date) => (date ? Math.floor(date.getTime() / 1000) : null);
+    const payments = (await searchApplicationFeePayments({ start: toSeconds(start), end: toSeconds(end) }))
+      .filter((payment) => inScope(payment.program));
+
+    const intentIds = payments.map((payment) => payment.paymentIntentId);
+    const linkedIds = payments.map((payment) => payment.applicationId).filter((id) => mongoose.Types.ObjectId.isValid(id));
+    const [savedWithPayment, stillThere] = await Promise.all([
+      Application.find({ 'payment.stripePaymentIntentId': { $in: intentIds } })
+        .select('fullName program payment.stripePaymentIntentId')
+        .lean(),
+      Application.find({ _id: { $in: linkedIds } }).select('_id').lean()
+    ]);
+    const applicationsByIntentId = new Map(savedWithPayment.map((application) => [application.payment.stripePaymentIntentId, application]));
+    const existingApplicationIds = new Set(stillThere.map((application) => String(application._id)));
+
+    const result = classifyStripePayments({ payments, applicationsByIntentId, existingApplicationIds });
+
+    const describe = (payment) => {
+      const application = applicationsByIntentId.get(payment.paymentIntentId);
+      const applicationId = application
+        ? String(application._id)
+        : existingApplicationIds.has(payment.applicationId) ? payment.applicationId : '';
+      return {
+        ...payment,
+        programTitle: programTitles.get(payment.program) || '',
+        applicationId,
+        reference: applicationId ? toReference(applicationId) : '',
+        deletedApplicationReference: !applicationId && payment.applicationId ? toReference(payment.applicationId) : '',
+        dashboardUrl: dashboardUrl(payment.paymentIntentId, stripeMode)
+      };
+    };
+
+    // Card payments in the database that the search didn't return. Each is looked up by its id first,
+    // because the search can take a minute to include a new payment. Only payments made with this kind of
+    // key (live or test) can be in this Stripe account.
+    const databaseFilter = {
+      'payment.method': 'card',
+      'payment.status': 'succeeded',
+      'payment.livemode': stripeMode === 'live' ? true : { $ne: true }
+    };
+    if (start || end) {
+      databaseFilter['payment.paidAt'] = {};
+      if (start) databaseFilter['payment.paidAt'].$gte = start;
+      if (end) databaseFilter['payment.paidAt'].$lte = end;
+    }
+    if (filters.program) {
+      databaseFilter.program = filters.program;
+    } else if (filters.hideDemo && demoCodes.length > 0) {
+      databaseFilter.program = { $nin: demoCodes };
+    }
+    const found = new Set(intentIds);
+    const notReturned = (await Application.find(databaseFilter).select('fullName nicNo program payment').lean())
+      .filter((application) => !found.has(application.payment.stripePaymentIntentId));
+
+    const toLookUp = notReturned.slice(0, MAX_LOOKUPS);
+    const lookups = [];
+    for (let index = 0; index < toLookUp.length; index += 5) {
+      // Five at a time: quicker than one by one, and well inside Stripe's rate limit.
+      lookups.push(...await Promise.all(toLookUp.slice(index, index + 5)
+        .map((application) => getApplicationFeePayment(application.payment.stripePaymentIntentId))));
+    }
+
+    const missingInStripe = [];
+    toLookUp.forEach((application, index) => {
+      const payment = lookups[index];
+      if (!payment || payment.status !== 'succeeded') {
+        missingInStripe.push({
+          applicationId: String(application._id),
+          reference: toReference(application._id),
+          fullName: application.fullName || '',
+          nicNo: application.nicNo || '',
+          program: application.program,
+          programTitle: programTitles.get(application.program) || '',
+          paymentIntentId: application.payment.stripePaymentIntentId,
+          amount: application.payment.amount,
+          paidAt: application.payment.paidAt || null
+        });
+      }
+    });
+
+    return res.json({
+      success: true,
+      data: {
+        configured: true,
+        stripeMode,
+        checkedAt: new Date().toISOString(),
+        filters: describeFilters(filters),
+        totals: result.totals,
+        noApplication: result.noApplication.map(describe),
+        applicationDeleted: result.applicationDeleted.map(describe),
+        refunds: result.refunds.map(describe),
+        disputes: result.disputes.map(describe),
+        missingInStripe,
+        missingNotLookedUp: Math.max(0, notReturned.length - MAX_LOOKUPS)
+      }
+    });
+  } catch (error) {
+    console.error('Error comparing payments with Stripe:', error.message);
+    return res.status(502).json({ success: false, message: "Couldn't reach Stripe. Please try again in a minute." });
   }
 });
 
