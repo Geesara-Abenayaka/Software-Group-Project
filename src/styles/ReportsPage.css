@@ -445,6 +445,10 @@ table.report-table tfoot td {
   text-decoration: none;
 }
 
+button.report-link {
+  cursor: pointer;
+}
+
 .report-link:hover {
   text-decoration: underline;
 }

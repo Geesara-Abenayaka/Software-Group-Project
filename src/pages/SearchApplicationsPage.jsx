@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowDown, ArrowUp, ArrowUpDown, Download, FileText, Clock, CheckCircle2, SearchX, XCircle } from 'lucide-react';
 import '../styles/SearchApplicationsPage.css';
 import API_BASE_URL from '../utils/apiConfig';
+import { adminFetch } from '../utils/adminSession';
 import { formatReference } from '../utils/applicationReference';
 import { deleteConfirmMessage } from '../utils/applicationDelete';
 import AdminLayout from '../components/AdminLayout';
@@ -20,7 +21,7 @@ const fetchWithTimeout = async (url, timeoutMs = 8000) => {
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const response = await fetch(url, { signal: controller.signal });
+    const response = await adminFetch(url, { signal: controller.signal });
     return response;
   } finally {
     clearTimeout(timeoutId);
@@ -261,7 +262,7 @@ function SearchApplicationsPage() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/applications/${applicationId}`, {
+      const response = await adminFetch(`${API_BASE_URL}/applications/${applicationId}`, {
         method: 'DELETE'
       });
 

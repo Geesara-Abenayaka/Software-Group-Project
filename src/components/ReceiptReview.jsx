@@ -3,6 +3,7 @@ import { CheckCircle2, Clock, RotateCcw, XCircle } from 'lucide-react';
 import ReceiptMatches from './reports/ReceiptMatches';
 import { ButtonSpinner } from './Loaders';
 import API_BASE_URL from '../utils/apiConfig';
+import { adminFetch } from '../utils/adminSession';
 import { formatDate } from '../utils/formatDate';
 import { errorMessage, readJson } from '../utils/readJson';
 import { toast } from '../utils/toast';
@@ -46,7 +47,7 @@ function ReceiptReview({ applicationId, payment, matches, onChange, compact = fa
   const send = async (action) => {
     setBusy(action);
     try {
-      const response = await fetch(`${API_BASE_URL}/applications/${applicationId}/payment`, {
+      const response = await adminFetch(`${API_BASE_URL}/applications/${applicationId}/payment`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, note: action === 'reject' ? note.trim() : '', reviewedBy: signedInEmail() })

@@ -4,6 +4,7 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import '../styles/DownloadFormsPage.css';
 import API_BASE_URL from '../utils/apiConfig';
+import { adminFetch } from '../utils/adminSession';
 import AdminLayout from '../components/AdminLayout';
 import { toast } from '../utils/toast';
 import { Skeleton } from '../components/Loaders';
@@ -37,7 +38,7 @@ function DownloadFormsPage() {
   const fetchPrograms = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/programs`);
+      const response = await adminFetch(`${API_BASE_URL}/programs`);
       const data = await response.json();
       
       if (data.success) {
@@ -435,7 +436,7 @@ function DownloadFormsPage() {
       }
 
       // Fetch applications
-      const response = await fetch(`${API_BASE_URL}/applications`);
+      const response = await adminFetch(`${API_BASE_URL}/applications`);
       const data = await response.json();
 
       if (!data.success) {
@@ -529,7 +530,7 @@ function DownloadFormsPage() {
   const handleDownloadApproved = async () => {
     try {
       // Fetch applications
-      const response = await fetch(`${API_BASE_URL}/applications`);
+      const response = await adminFetch(`${API_BASE_URL}/applications`);
       const data = await response.json();
 
       if (!data.success) {

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { User } from 'lucide-react';
 import '../styles/ApplicationsPage.css';
 import API_BASE_URL from '../utils/apiConfig';
+import { adminFetch } from '../utils/adminSession';
 import AdminLayout from '../components/AdminLayout';
 import { AdminProgramCardSkeleton } from '../components/Loaders';
 import useDelayedFlag from '../utils/useDelayedFlag';
@@ -12,7 +13,7 @@ const fetchWithTimeout = async (url, timeoutMs = 8000) => {
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const response = await fetch(url, { signal: controller.signal });
+    const response = await adminFetch(url, { signal: controller.signal });
     return response;
   } finally {
     clearTimeout(timeoutId);

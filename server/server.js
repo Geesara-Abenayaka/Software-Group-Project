@@ -24,7 +24,9 @@ app.set('trust proxy', 1);
 // 1. IMPROVED MIDDLEWARE
 // For production, you can restrict this to your IP, but this ensures 
 // Nginx headers are accepted.
-app.use(cors()); 
+// Content-Disposition is exposed so the admin pages can read a downloaded document's file name
+// when the API is on another address (local development).
+app.use(cors({ exposedHeaders: ['Content-Disposition'] }));
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 

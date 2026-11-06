@@ -12,6 +12,7 @@ import ReportFilters from '../components/reports/ReportFilters';
 import ReportTiles from '../components/reports/ReportTiles';
 import StripeCheck from '../components/reports/StripeCheck';
 import API_BASE_URL from '../utils/apiConfig';
+import { adminFetch } from '../utils/adminSession';
 import { formatDateTime } from '../utils/formatDate';
 import { formatCount } from '../utils/formatMoney';
 import {
@@ -79,12 +80,12 @@ function ReportsPage() {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch(`${API_BASE_URL}/programs`, { signal: controller.signal })
+    adminFetch(`${API_BASE_URL}/programs`, { signal: controller.signal })
       .then((response) => readJson(response, 'Could not load the programs.'))
       .then((body) => setPrograms(Array.isArray(body.data) ? body.data : []))
       .catch(() => {}); // the program list just stays empty; the report still loads
 
-    fetch(`${API_BASE_URL}/settings/application-period`, { signal: controller.signal })
+    adminFetch(`${API_BASE_URL}/settings/application-period`, { signal: controller.signal })
       .then((response) => (response.ok ? response.json() : null))
       .then((body) => setApplicationPeriod(body?.value?.start && body?.value?.end ? body.value : null))
       .catch((error) => {
@@ -98,7 +99,7 @@ function ReportsPage() {
     if (!canRequest) return undefined;
 
     const controller = new AbortController();
-    fetch(`${API_BASE_URL}/reports/summary?${query}`, { signal: controller.signal })
+    adminFetch(`${API_BASE_URL}/reports/summary?${query}`, { signal: controller.signal })
       .then((response) => readJson(response, "Couldn't load the report."))
       .then((body) => setResult({ key: requestKey, data: body.data, error: '' }))
       .catch((error) => {
@@ -162,7 +163,7 @@ function ReportsPage() {
     const scope = exportScope();
     setExporting('payments');
     try {
-      const response = await fetch(`${API_BASE_URL}/reports/payments?${scope.query}&limit=all`);
+      const response = await adminFetch(`${API_BASE_URL}/reports/payments?${scope.query}&limit=all`);
       const body = await readJson(response, "Couldn't load the payment list.");
       downloadFile(buildPaymentsCsv(body.data), reportFileName('payments', scope.range, scope.code, 'csv'), 'text/csv;charset=utf-8');
     } catch (error) {

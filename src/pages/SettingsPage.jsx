@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import adminAxios from '../utils/adminAxios';
+import { saveAdminSession } from '../utils/adminSession';
 import '../styles/SettingsPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import AdminLayout from '../components/AdminLayout';
@@ -52,7 +53,7 @@ function SettingsPage() {
   };
 
   useEffect(() => {
-    axios.get(`${API_BASE_URL}/settings/assistant-facts`)
+    adminAxios.get(`${API_BASE_URL}/settings/assistant-facts`)
       .then(({ data }) => applyFacts(data))
       .catch(() => setFactsFeedback({ type: 'error', message: 'Could not load the Course Advisor facts.' }));
   }, []);
@@ -68,7 +69,7 @@ function SettingsPage() {
   };
 
   useEffect(() => {
-    axios.get(`${API_BASE_URL}/settings/application-period`)
+    adminAxios.get(`${API_BASE_URL}/settings/application-period`)
       .then(({ data }) => {
         applyDateRange(data.value);
         // Open the calendars on the saved range.
@@ -80,13 +81,13 @@ function SettingsPage() {
       })
       .catch(() => setDateRangeFeedback({ type: 'error', message: 'Could not load the date range.' }));
 
-    axios.get(`${API_BASE_URL}/settings/application-deadline`)
+    adminAxios.get(`${API_BASE_URL}/settings/application-deadline`)
       .then(({ data }) => applyDeadline(data.value))
       .catch(() => setDeadlineFeedback({ type: 'error', message: 'Could not load the application deadline.' }));
   }, []);
 
   useEffect(() => {
-    axios.get(`${API_BASE_URL}/assistant/feedback`, { params: feedbackFilter ? { type: feedbackFilter } : {} })
+    adminAxios.get(`${API_BASE_URL}/assistant/feedback`, { params: feedbackFilter ? { type: feedbackFilter } : {} })
       .then(({ data }) => {
         setAssistantFeedback(data.data || []);
         setFeedbackError('');
@@ -106,7 +107,7 @@ function SettingsPage() {
     setFactsFeedback({ type: '', message: '' });
 
     try {
-      const { data } = await axios.put(`${API_BASE_URL}/settings/assistant-facts`, { value: assistantFacts });
+      const { data } = await adminAxios.put(`${API_BASE_URL}/settings/assistant-facts`, { value: assistantFacts });
       applyFacts(data);
       setFactsFeedback({ type: 'success', message: 'Saved. The Course Advisor now answers with these facts.' });
     } catch (error) {
@@ -130,7 +131,7 @@ function SettingsPage() {
     setFactsFeedback({ type: '', message: '' });
 
     try {
-      const { data } = await axios.delete(`${API_BASE_URL}/settings/assistant-facts`);
+      const { data } = await adminAxios.delete(`${API_BASE_URL}/settings/assistant-facts`);
       applyFacts(data);
       setFactsFeedback({ type: 'success', message: 'The default facts are back.' });
     } catch (error) {
@@ -158,7 +159,7 @@ function SettingsPage() {
     }
 
     try {
-      const { data } = await axios.put(`${API_BASE_URL}/settings/application-period`, {
+      const { data } = await adminAxios.put(`${API_BASE_URL}/settings/application-period`, {
         value: { start: selectedDates[0], end: selectedDates[1] }
       });
       applyDateRange(data.value);
@@ -170,7 +171,7 @@ function SettingsPage() {
 
   const handleClearDateRange = async () => {
     try {
-      const { data } = await axios.delete(`${API_BASE_URL}/settings/application-period`);
+      const { data } = await adminAxios.delete(`${API_BASE_URL}/settings/application-period`);
       applyDateRange(data.value);
       setDateRangeFeedback({ type: 'success', message: 'Cleared. Applications are open all year.' });
     } catch (error) {
@@ -185,7 +186,7 @@ function SettingsPage() {
     }
 
     try {
-      const { data } = await axios.put(`${API_BASE_URL}/settings/application-deadline`, { value: newDeadline });
+      const { data } = await adminAxios.put(`${API_BASE_URL}/settings/application-deadline`, { value: newDeadline });
       applyDeadline(data.value);
       setDeadlineFeedback({ type: 'success', message: 'Saved. Programs without their own deadline close after this date.' });
     } catch (error) {
@@ -195,7 +196,7 @@ function SettingsPage() {
 
   const handleClearDeadline = async () => {
     try {
-      const { data } = await axios.delete(`${API_BASE_URL}/settings/application-deadline`);
+      const { data } = await adminAxios.delete(`${API_BASE_URL}/settings/application-deadline`);
       applyDeadline(data.value);
       setDeadlineFeedback({ type: 'success', message: 'Cleared. Only programs with their own deadline close.' });
     } catch (error) {
@@ -235,11 +236,15 @@ function SettingsPage() {
     setPasswordFeedback({ type: '', message: '' });
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/change-password`, {
-        userId: user.id,
+      // The server takes the admin from the session. The old session ends with the old password,
+      // so keep the new one it returns.
+      const response = await adminAxios.post(`${API_BASE_URL}/auth/change-password`, {
         currentPassword,
         newPassword
       });
+      if (response.data?.token) {
+        saveAdminSession({ token: response.data.token, expiresAt: response.data.expiresAt });
+      }
 
       setPasswordFeedback({ type: 'success', message: response.data?.message || 'Password changed successfully.' });
       setCurrentPassword('');

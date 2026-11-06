@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import axios from 'axios'
 import { AlertCircle, ArrowLeft, Lock } from 'lucide-react'
 import '../App.css'
@@ -9,6 +9,7 @@ import SiteFooter from '../components/SiteFooter'
 import { ButtonSpinner } from '../components/Loaders'
 import PasswordInput from '../components/PasswordInput'
 import usePageTitle from '../utils/usePageTitle'
+import { saveAdminSession } from '../utils/adminSession'
 
 // Wrong email or password: shown with a link to reset the password
 const WRONG_DETAILS = 'wrong-details'
@@ -20,6 +21,9 @@ function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  // Sent here by an admin page after the server said the session was no longer valid
+  const [searchParams] = useSearchParams()
+  const sessionEnded = searchParams.get('session') === 'ended'
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -33,8 +37,8 @@ function LoginPage() {
       })
 
       if (response.data) {
-        // Store user data if needed
-        localStorage.setItem('user', JSON.stringify(response.data.user))
+        // The user and the signed session that admin pages send with every admin API request
+        saveAdminSession(response.data)
         // Navigate to admin dashboard
         navigate('/admin/dashboard')
       }
@@ -98,6 +102,13 @@ function LoginPage() {
                 required
               />
             </div>
+
+            {sessionEnded && !error && (
+              <div className="form-alert form-alert--info" role="status">
+                <AlertCircle size={16} aria-hidden="true" />
+                <p className="form-alert__body">Your session has ended. Please sign in again.</p>
+              </div>
+            )}
 
             {error && (
               <div className="form-alert form-alert--error" role="alert">

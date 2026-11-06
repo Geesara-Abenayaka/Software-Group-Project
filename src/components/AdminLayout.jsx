@@ -5,6 +5,7 @@ import uomLogo from '../assets/uom-logo.png';
 import '../styles/AdminDashboard.css';
 import '../styles/admin-tables.css';
 import usePageTitle from '../utils/usePageTitle';
+import { clearAdminSession, getAdminSession } from '../utils/adminSession';
 
 const NAV_ITEMS = [
   { to: '/admin/dashboard', label: 'Programs', icon: GraduationCap },
@@ -32,14 +33,16 @@ function AdminLayout({ children, onClick }) {
     activeTabRef.current?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   }, [pathname]);
 
+  // No session, an expired one, or one saved before sessions had a token: sign in again.
   useEffect(() => {
-    if (!localStorage.getItem('user')) {
+    if (!getAdminSession()) {
+      clearAdminSession();
       navigate('/login');
     }
   }, [navigate]);
 
   const handleLogout = () => {
-    localStorage.removeItem('user');
+    clearAdminSession();
     navigate('/login');
   };
 

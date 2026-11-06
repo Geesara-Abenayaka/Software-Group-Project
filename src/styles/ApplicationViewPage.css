@@ -345,3 +345,9 @@
   font-weight: 500;
   letter-spacing: 1px;
 }
+
+/* "View" is a button (documents need the admin session, which a link can't send); buttons don't inherit the font */
+button.file-action-btn {
+  font-family: inherit;
+  line-height: inherit;
+}

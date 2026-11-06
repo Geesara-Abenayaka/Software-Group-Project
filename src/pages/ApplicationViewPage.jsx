@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Check, CreditCard, ExternalLink, Eye, FileText, X } from 'lucide-react';
 import '../styles/ApplicationViewPage.css';
 import API_BASE_URL from '../utils/apiConfig';
+import { adminFetch, clearAdminSession, getAdminSession } from '../utils/adminSession';
+import { openAdminFile } from '../utils/adminFiles';
 import { PageLoader } from '../components/Loaders';
 import Breadcrumbs from '../components/Breadcrumbs';
 import { formatReference } from '../utils/applicationReference';
@@ -18,12 +20,21 @@ const fetchWithTimeout = async (url, timeoutMs = 8000) => {
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const response = await fetch(url, { signal: controller.signal });
+    const response = await adminFetch(url, { signal: controller.signal });
     return response;
   } finally {
     clearTimeout(timeoutId);
   }
 };
+
+// Opens an uploaded document in a new tab. Documents need the admin session, which a plain link can't send.
+function ViewFileButton({ url, fileName }) {
+  return (
+    <button type="button" className="file-action-btn view-btn" title="Open in a new tab" onClick={() => openAdminFile(url, fileName)}>
+      <Eye size={16} aria-hidden="true" /> View
+    </button>
+  );
+}
 
 function ApplicationViewPage() {
   const navigate = useNavigate();
@@ -35,10 +46,12 @@ function ApplicationViewPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
+    // No session, an expired one, or one saved before sessions had a token: sign in again.
+    const session = getAdminSession();
+    if (session) {
+      setUser(session);
     } else {
+      clearAdminSession();
       navigate('/login');
     }
     fetchApplicationDetails();
@@ -80,7 +93,7 @@ function ApplicationViewPage() {
 
   const handleUpdateStatus = async (newStatus) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/applications/${applicationId}/status`, {
+      const response = await adminFetch(`${API_BASE_URL}/applications/${applicationId}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'
@@ -372,15 +385,7 @@ function ApplicationViewPage() {
                   <div key={idx} className="file-item-with-actions">
                     <span className="file-name"><FileText size={16} aria-hidden="true" /> {file.fileName}</span>
                     <div className="file-actions">
-                      <a 
-                        href={`${API_BASE_URL}/applications/${applicationId}/file/${file.fileId}`} 
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="file-action-btn view-btn"
-                        title="Open in new tab"
-                      >
-                        <Eye size={16} aria-hidden="true" /> View
-                      </a>
+                      <ViewFileButton url={`${API_BASE_URL}/applications/${applicationId}/file/${file.fileId}`} fileName={file.fileName} />
                     </div>
                   </div>
                 ))}
@@ -396,15 +401,7 @@ function ApplicationViewPage() {
               <div className="file-item-with-actions">
                 <span className="file-name"><FileText size={16} aria-hidden="true" /> {application.documents.nic.fileName}</span>
                 <div className="file-actions">
-                  <a 
-                    href={`${API_BASE_URL}/applications/${applicationId}/file/${application.documents.nic.fileId}`} 
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="file-action-btn view-btn"
-                    title="Open in new tab"
-                  >
-                    <Eye size={16} aria-hidden="true" /> View
-                  </a>
+                  <ViewFileButton url={`${API_BASE_URL}/applications/${applicationId}/file/${application.documents.nic.fileId}`} fileName={application.documents.nic.fileName} />
                 </div>
               </div>
             ) : (
@@ -420,15 +417,7 @@ function ApplicationViewPage() {
                   <div key={idx} className="file-item-with-actions">
                     <span className="file-name"><FileText size={16} aria-hidden="true" /> {file.fileName}</span>
                     <div className="file-actions">
-                      <a 
-                        href={`${API_BASE_URL}/applications/${applicationId}/file/${file.fileId}`} 
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="file-action-btn view-btn"
-                        title="Open in new tab"
-                      >
-                        <Eye size={16} aria-hidden="true" /> View
-                      </a>
+                      <ViewFileButton url={`${API_BASE_URL}/applications/${applicationId}/file/${file.fileId}`} fileName={file.fileName} />
                     </div>
                   </div>
                 ))}
@@ -444,15 +433,7 @@ function ApplicationViewPage() {
               <div className="file-item-with-actions">
                 <span className="file-name"><FileText size={16} aria-hidden="true" /> {application.documents.transcript.fileName}</span>
                 <div className="file-actions">
-                  <a 
-                    href={`${API_BASE_URL}/applications/${applicationId}/file/${application.documents.transcript.fileId}`} 
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="file-action-btn view-btn"
-                    title="Open in new tab"
-                  >
-                    <Eye size={16} aria-hidden="true" /> View
-                  </a>
+                  <ViewFileButton url={`${API_BASE_URL}/applications/${applicationId}/file/${application.documents.transcript.fileId}`} fileName={application.documents.transcript.fileName} />
                 </div>
               </div>
             ) : (
@@ -493,15 +474,7 @@ function ApplicationViewPage() {
                 <div className="file-item-with-actions">
                   <span className="file-name"><FileText size={16} aria-hidden="true" /> {application.documents.paymentConfirmation.fileName}</span>
                   <div className="file-actions">
-                    <a
-                      href={`${API_BASE_URL}/applications/${applicationId}/file/${application.documents.paymentConfirmation.fileId}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="file-action-btn view-btn"
-                      title="Open in new tab"
-                    >
-                      <Eye size={16} aria-hidden="true" /> View
-                    </a>
+                    <ViewFileButton url={`${API_BASE_URL}/applications/${applicationId}/file/${application.documents.paymentConfirmation.fileId}`} fileName={application.documents.paymentConfirmation.fileName} />
                   </div>
                 </div>
                 {/* An admin checks the receipt against the bank statement */}

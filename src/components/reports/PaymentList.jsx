@@ -4,6 +4,8 @@ import { ExternalLink, SearchX } from 'lucide-react';
 import ReceiptMatches from './ReceiptMatches';
 import ReceiptReview from '../ReceiptReview';
 import API_BASE_URL from '../../utils/apiConfig';
+import { adminFetch } from '../../utils/adminSession';
+import { downloadAdminFile } from '../../utils/adminFiles';
 import { formatDate, formatDateTime } from '../../utils/formatDate';
 import { describeCard, formatCount, formatRupees } from '../../utils/formatMoney';
 import { errorMessage, readJson } from '../../utils/readJson';
@@ -59,9 +61,14 @@ function PaymentCell({ row, onPaymentChange }) {
         {row.method === 'bankRejected' && row.note && <span className="report-pay__sub">“{row.note}”</span>}
         <ReceiptMatches matches={row.receiptMatches} />
         {row.receiptFileId && (
-          <a className="report-link report-pay__link" href={`${API_BASE_URL}/applications/${row._id}/file/${row.receiptFileId}`}>
+          // A button: the file needs the admin session, which a plain link can't send.
+          <button
+            type="button"
+            className="btn-reset report-link report-pay__link"
+            onClick={() => downloadAdminFile(`${API_BASE_URL}/applications/${row._id}/file/${row.receiptFileId}`, `receipt-${row.reference}`)}
+          >
             Download receipt
-          </a>
+          </button>
         )}
         <ReceiptReview
           compact
@@ -119,7 +126,7 @@ function PaymentList({ baseQuery, refreshKey, liveMode, onReceiptChecked }) {
     params.set('page', String(pageNumber));
     params.set('limit', String(PAGE_SIZE));
 
-    fetch(`${API_BASE_URL}/reports/payments?${params}`, { signal: controller.signal })
+    adminFetch(`${API_BASE_URL}/reports/payments?${params}`, { signal: controller.signal })
       .then((response) => readJson(response, "Couldn't load the payment list."))
       .then((body) => setResult((previous) => ({
         key: requestKey,

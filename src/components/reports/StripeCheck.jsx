@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { CheckCircle2, ExternalLink, ShieldCheck } from 'lucide-react';
 import { ButtonSpinner } from '../Loaders';
 import API_BASE_URL from '../../utils/apiConfig';
+import { adminFetch } from '../../utils/adminSession';
 import { formatDate, formatDateTime } from '../../utils/formatDate';
 import { formatCount, formatRupees } from '../../utils/formatMoney';
 import { errorMessage, readJson } from '../../utils/readJson';
@@ -84,7 +85,7 @@ function StripeCheck({ baseQuery }) {
   const run = async () => {
     setRunning(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/reports/stripe-check?${baseQuery}`);
+      const response = await adminFetch(`${API_BASE_URL}/reports/stripe-check?${baseQuery}`);
       const body = await readJson(response, "Couldn't reach Stripe. Please try again in a minute.");
       setResult({ query: baseQuery, data: body.data, error: '' });
     } catch (error) {
