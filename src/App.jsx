@@ -21,6 +21,7 @@ import './styles/SearchApplicationsPage.css'
 import './styles/DownloadFormsPage.css'
 import './styles/MarksPage.css'
 import './styles/SettingsPage.css'
+import './styles/ReportsPage.css'
 import FloatingAssistant from './components/FloatingAssistant'
 import ToastHost from './components/ToastHost'
 import { PageLoader } from './components/Loaders'
@@ -38,6 +39,7 @@ const SearchApplicationsPage = lazy(() => import('./pages/SearchApplicationsPage
 const DownloadFormsPage = lazy(() => import('./pages/DownloadFormsPage'))
 const MarksPage = lazy(() => import('./pages/MarksPage'))
 const SettingsPage = lazy(() => import('./pages/SettingsPage'))
+const ReportsPage = lazy(() => import('./pages/ReportsPage'))
 
 function AppRoutes() {
   const location = useLocation()
@@ -75,6 +77,7 @@ function AppRoutes() {
         <Route path="/admin/search" element={<SearchApplicationsPage />} />
         <Route path="/admin/download" element={<DownloadFormsPage />} />
         <Route path="/admin/marks" element={<MarksPage />} />
+        <Route path="/admin/reports" element={<ReportsPage />} />
         <Route path="/admin/settings" element={<SettingsPage />} />
       </Routes>
       </Suspense>

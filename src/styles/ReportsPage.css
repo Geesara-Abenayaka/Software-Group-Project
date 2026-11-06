@@ -1,0 +1,294 @@
+/* Admin Reports page (ReportsPage.jsx and components/reports/).
+   Every class starts with report-, so nothing here can change another page. Colours come from the tokens in index.css. */
+
+main.admin-main-full.report-main {
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.report-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.report-subtitle {
+  margin: 4px 0 0;
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+}
+
+/* Filters */
+.report-filters {
+  margin-bottom: var(--space-4);
+  padding: var(--space-4) 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.report-filters__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3) var(--space-4);
+}
+
+.report-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.report-field label {
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.report-field select,
+.report-field input,
+.report-search input {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-sm);
+}
+
+.report-field select {
+  min-width: 220px;
+  max-width: 100%;
+}
+
+.report-field--program select {
+  min-width: 260px;
+}
+
+.report-field select:focus-visible,
+.report-field input:focus-visible,
+.report-search input:focus-visible {
+  outline: none;
+  border-color: var(--input-focus-border);
+  box-shadow: var(--focus-ring);
+}
+
+.report-field input[aria-invalid='true'] {
+  border-color: var(--input-error-border);
+}
+
+.report-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 40px;
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.report-check input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--brand);
+}
+
+.report-check:has(input:disabled) {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.report-field-error {
+  margin: var(--space-3) 0 0;
+  color: var(--danger);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+/* What the numbers cover, and when they were loaded */
+.report-status-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.report-scope,
+.report-updated {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+}
+
+.report-scope strong {
+  color: var(--ink-strong);
+}
+
+.report-updated {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.report-refresh {
+  min-height: 32px;
+}
+
+/* Messages above the numbers */
+.report-alert,
+.report-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.report-alert {
+  align-items: center;
+  background: var(--danger-bg);
+  border: 1px solid var(--danger);
+}
+
+.report-alert p {
+  flex: 1;
+  margin: 0;
+}
+
+.report-alert svg {
+  flex-shrink: 0;
+  color: var(--danger);
+}
+
+.report-banner {
+  background: var(--warning-bg);
+  border: 1px solid var(--warning);
+}
+
+.report-banner svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--warning);
+}
+
+/* While new numbers load, the old ones stay, dimmed */
+.report-body {
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.report-body--updating {
+  opacity: 0.55;
+}
+
+/* Tiles: the summary-tile look from admin-summary.css, with a note line under each number */
+.report-tiles {
+  margin-bottom: var(--space-4);
+}
+
+.report-tile__value {
+  overflow-wrap: anywhere;
+}
+
+.report-tile__extra {
+  color: var(--ink-muted);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.report-tile__note {
+  margin: 6px 0 0;
+  color: var(--ink-muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.report-tile__note + .report-tile__note {
+  margin-top: 2px;
+}
+
+.report-tile__skeleton-note {
+  width: 120px;
+  margin: 10px 0 0;
+}
+
+/* Cards that hold a chart or a table */
+.report-card {
+  min-width: 0;
+  margin-bottom: var(--space-4);
+  padding: 20px 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.report-card__title {
+  margin: 0 0 var(--space-3);
+  color: var(--ink-strong);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.report-card__note {
+  margin: var(--space-3) 0 0;
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+.report-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-10) var(--space-4);
+  color: var(--ink-muted);
+  text-align: center;
+}
+
+.report-empty p {
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  main.admin-main-full.report-main {
+    padding: var(--space-4);
+  }
+
+  .report-filters,
+  .report-card {
+    padding: var(--space-4);
+  }
+
+  .report-field,
+  .report-field select,
+  .report-field--program select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .report-field--date {
+    width: calc(50% - var(--space-2));
+  }
+}
+
+/* One tile per row on phones: rupee amounts need the width */
+@media (max-width: 480px) {
+  .summary-tiles.report-tiles {
+    grid-template-columns: 1fr;
+  }
+}

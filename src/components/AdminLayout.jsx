@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User } from 'lucide-react';
+import { GraduationCap, ClipboardList, Search, Download, BarChart2, ChartPie, Settings, LogOut, User } from 'lucide-react';
 import uomLogo from '../assets/uom-logo.png';
 import '../styles/AdminDashboard.css';
 import '../styles/admin-tables.css';
@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { to: '/admin/search', label: 'Search', icon: Search },
   { to: '/admin/download', label: 'Download', icon: Download },
   { to: '/admin/marks', label: 'Marks', icon: BarChart2 },
+  { to: '/admin/reports', label: 'Reports', icon: ChartPie },
   { to: '/admin/settings', label: 'Settings', icon: Settings }
 ];
 
