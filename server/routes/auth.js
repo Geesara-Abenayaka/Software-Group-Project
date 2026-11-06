@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import User from '../models/User.js';
 import { sendBulkEmail } from '../utils/emailService.js';
+import { createAdminSession, requireAdmin } from '../utils/adminAuth.js';
 
 const router = express.Router();
 const ADMIN_RECOVERY_EMAIL = 'admin@uom.lk';
@@ -63,7 +64,10 @@ router.post('/login', async (req, res) => {
       await user.save();
     }
 
-    // Return user data
+    // The signed session the admin pages send with every admin API request (after the hash upgrade above,
+    // because the session is tied to the stored password).
+    const session = createAdminSession(user);
+
     res.json({
       message: 'Login successful',
       user: {
@@ -71,7 +75,9 @@ router.post('/login', async (req, res) => {
         email: user.email,
         name: user.name,
         role: user.role
-      }
+      },
+      token: session.token,
+      expiresAt: session.expiresAt
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -79,13 +85,14 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Change password route (admin only)
-router.post('/change-password', async (req, res) => {
+// Change password route (admin only). The signed-in admin changes their own password: the user comes from the
+// session, not from the request body. Old sessions end with the old password, so a new one is returned.
+router.post('/change-password', requireAdmin, async (req, res) => {
   try {
-    const { userId, currentPassword, newPassword } = req.body;
+    const { currentPassword, newPassword } = req.body;
 
-    if (!userId || !currentPassword || !newPassword) {
-      return res.status(400).json({ message: 'userId, currentPassword and newPassword are required.' });
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'currentPassword and newPassword are required.' });
     }
 
     const validationError = validateNewPassword(newPassword);
@@ -93,7 +100,7 @@ router.post('/change-password', async (req, res) => {
       return res.status(400).json({ message: validationError });
     }
 
-    const user = await User.findById(userId);
+    const user = await User.findById(req.admin.id);
     if (!user) {
       return res.status(404).json({ message: 'User not found.' });
     }
@@ -104,7 +111,8 @@ router.post('/change-password', async (req, res) => {
 
     const isCurrentPasswordValid = await verifyPassword(currentPassword, user.password);
     if (!isCurrentPasswordValid) {
-      return res.status(401).json({ message: 'Current password is incorrect.' });
+      // 400, not 401: the admin pages treat 401 as "session ended" and sign out.
+      return res.status(400).json({ message: 'Current password is incorrect.' });
     }
 
     const isSameAsCurrent = await verifyPassword(newPassword, user.password);
@@ -115,7 +123,8 @@ router.post('/change-password', async (req, res) => {
     user.password = await bcrypt.hash(newPassword, 10);
     await user.save();
 
-    res.json({ message: 'Password changed successfully.' });
+    const session = createAdminSession(user);
+    res.json({ message: 'Password changed successfully.', token: session.token, expiresAt: session.expiresAt });
   } catch (error) {
     console.error('Change password error:', error);
     res.status(500).json({ message: 'Server error' });
