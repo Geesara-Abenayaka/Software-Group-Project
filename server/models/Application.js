@@ -104,7 +104,10 @@ const applicationSchema = new mongoose.Schema({
     cardBrand: String,     // 'visa', 'mastercard', ...
     cardLast4: String,
     receiptUrl: String,
-    paidAt: Date
+    paidAt: Date,
+    // true for a real payment, false for a Stripe test payment. Payments saved before this field
+    // existed have none; they were all made with test keys, and the reports treat them as test payments.
+    livemode: Boolean
   },
 
   // Declaration
