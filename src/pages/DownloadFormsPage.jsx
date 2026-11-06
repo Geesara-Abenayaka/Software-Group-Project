@@ -4,10 +4,20 @@ import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import '../styles/DownloadFormsPage.css';
 import API_BASE_URL from '../utils/apiConfig';
+import { adminFetch } from '../utils/adminSession';
 import AdminLayout from '../components/AdminLayout';
 import { toast } from '../utils/toast';
 import { Skeleton } from '../components/Loaders';
 import useDelayedFlag from '../utils/useDelayedFlag';
+
+// How the application fee was paid, for the exports.
+const feeStatusText = (app) => {
+  if (app.payment?.method === 'card') return 'Paid by card';
+  if (app.payment?.method === 'bank') {
+    return app.payment.status === 'rejected' ? 'Bank receipt rejected' : 'Bank receipt confirmed';
+  }
+  return app.documents?.paymentConfirmation ? 'Uploaded' : 'Not Uploaded';
+};
 
 function DownloadFormsPage() {
   const [programs, setPrograms] = useState([]);
@@ -28,7 +38,7 @@ function DownloadFormsPage() {
   const fetchPrograms = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_BASE_URL}/programs`);
+      const response = await adminFetch(`${API_BASE_URL}/programs`);
       const data = await response.json();
       
       if (data.success) {
@@ -108,7 +118,7 @@ function DownloadFormsPage() {
       'NIC Document Status': app.documents?.nic ? 'Uploaded' : 'Not Uploaded',
       'Employer Letter Status': app.documents?.employerLetter ? 'Uploaded' : 'Not Uploaded',
       'Transcript Status': app.documents?.transcript ? 'Uploaded' : 'Not Uploaded',
-      'Payment Confirmation Status': app.payment?.method === 'card' ? 'Paid by card' : app.documents?.paymentConfirmation ? 'Uploaded' : 'Not Uploaded',
+      'Payment Confirmation Status': feeStatusText(app),
       'Program': programs.find(p => p.shortCode === app.program)?.title || app.program,
       'Status': app.status.charAt(0).toUpperCase() + app.status.slice(1).replace('-', ' '),
       'Submission Date': new Date(app.submittedAt).toLocaleDateString(),
@@ -389,8 +399,8 @@ function DownloadFormsPage() {
         { label: 'NIC', status: app.documents?.nic },
         { label: 'Employer Letter', status: app.documents?.employerLetter },
         { label: 'Transcript', status: app.documents?.transcript },
-        app.payment?.method === 'card'
-          ? { label: 'Payment Confirmation', status: true, text: 'Paid by card' }
+        app.payment?.method === 'card' || app.payment?.method === 'bank'
+          ? { label: 'Payment Confirmation', status: app.payment.status !== 'rejected', text: feeStatusText(app) }
           : { label: 'Payment Confirmation', status: app.documents?.paymentConfirmation }
       ];
       
@@ -426,7 +436,7 @@ function DownloadFormsPage() {
       }
 
       // Fetch applications
-      const response = await fetch(`${API_BASE_URL}/applications`);
+      const response = await adminFetch(`${API_BASE_URL}/applications`);
       const data = await response.json();
 
       if (!data.success) {
@@ -520,7 +530,7 @@ function DownloadFormsPage() {
   const handleDownloadApproved = async () => {
     try {
       // Fetch applications
-      const response = await fetch(`${API_BASE_URL}/applications`);
+      const response = await adminFetch(`${API_BASE_URL}/applications`);
       const data = await response.json();
 
       if (!data.success) {

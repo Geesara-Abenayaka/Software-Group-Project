@@ -4,7 +4,8 @@ import { AlertTriangle, ExternalLink, Lock, RefreshCw, ShieldCheck, X } from 'lu
 import { ButtonSpinner, Skeleton } from './Loaders';
 import useDialogFocus from '../utils/useDialogFocus';
 import { formatDate } from '../utils/formatDate';
-import { buildStripeAppearance, describeCard, formatRupees, getStripe } from '../utils/stripe';
+import { buildStripeAppearance, getStripe } from '../utils/stripe';
+import { describeCard, formatRupees } from '../utils/formatMoney';
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 

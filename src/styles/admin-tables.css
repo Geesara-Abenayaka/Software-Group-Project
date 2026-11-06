@@ -1,11 +1,12 @@
-/* One look for the admin data tables (Search, programme applications, Marks, Settings feedback).
+/* One look for the admin data tables (Search, programme applications, Marks, Settings feedback, Reports).
    Loaded by AdminLayout, which can load before a page's own stylesheet, so every rule here is one step
    more specific than the page's (`table.x th`, `div.x`). */
 
 table.applications-table th,
 table.detail-table th,
 table.marks-table th,
-table.assistant-feedback-table th {
+table.assistant-feedback-table th,
+table.report-table thead th {
   position: sticky;
   top: 0;
   z-index: 1;
@@ -16,14 +17,18 @@ table.assistant-feedback-table th {
 table.applications-table td,
 table.detail-table td,
 table.marks-table td,
-table.assistant-feedback-table td {
+table.assistant-feedback-table td,
+table.report-table tbody th,
+table.report-table tbody td {
   border-bottom: 1px solid var(--table-row-border);
   font-variant-numeric: tabular-nums;
 }
 
 table.applications-table tbody tr:hover td,
 table.detail-table tbody tr:hover td,
-table.assistant-feedback-table tbody tr:hover td {
+table.assistant-feedback-table tbody tr:hover td,
+table.report-table tbody tr:hover th,
+table.report-table tbody tr:hover td {
   background: var(--table-row-hover-bg);
 }
 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { User } from 'lucide-react';
 import '../styles/ApplicationsPage.css';
 import API_BASE_URL from '../utils/apiConfig';
+import { adminFetch } from '../utils/adminSession';
 import AdminLayout from '../components/AdminLayout';
 import { AdminProgramCardSkeleton } from '../components/Loaders';
 import useDelayedFlag from '../utils/useDelayedFlag';
@@ -12,7 +13,7 @@ const fetchWithTimeout = async (url, timeoutMs = 8000) => {
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const response = await fetch(url, { signal: controller.signal });
+    const response = await adminFetch(url, { signal: controller.signal });
     return response;
   } finally {
     clearTimeout(timeoutId);
@@ -43,25 +44,18 @@ function ApplicationsPage() {
         setPrograms(basePrograms);
 
         // Fetch pending counts in background so a slow endpoint doesn't block the page render.
-        fetchWithTimeout(`${API_BASE_URL}/applications/summary`, 6000)
-          .then((appsResponse) => appsResponse.json())
-          .then((appsData) => {
-            if (!appsData?.success || !Array.isArray(appsData.data)) {
+        // The server counts them in every spelling ('pending', 'Pending'), the same as the Programs page.
+        fetchWithTimeout(`${API_BASE_URL}/applications/summary/by-program`, 6000)
+          .then((summaryResponse) => summaryResponse.json())
+          .then((summaryData) => {
+            if (!summaryData?.success || !Array.isArray(summaryData.data)) {
               return;
             }
 
-            setPrograms((currentPrograms) => {
-              return currentPrograms.map((program) => {
-                const pendingCount = appsData.data.filter((app) => (
-                  app.program === program.shortCode && app.status === 'pending'
-                )).length;
-
-                return {
-                  ...program,
-                  pendingCount
-                };
-              });
-            });
+            setPrograms((currentPrograms) => currentPrograms.map((program) => ({
+              ...program,
+              pendingCount: summaryData.data.find((row) => row.program === program.shortCode)?.pending || 0
+            })));
           })
           .catch((countError) => {
             if (countError?.name !== 'AbortError') {

@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { Check, Inbox, Trash2 } from 'lucide-react';
 import '../styles/MarksPage.css';
 import API_BASE_URL from '../utils/apiConfig';
+import { adminFetch } from '../utils/adminSession';
 import AdminLayout from '../components/AdminLayout';
 import StatusPill from '../components/StatusPill';
 import useConfirm from '../utils/useConfirm';
 import { toast } from '../utils/toast';
+import { deleteConfirmMessage } from '../utils/applicationDelete';
 
 function MarksPage() {
   const { confirm, confirmDialog } = useConfirm();
@@ -44,7 +46,7 @@ function MarksPage() {
   useEffect(() => {
     const fetchPrograms = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/programs`);
+        const response = await adminFetch(`${API_BASE_URL}/programs`);
         const result = await response.json();
 
         if (result.success) {
@@ -68,7 +70,7 @@ function MarksPage() {
 
   const fetchApplications = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/applications`);
+      const response = await adminFetch(`${API_BASE_URL}/applications`);
       const result = await response.json();
       
       if (result.success) {
@@ -127,7 +129,8 @@ function MarksPage() {
               oaMarks: app.oaMarks || '-',
               writingMarks: app.writingMarks || '-',
               interviewMarks: app.interviewMarks || '-',
-              graduationDate: gradDate
+              graduationDate: gradDate,
+              payment: app.payment
             };
           });
         console.log('Filtered applications:', transformedData);
@@ -203,7 +206,7 @@ function MarksPage() {
 
   const fetchApplicationByNIC = async (nic) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/applications`);
+      const response = await adminFetch(`${API_BASE_URL}/applications`);
       const result = await response.json();
       
       if (result.success) {
@@ -309,12 +312,12 @@ function MarksPage() {
     }));
   };
 
-  const handleDelete = async (appId, event) => {
+  const handleDelete = async (appId, event, payment) => {
     event.stopPropagation(); // Prevent row selection when clicking delete
-    
+
     const confirmed = await confirm({
       title: 'Delete this application?',
-      message: "This can't be undone.",
+      message: deleteConfirmMessage(payment),
       confirmLabel: 'Delete application',
       danger: true
     });
@@ -323,7 +326,7 @@ function MarksPage() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/applications/${appId}`, {
+      const response = await adminFetch(`${API_BASE_URL}/applications/${appId}`, {
         method: 'DELETE'
       });
 
@@ -378,7 +381,7 @@ function MarksPage() {
 
     try {
       // Update marks via API
-      const response = await fetch(`${API_BASE_URL}/applications/${selectedApplicationId}/marks`, {
+      const response = await adminFetch(`${API_BASE_URL}/applications/${selectedApplicationId}/marks`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'
@@ -556,7 +559,7 @@ function MarksPage() {
                         <td>
                           <button 
                             className="delete-icon-btn"
-                            onClick={(e) => handleDelete(app._id, e)}
+                            onClick={(e) => handleDelete(app._id, e, app.payment)}
                             title="Delete application"
                             aria-label="Delete application"
                           >

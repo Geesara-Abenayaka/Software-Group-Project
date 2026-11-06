@@ -5,6 +5,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import AssistantFeedback from '../models/AssistantFeedback.js';
 import Program from '../models/Program.js';
 import { getAssistantFacts } from '../utils/assistantKnowledge.js';
+import { requireAdmin } from '../utils/adminAuth.js';
 
 const router = express.Router();
 
@@ -355,7 +356,7 @@ router.post('/feedback', feedbackLimiter, async (req, res) => {
 });
 
 // Latest 100 for admins: ?type=helpful | not-helpful | unanswered
-router.get('/feedback', async (req, res) => {
+router.get('/feedback', requireAdmin, async (req, res) => {
   const filters = {
     helpful: { helpful: true },
     'not-helpful': { helpful: false },

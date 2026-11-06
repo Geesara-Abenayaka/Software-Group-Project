@@ -8,7 +8,7 @@ export const ASSISTANT_FACTS = `
 Department: Department of Computer Science & Engineering, University of Moratuwa.
 Contact: postgrad@cse.mrt.ac.lk
 How to apply: open a programme from the home page, press "View Details", then "Online Application". Fill every section, upload documents, accept the declaration and submit.
-Application fee: Rs. 2,000. Pay it online by card (Visa, Mastercard and others) in the Documents section of the application form, or pay at the bank (account no. 0043618) and upload the receipt there.
+Application fee: Rs. 2,000. Pay it online by card (Visa, Mastercard and others) in the Documents section of the application form, or pay at the bank (account no. 0043618) and upload the receipt there. The fee is non-refundable, also when an application is not selected.
 Required documents: NIC, degree certificate, academic transcript, professional membership proof (if any), employer consent letter (if claiming work experience), payment receipt (not needed when the fee is paid online by card).
 Selection: eligible applicants are invited to a selection test and an interview after the closing date.
 Course fees, durations, study modes and entry requirements for each programme are in PROGRAMMES.

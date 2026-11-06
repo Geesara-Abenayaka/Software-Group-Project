@@ -1,0 +1,907 @@
+/* Admin Reports page (ReportsPage.jsx and components/reports/).
+   Every class starts with report-, so nothing here can change another page. Colours come from the tokens in index.css. */
+
+main.admin-main-full.report-main {
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.report-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.report-subtitle {
+  margin: 4px 0 0;
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+}
+
+/* Filters */
+.report-filters {
+  margin-bottom: var(--space-4);
+  padding: var(--space-4) 20px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.report-filters__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3) var(--space-4);
+}
+
+.report-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.report-field label {
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.report-field select,
+.report-field input,
+.report-search input {
+  min-height: 40px;
+  padding: 8px 12px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-sm);
+}
+
+.report-field select {
+  min-width: 220px;
+  max-width: 100%;
+}
+
+.report-field--program select {
+  min-width: 260px;
+}
+
+.report-field select:focus-visible,
+.report-field input:focus-visible,
+.report-search input:focus-visible {
+  outline: none;
+  border-color: var(--input-focus-border);
+  box-shadow: var(--focus-ring);
+}
+
+.report-field input[aria-invalid='true'] {
+  border-color: var(--input-error-border);
+}
+
+.report-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 40px;
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.report-check input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--brand);
+}
+
+.report-check:has(input:disabled) {
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
+.report-field-error {
+  margin: var(--space-3) 0 0;
+  color: var(--danger);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+/* What the numbers cover, and when they were loaded */
+.report-status-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.report-scope,
+.report-updated {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+}
+
+.report-scope strong {
+  color: var(--ink-strong);
+}
+
+.report-updated {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.report-refresh {
+  min-height: 32px;
+}
+
+/* Messages above the numbers */
+.report-alert,
+.report-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius);
+  color: var(--ink);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.report-alert {
+  align-items: center;
+  background: var(--danger-bg);
+  border: 1px solid var(--danger);
+}
+
+.report-alert p {
+  flex: 1;
+  margin: 0;
+}
+
+.report-alert svg {
+  flex-shrink: 0;
+  color: var(--danger);
+}
+
+.report-banner {
+  background: var(--warning-bg);
+  border: 1px solid var(--warning);
+}
+
+.report-banner svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--warning);
+}
+
+/* While new numbers load, the old ones stay, dimmed */
+.report-body {
+  transition: opacity var(--duration-fast) var(--ease-out);
+}
+
+.report-body--updating {
+  opacity: 0.55;
+}
+
+/* Tiles: the summary-tile look from admin-summary.css, with a note line under each number */
+.report-tiles {
+  margin-bottom: var(--space-4);
+}
+
+.report-tile__value {
+  overflow-wrap: anywhere;
+}
+
+.report-tile__extra {
+  color: var(--ink-muted);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.report-tile__note {
+  margin: 6px 0 0;
+  color: var(--ink-muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.report-tile__note + .report-tile__note {
+  margin-top: 2px;
+}
+
+.report-tile__skeleton-note {
+  width: 120px;
+  margin: 10px 0 0;
+}
+
+/* Cards that hold a chart or a table */
+.report-card {
+  min-width: 0;
+  margin-bottom: var(--space-4);
+  padding: 20px 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.report-card__title {
+  margin: 0 0 var(--space-3);
+  color: var(--ink-strong);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.report-card__note {
+  margin: var(--space-3) 0 0;
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+/* Two cards side by side on wide screens */
+.report-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 var(--space-4);
+}
+
+/* How the fee was paid: one bar split by method, then a legend with every number */
+.report-split {
+  display: flex;
+  gap: 3px;
+  height: 20px;
+  margin-bottom: var(--space-4);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.report-split__part {
+  flex: 1 1 0;
+  min-width: 6px;
+  background: var(--muted);
+}
+
+.report-split__part--card { background: var(--brand); }
+.report-split__part--bank-confirmed { background: var(--success); }
+.report-split__part--bank-waiting { background: var(--warning); }
+.report-split__part--bank-rejected { background: var(--danger-solid); }
+.report-split__part--none { background: var(--muted); }
+.report-split__part--test { background: var(--info); }
+
+.report-legend {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.report-legend__item {
+  display: grid;
+  grid-template-columns: 12px minmax(0, 1fr) auto;
+  grid-template-areas:
+    'swatch label count'
+    '. detail detail';
+  align-items: center;
+  column-gap: var(--space-2);
+  font-size: var(--text-sm);
+}
+
+.report-legend__swatch {
+  grid-area: swatch;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.report-legend__label {
+  grid-area: label;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.report-legend__count {
+  grid-area: count;
+  color: var(--ink-strong);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.report-legend__share {
+  color: var(--ink-muted);
+  font-weight: 400;
+}
+
+.report-legend__detail {
+  grid-area: detail;
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+/* Applications per day: CSS columns along a baseline */
+.report-columns-wrap {
+  position: relative;
+  padding-top: 18px;
+}
+
+.report-columns__max {
+  position: absolute;
+  top: 0;
+  left: 0;
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+.report-columns {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 150px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px dashed var(--border);
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.report-columns__item {
+  display: flex;
+  flex: 1 1 0;
+  align-items: flex-end;
+  min-width: 0;
+  height: 100%;
+}
+
+.report-columns__bar {
+  width: 100%;
+  background: var(--brand);
+  border-radius: 2px 2px 0 0;
+}
+
+.report-columns__item:hover .report-columns__bar {
+  background: var(--brand-dark);
+}
+
+.report-columns__axis {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+}
+
+/* By program */
+.report-table-wrap {
+  /* relative: screen-reader-only text in the cells is positioned inside this scrolling box,
+     not at its place far to the right of the page, where it would make the whole page scroll sideways */
+  position: relative;
+  overflow-x: auto;
+  margin: 0 -24px;
+  padding: 0 24px;
+}
+
+table.report-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+table.report-table th,
+table.report-table td {
+  padding: 10px 12px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+table.report-table thead th {
+  border-bottom: 2px solid var(--border);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+}
+
+table.report-table thead th.cell-number,
+table.report-table td.cell-number {
+  text-align: right;
+}
+
+table.report-table tbody th {
+  font-weight: 500;
+  white-space: normal;
+  min-width: 200px;
+}
+
+table.report-table tfoot th,
+table.report-table tfoot td {
+  border-top: 2px solid var(--border);
+  color: var(--ink-strong);
+  font-weight: 700;
+}
+
+.report-link {
+  color: var(--brand-text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+button.report-link {
+  cursor: pointer;
+}
+
+.report-link:hover {
+  text-decoration: underline;
+}
+
+.report-link:focus-visible {
+  outline: none;
+  border-radius: 2px;
+  box-shadow: var(--focus-ring);
+}
+
+.report-muted {
+  color: var(--ink-muted);
+}
+
+.report-tag {
+  display: inline-block;
+  margin-left: var(--space-2);
+  padding: 1px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+/* Status and GPA category: labelled bars with the count beside each */
+.report-bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.report-bars__row {
+  display: grid;
+  grid-template-columns: minmax(110px, 160px) minmax(0, 1fr) 84px;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.report-bars__label {
+  display: flex;
+  flex-direction: column;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.report-bars__hint {
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+  font-weight: 400;
+}
+
+.report-bars__track {
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: var(--border-subtle);
+  overflow: hidden;
+}
+
+.report-bars__fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--brand);
+}
+
+.report-bars__value {
+  color: var(--ink-strong);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.report-bars__share {
+  color: var(--ink-muted);
+  font-weight: 400;
+}
+
+/* Payments list */
+.report-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.report-card__head .report-card__title {
+  margin: 0;
+}
+
+.report-list-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+}
+
+.report-list-filters .report-field select {
+  min-width: 180px;
+}
+
+.report-search input {
+  width: 240px;
+  max-width: 100%;
+}
+
+.report-list-count {
+  margin: 0 0 var(--space-2);
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+table.report-table td.report-table__wrap {
+  white-space: normal;
+  min-width: 140px;
+}
+
+table.report-table--payments td {
+  vertical-align: top;
+}
+
+.report-pay-cell {
+  min-width: 200px;
+}
+
+.report-pay,
+.report-pay__sub,
+.report-pay__link {
+  display: block;
+}
+
+.report-pay {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.report-pay__sub {
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+.report-pay__status {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.report-pay__status--bankConfirmed { color: var(--success); }
+.report-pay__status--bankWaiting { color: var(--warning); }
+.report-pay__status--bankRejected { color: var(--danger); }
+
+/* The same receipt file was uploaded with another application (Reports list and application page) */
+.receipt-match {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 2px;
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.receipt-match svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.report-pay__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  font-size: 13px;
+}
+
+.report-alert--inline {
+  margin: var(--space-3) 0 0;
+}
+
+.report-more {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-4);
+}
+
+/* Check with Stripe */
+.stripe-check__intro {
+  margin: 4px 0 0;
+  max-width: 720px;
+  color: var(--ink-muted);
+  font-size: var(--text-sm);
+}
+
+.stripe-check__summary {
+  margin: var(--space-3) 0 0;
+  color: var(--ink);
+  font-size: var(--text-sm);
+}
+
+.stripe-check__ok {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  color: var(--success);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.stripe-check__issue {
+  margin-top: var(--space-6);
+}
+
+.stripe-check__issue-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--ink-strong);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.stripe-check__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--radius-pill);
+  background: var(--danger-bg);
+  color: var(--danger);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+.stripe-check__hint {
+  margin: 4px 0 var(--space-2);
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+.report-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-10) var(--space-4);
+  color: var(--ink-muted);
+  text-align: center;
+}
+
+.report-empty p {
+  margin: 0;
+}
+
+@media (max-width: 960px) {
+  .report-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  main.admin-main-full.report-main {
+    padding: var(--space-4);
+  }
+
+  .report-filters,
+  .report-card {
+    padding: var(--space-4);
+  }
+
+  .report-table-wrap {
+    margin: 0 calc(-1 * var(--space-4));
+    padding: 0 var(--space-4);
+  }
+
+  table.report-table tbody th {
+    min-width: 150px;
+  }
+
+  .report-bars__row {
+    grid-template-columns: minmax(0, 1fr) 76px;
+    grid-template-areas:
+      'label value'
+      'track track';
+    row-gap: 6px;
+  }
+
+  .report-bars__label { grid-area: label; }
+  .report-bars__track { grid-area: track; }
+  .report-bars__value { grid-area: value; }
+
+  .report-list-filters,
+  .report-list-filters .report-field,
+  .report-list-filters .report-field select,
+  .report-search input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .report-field,
+  .report-field select,
+  .report-field--program select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .report-field--date {
+    width: calc(50% - var(--space-2));
+  }
+}
+
+/* One tile per row on phones: rupee amounts need the width */
+@media (max-width: 480px) {
+  .summary-tiles.report-tiles {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Print: the numbers and tables in black on white, without the admin header, tabs, filters or buttons.
+   Scoped to the Reports page (this stylesheet loads with every page). The payment list is left out:
+   it holds personal details and only part of it is loaded; the Payment list CSV has all of it. */
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  body:has(.report-main),
+  body:has(.report-main) .admin-app {
+    min-height: 0;
+    background: #fff;
+  }
+
+  body:has(.report-main) .admin-header,
+  body:has(.report-main) .admin-navbar,
+  body:has(.report-main) .skip-link,
+  body:has(.report-main) .toast-host,
+  .report-actions,
+  .report-filters,
+  .report-refresh,
+  .report-alert,
+  .report-card--payments,
+  .report-empty .btn {
+    display: none !important;
+  }
+
+  main.admin-main-full.report-main {
+    max-width: none;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .report-main .page-heading {
+    font-size: 20px;
+  }
+
+  .report-main * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .report-body--updating {
+    opacity: 1;
+  }
+
+  .report-status-line {
+    margin-bottom: 10px;
+  }
+
+  .report-banner {
+    padding: 6px 10px;
+  }
+
+  .summary-tiles.report-tiles {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .report-main .summary-tile,
+  .report-card {
+    box-shadow: none;
+    border-color: #bbb;
+    break-inside: avoid;
+  }
+
+  .report-main .summary-tile {
+    padding: 10px 12px;
+  }
+
+  .report-main .summary-tile__value {
+    font-size: 20px;
+  }
+
+  .report-main .summary-tile__icon {
+    display: none;
+  }
+
+  .report-card {
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+
+  .report-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 10px;
+  }
+
+  .report-columns {
+    height: 110px;
+  }
+
+  .report-table-wrap {
+    overflow: visible;
+    margin: 0;
+    padding: 0;
+  }
+
+  table.report-table {
+    font-size: 11px;
+  }
+
+  table.report-table th,
+  table.report-table td {
+    padding: 5px 6px;
+    white-space: normal;
+  }
+
+  table.report-table tbody th {
+    min-width: 0;
+  }
+
+  table.report-table thead th {
+    position: static;
+  }
+
+  .report-main .th-sort svg {
+    display: none;
+  }
+
+  .report-link {
+    color: inherit;
+    text-decoration: none;
+  }
+}

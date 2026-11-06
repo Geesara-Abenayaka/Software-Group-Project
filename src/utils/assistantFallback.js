@@ -18,7 +18,7 @@ const FAQ_KNOWLEDGE = [
   },
   {
     keywords: ['fee', 'application fee', 'how much is the application fee', 'payment', 'how should i pay', 'how to pay', 'payment method'],
-    answer: 'The application fee is Rs. 2,000. You can pay it online by card in the Documents section of the application form, or pay at the bank and upload the receipt there before submitting.'
+    answer: 'The application fee is Rs. 2,000. You can pay it online by card in the Documents section of the application form, or pay at the bank and upload the receipt there before submitting. The fee is non-refundable.'
   },
   {
     keywords: ['documents', 'required documents', 'upload', 'attachments'],

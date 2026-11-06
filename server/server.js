@@ -10,6 +10,7 @@ import documentVerificationRoutes from './routes/documentVerification.js';
 import assistantRoutes from './routes/assistant.js';
 import settingsRoutes from './routes/settings.js';
 import paymentRoutes from './routes/payments.js';
+import reportRoutes from './routes/reports.js';
 import { initializeGridFS } from './utils/gridfsService.js';
 
 dotenv.config();
@@ -23,7 +24,9 @@ app.set('trust proxy', 1);
 // 1. IMPROVED MIDDLEWARE
 // For production, you can restrict this to your IP, but this ensures 
 // Nginx headers are accepted.
-app.use(cors()); 
+// Content-Disposition is exposed so the admin pages can read a downloaded document's file name
+// when the API is on another address (local development).
+app.use(cors({ exposedHeaders: ['Content-Disposition'] }));
 app.use(express.json({ limit: '20mb' }));
 app.use(express.urlencoded({ extended: true, limit: '20mb' }));
 
@@ -46,6 +49,7 @@ app.use('/api/verify', documentVerificationRoutes); // Changed from /api/applica
 app.use('/api/assistant', assistantRoutes);
 app.use('/api/settings', settingsRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/reports', reportRoutes);
 
 // 3. ENHANCED HEALTH CHECK
 // This helps Nginx verify if the backend is truly ready

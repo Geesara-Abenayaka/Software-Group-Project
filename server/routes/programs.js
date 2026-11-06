@@ -1,6 +1,7 @@
 import express from 'express';
 import Program from '../models/Program.js';
 import { getApplicationWindow } from '../utils/applicationWindow.js';
+import { requireAdmin } from '../utils/adminAuth.js';
 
 const router = express.Router();
 
@@ -55,7 +56,7 @@ router.get('/:shortCode/application-window', async (req, res) => {
 });
 
 // Create new program (admin only)
-router.post('/', async (req, res) => {
+router.post('/', requireAdmin, async (req, res) => {
   try {
     const program = new Program(req.body);
     await program.save();
@@ -67,7 +68,7 @@ router.post('/', async (req, res) => {
 });
 
 // Update program (admin only)
-router.put('/:id', async (req, res) => {
+router.put('/:id', requireAdmin, async (req, res) => {
   try {
     const program = await Program.findByIdAndUpdate(
       req.params.id,
@@ -87,7 +88,7 @@ router.put('/:id', async (req, res) => {
 });
 
 // Delete program (admin only)
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireAdmin, async (req, res) => {
   try {
     const program = await Program.findByIdAndDelete(req.params.id);
     

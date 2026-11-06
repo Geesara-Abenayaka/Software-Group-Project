@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import '../styles/AdminDashboard.css';
 import API_BASE_URL from '../utils/apiConfig';
+import { adminFetch } from '../utils/adminSession';
 import AdminLayout from '../components/AdminLayout';
 import AdminSummary from '../components/AdminSummary';
 import ProgramFormFields from '../components/ProgramFormFields';
@@ -92,7 +93,7 @@ function AdminDashboard() {
   const fetchPrograms = async () => {
     try {
       setLoading(true);
-      const progResponse = await fetch(`${API_BASE_URL}/programs`);
+      const progResponse = await adminFetch(`${API_BASE_URL}/programs`);
       const progData = await progResponse.json();
 
       if (progData.success) {
@@ -104,7 +105,7 @@ function AdminDashboard() {
         const timeoutId = setTimeout(() => controller.abort(), 6000);
 
         // Counts per programme (total, pending, approved, rejected) for the summary and the pending pills
-        fetch(`${API_BASE_URL}/applications/summary/by-program`, { signal: controller.signal })
+        adminFetch(`${API_BASE_URL}/applications/summary/by-program`, { signal: controller.signal })
           .then((response) => response.json())
           .then((summaryData) => {
             if (!summaryData?.success || !Array.isArray(summaryData.data)) {
@@ -142,7 +143,7 @@ function AdminDashboard() {
     // The programs list leaves out deadlines, resources and the detailed description,
     // so load the full program before editing; saving a partial copy would overwrite them.
     try {
-      const response = await fetch(`${API_BASE_URL}/programs/${program._id}`);
+      const response = await adminFetch(`${API_BASE_URL}/programs/${program._id}`);
       const data = await response.json();
 
       if (!data.success) {
@@ -236,7 +237,7 @@ function AdminDashboard() {
         resourcesCount: editingProgram.resources?.length || 3
       };
 
-      const response = await fetch(`${API_BASE_URL}/programs/${editingProgram._id}`, {
+      const response = await adminFetch(`${API_BASE_URL}/programs/${editingProgram._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -287,7 +288,7 @@ function AdminDashboard() {
         resourcesCount: 3
       };
 
-      const response = await fetch(`${API_BASE_URL}/programs`, {
+      const response = await adminFetch(`${API_BASE_URL}/programs`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -329,7 +330,7 @@ function AdminDashboard() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/programs/${programId}`, {
+      const response = await adminFetch(`${API_BASE_URL}/programs/${programId}`, {
         method: 'DELETE'
       });
 

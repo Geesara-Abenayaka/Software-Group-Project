@@ -14,7 +14,7 @@ import { formatReference } from '../utils/applicationReference';
 import { toast } from '../utils/toast';
 import usePageTitle from '../utils/usePageTitle';
 import useDialogFocus from '../utils/useDialogFocus';
-import { describeCard, formatRupees } from '../utils/stripe';
+import { describeCard, formatRupees } from '../utils/formatMoney';
 
 // Stripe's card form is only downloaded when the applicant opens the payment window.
 const PaymentDialog = lazy(() => import('../components/PaymentDialog'));

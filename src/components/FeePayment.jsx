@@ -1,6 +1,6 @@
 import { AlertCircle, ArrowUp, CheckCircle2, CreditCard, ExternalLink, Landmark, Lock, ShieldCheck } from 'lucide-react';
 import { formatDate } from '../utils/formatDate';
-import { describeCard, formatRupees } from '../utils/stripe';
+import { describeCard, formatRupees } from '../utils/formatMoney';
 
 /**
  * "Application fee" on the application form: pay online by card (Stripe) or upload a bank receipt.
@@ -40,6 +40,7 @@ function FeePayment({
             {cardAvailable
               ? 'Pay the processing fee online by card, or pay at the bank and upload the receipt.'
               : 'Pay the processing fee at the bank and upload the receipt.'}
+            {' '}The fee is non-refundable.
           </p>
         </div>
         <p className="fee-card__amount">

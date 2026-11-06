@@ -54,7 +54,9 @@ const summarize = (intent) => {
     cardBrand: card?.brand || '',
     cardLast4: card?.last4 || '',
     receiptUrl: charge?.receipt_url || '',
-    paidAt: charge ? new Date(charge.created * 1000).toISOString() : null
+    paidAt: charge ? new Date(charge.created * 1000).toISOString() : null,
+    // false for payments made with test keys, so reports never count them as real money
+    livemode: Boolean(intent.livemode)
   };
 };
 
@@ -107,7 +109,8 @@ export const verifyApplicationFeePayment = async (paymentIntentId, program) => {
       cardBrand: payment.cardBrand,
       cardLast4: payment.cardLast4,
       receiptUrl: payment.receiptUrl,
-      paidAt: payment.paidAt
+      paidAt: payment.paidAt,
+      livemode: payment.livemode
     }
   };
 };

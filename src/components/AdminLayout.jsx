@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User } from 'lucide-react';
+import { GraduationCap, ClipboardList, Search, Download, BarChart2, ChartPie, Settings, LogOut, User } from 'lucide-react';
 import uomLogo from '../assets/uom-logo.png';
 import '../styles/AdminDashboard.css';
 import '../styles/admin-tables.css';
 import usePageTitle from '../utils/usePageTitle';
+import { clearAdminSession, getAdminSession } from '../utils/adminSession';
 
 const NAV_ITEMS = [
   { to: '/admin/dashboard', label: 'Programs', icon: GraduationCap },
@@ -12,6 +13,7 @@ const NAV_ITEMS = [
   { to: '/admin/search', label: 'Search', icon: Search },
   { to: '/admin/download', label: 'Download', icon: Download },
   { to: '/admin/marks', label: 'Marks', icon: BarChart2 },
+  { to: '/admin/reports', label: 'Reports', icon: ChartPie },
   { to: '/admin/settings', label: 'Settings', icon: Settings }
 ];
 
@@ -31,14 +33,16 @@ function AdminLayout({ children, onClick }) {
     activeTabRef.current?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
   }, [pathname]);
 
+  // No session, an expired one, or one saved before sessions had a token: sign in again.
   useEffect(() => {
-    if (!localStorage.getItem('user')) {
+    if (!getAdminSession()) {
+      clearAdminSession();
       navigate('/login');
     }
   }, [navigate]);
 
   const handleLogout = () => {
-    localStorage.removeItem('user');
+    clearAdminSession();
     navigate('/login');
   };
 

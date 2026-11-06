@@ -62,7 +62,29 @@ EMAIL_SIMULATION=true
 # SMTP_USER=your_username
 # SMTP_PASS=your_password
 # SMTP_FROM=no-reply@example.com
+
+# Signs admin login sessions (any long random string). Without it, admins sign in again after every restart.
+# ADMIN_TOKEN_SECRET=
 ```
+
+`server/.env.example` lists every setting with an explanation.
+
+## Admin sessions
+
+Admin pages send a signed session token (from the login) with every admin API request, and the server
+refuses admin routes without a valid one (`401`, and the page goes back to the login). A session lasts
+12 hours and ends when the password changes. Public routes (programs, the application form, payments,
+the chatbot, login and password reset) need no session.
+
+## Tests
+
+```bash
+cd server
+npm test
+```
+
+Runs the server's unit tests (reports, receipt matching, Stripe check, admin sessions) with Node's built-in
+test runner. They need no database.
 
 ## Troubleshooting
 
@@ -92,6 +114,13 @@ host's Docker daemon). It needs Git, Docker, and a POSIX shell.
 5. Ensure the EC2 security group allows inbound HTTP on port 80. The pipeline
    also publishes the backend on port 5000, as in the previous deployment
    setup.
+6. Optional: so admins stay signed in across deployments, create a **Secret
+   text** credential (for example `admin-token-secret`) with a long random
+   string, add it to the `withCredentials` block of the deploy stage as
+   `ADMIN_TOKEN_SECRET`, and pass `-e ADMIN_TOKEN_SECRET` to the backend's
+   `docker run`. Without it the backend makes a new secret at every start and
+   admins sign in again after each deployment. (The same goes for the Stripe
+   keys, which the pipeline doesn't pass to the backend today.)
 
 There are already two GitHub Actions workflows under `.github/workflows/` that
 also run on pushes to `main`. Disable them in GitHub or remove their push

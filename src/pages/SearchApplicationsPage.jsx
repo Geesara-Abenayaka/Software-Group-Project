@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowDown, ArrowUp, ArrowUpDown, Download, FileText, Clock, CheckCircle2, SearchX, XCircle } from 'lucide-react';
 import '../styles/SearchApplicationsPage.css';
 import API_BASE_URL from '../utils/apiConfig';
+import { adminFetch } from '../utils/adminSession';
 import { formatReference } from '../utils/applicationReference';
+import { deleteConfirmMessage } from '../utils/applicationDelete';
 import AdminLayout from '../components/AdminLayout';
 import StatusPill from '../components/StatusPill';
 import useConfirm from '../utils/useConfirm';
@@ -19,7 +21,7 @@ const fetchWithTimeout = async (url, timeoutMs = 8000) => {
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const response = await fetch(url, { signal: controller.signal });
+    const response = await adminFetch(url, { signal: controller.signal });
     return response;
   } finally {
     clearTimeout(timeoutId);
@@ -247,10 +249,10 @@ function SearchApplicationsPage() {
     }
   };
 
-  const handleDeleteApplication = async (applicationId, fullName) => {
+  const handleDeleteApplication = async (applicationId, fullName, payment) => {
     const confirmed = await confirm({
       title: `Delete the application from ${fullName}?`,
-      message: "This can't be undone.",
+      message: deleteConfirmMessage(payment),
       confirmLabel: 'Delete application',
       danger: true
     });
@@ -260,7 +262,7 @@ function SearchApplicationsPage() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/applications/${applicationId}`, {
+      const response = await adminFetch(`${API_BASE_URL}/applications/${applicationId}`, {
         method: 'DELETE'
       });
 
@@ -543,7 +545,7 @@ function SearchApplicationsPage() {
                         <td>
                           <button 
                             className="delete-btn-search"
-                            onClick={() => handleDeleteApplication(app._id, app.fullName)}
+                            onClick={() => handleDeleteApplication(app._id, app.fullName, app.payment)}
                             title="Delete application"
                           >
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">

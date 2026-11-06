@@ -11,7 +11,9 @@ import {
 } from '../utils/gridfsService.js';
 import { parseGpa, isValidGpa, withGpaCategory, MAX_GPA } from '../utils/gpaCategory.js';
 import { getApplicationWindow } from '../utils/applicationWindow.js';
-import { isStripeConfigured, markPaymentUsed, verifyApplicationFeePayment } from '../utils/stripePayments.js';
+import { APPLICATION_FEE, isStripeConfigured, markPaymentUsed, verifyApplicationFeePayment } from '../utils/stripePayments.js';
+import { loadReceiptMatches } from '../utils/receiptMatches.js';
+import { requireAdmin } from '../utils/adminAuth.js';
 
 const router = express.Router();
 
@@ -37,7 +39,8 @@ const ADMIN_LIST_FIELDS = [
   'createdAt',
   'updatedAt',
   'payment.method',
-  'payment.status'
+  'payment.status',
+  'payment.amount'
 ].join(' ');
 
 const APPLICATION_SUMMARY_FIELDS = [
@@ -57,7 +60,10 @@ const APPLICATION_SUMMARY_FIELDS = [
   'graduationDate',
   'submittedAt',
   'createdAt',
-  'updatedAt'
+  'updatedAt',
+  // So the delete confirm can mention a card payment
+  'payment.method',
+  'payment.amount'
 ].join(' ');
 
 // Create a new application
@@ -287,7 +293,7 @@ router.post('/', async (req, res) => {
 });
 
 // Get all applications
-router.get('/', async (req, res) => {
+router.get('/', requireAdmin, async (req, res) => {
   try {
     const { page = 1, limit = 50, program, status } = req.query;
     const hasPagination = req.query.page !== undefined || req.query.limit !== undefined;
@@ -329,7 +335,7 @@ router.get('/', async (req, res) => {
 });
 
 // Get lightweight application summaries (for fast admin lists/search)
-router.get('/summary', async (req, res) => {
+router.get('/summary', requireAdmin, async (req, res) => {
   try {
     const applications = await Application.find()
       .select(`${APPLICATION_SUMMARY_FIELDS} ${GPA_FIELD}`)
@@ -352,7 +358,7 @@ router.get('/summary', async (req, res) => {
 });
 
 // Get applications by program
-router.get('/program/:program', async (req, res) => {
+router.get('/program/:program', requireAdmin, async (req, res) => {
   try {
     const { program } = req.params;
     const applications = await Application.find({ program })
@@ -376,7 +382,7 @@ router.get('/program/:program', async (req, res) => {
 });
 
 // Lightweight summary endpoint for admin dashboards
-router.get('/summary/by-program', async (req, res) => {
+router.get('/summary/by-program', requireAdmin, async (req, res) => {
   try {
     // Statuses are stored in more than one spelling ('approved' and 'Approved', 'Rejected', 'Application Rejected'),
     // so compare them in lower case.
@@ -431,7 +437,7 @@ router.get('/summary/by-program', async (req, res) => {
 });
 
 // Fast lookup by NIC for admin marks page
-router.get('/nic/:nicNo', async (req, res) => {
+router.get('/nic/:nicNo', requireAdmin, async (req, res) => {
   try {
     const { nicNo } = req.params;
     const normalizedNic = String(nicNo || '').trim();
@@ -470,7 +476,7 @@ router.get('/nic/:nicNo', async (req, res) => {
 });
 
 // Get lightweight summaries by program
-router.get('/program/:program/summary', async (req, res) => {
+router.get('/program/:program/summary', requireAdmin, async (req, res) => {
   try {
     const { program } = req.params;
     const applications = await Application.find({ program })
@@ -504,7 +510,7 @@ router.get('/program/:program/summary', async (req, res) => {
 });
 
 // Get lightweight view of single application
-router.get('/:id/view', async (req, res) => {
+router.get('/:id/view', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const application = await Application.findById(id)
@@ -585,13 +591,19 @@ router.get('/:id/view', async (req, res) => {
       processedDocuments.transcript = await getFileInfo(documents.transcript);
     }
     
+    // Other applications that uploaded the same bank receipt (one bank payment pays one fee).
+    let receiptMatches = [];
     if (documents.paymentConfirmation) {
       processedDocuments.paymentConfirmation = await getFileInfo(documents.paymentConfirmation);
+      if (application.payment?.method !== 'card') {
+        receiptMatches = (await loadReceiptMatches()).get(String(application._id)) || [];
+      }
     }
 
     const lightweightApplication = {
       ...withGpaCategory(application),
-      documents: processedDocuments
+      documents: processedDocuments,
+      receiptMatches
     };
 
     return res.json({
@@ -609,7 +621,7 @@ router.get('/:id/view', async (req, res) => {
 });
 
 // Get full application details
-router.get('/:id', async (req, res) => {
+router.get('/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const application = await Application.findById(id).lean();
@@ -636,7 +648,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Update application status
-router.patch('/:id/status', async (req, res) => {
+router.patch('/:id/status', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -670,7 +682,7 @@ router.patch('/:id/status', async (req, res) => {
 });
 
 // Update marks
-router.patch('/:id/marks', async (req, res) => {
+router.patch('/:id/marks', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const { oaMarks, writingMarks, interviewMarks, graduationDate } = req.body;
@@ -703,8 +715,74 @@ router.patch('/:id/marks', async (req, res) => {
   }
 });
 
+// An admin checks an uploaded bank receipt against the bank statement.
+// Body: { action: 'confirm' | 'reject' | 'reset', note? }. Saves the signed-in admin as the one who checked it.
+// confirm: the fee counts as paid and collected; reject: the application counts as not paid;
+// reset: back to "not checked yet".
+const PAYMENT_REVIEW_ACTIONS = ['confirm', 'reject', 'reset'];
+
+router.patch('/:id/payment', requireAdmin, async (req, res) => {
+  const action = String(req.body?.action || '');
+  if (!PAYMENT_REVIEW_ACTIONS.includes(action)) {
+    return res.status(400).json({ success: false, message: 'The action must be confirm, reject or reset.' });
+  }
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(404).json({ success: false, message: 'Application not found' });
+  }
+
+  try {
+    const application = await Application.findById(req.params.id)
+      .select('payment.method documents.paymentConfirmation')
+      .lean();
+
+    if (!application) {
+      return res.status(404).json({ success: false, message: 'Application not found' });
+    }
+    if (application.payment?.method === 'card') {
+      return res.status(409).json({ success: false, message: 'This application was paid by card, so there is no bank receipt to check.' });
+    }
+    if (!application.documents?.paymentConfirmation) {
+      return res.status(409).json({ success: false, message: 'This application has no bank receipt to check.' });
+    }
+
+    const review = {
+      method: 'bank',
+      status: action === 'confirm' ? 'confirmed' : 'rejected',
+      currency: APPLICATION_FEE.currency.toUpperCase(),
+      // The signed-in admin, from the session (never from the request body)
+      reviewedBy: req.admin.email,
+      reviewedAt: new Date(),
+      note: String(req.body?.note || '').trim().slice(0, 500)
+    };
+    if (action === 'confirm') {
+      review.amount = APPLICATION_FEE.amount;
+    }
+
+    // The condition stops this from replacing a card payment saved at the same moment.
+    const updated = await Application.findOneAndUpdate(
+      { _id: req.params.id, 'payment.method': { $ne: 'card' } },
+      action === 'reset' ? { $unset: { payment: 1 } } : { $set: { payment: review } },
+      { new: true, projection: { payment: 1 } }
+    ).lean();
+
+    if (!updated) {
+      return res.status(409).json({ success: false, message: 'This application was paid by card, so there is no bank receipt to check.' });
+    }
+
+    const messages = {
+      confirm: 'Bank payment confirmed',
+      reject: 'Bank receipt rejected',
+      reset: 'Bank receipt marked as not checked'
+    };
+    return res.json({ success: true, message: messages[action], data: { payment: updated.payment || null } });
+  } catch (error) {
+    console.error('Error reviewing bank receipt:', error);
+    return res.status(500).json({ success: false, message: 'Could not save the receipt check. Please try again.' });
+  }
+});
+
 // Delete application
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
     const application = await Application.findByIdAndDelete(id);
@@ -732,7 +810,7 @@ router.delete('/:id', async (req, res) => {
 
 // Download file from GridFS
 // Usage: GET /api/applications/:appId/file/:fileId
-router.get('/:appId/file/:fileId', async (req, res) => {
+router.get('/:appId/file/:fileId', requireAdmin, async (req, res) => {
   try {
     const { appId, fileId } = req.params;
     
@@ -794,7 +872,7 @@ router.get('/:appId/file/:fileId', async (req, res) => {
 });
 
 // Bulk email endpoint
-router.post('/program/:program/bulk-email', async (req, res) => {
+router.post('/program/:program/bulk-email', requireAdmin, async (req, res) => {
   try {
     const { program } = req.params;
     const { subject, message, applicationIds = [] } = req.body;

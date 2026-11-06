@@ -2,6 +2,7 @@ import express from 'express';
 import Setting from '../models/Setting.js';
 import { ASSISTANT_FACTS, ASSISTANT_FACTS_KEY, clearAssistantFactsCache } from '../utils/assistantKnowledge.js';
 import { APPLICATION_DEADLINE_KEY, APPLICATION_PERIOD_KEY, isDateString } from '../utils/applicationWindow.js';
+import { requireAdmin } from '../utils/adminAuth.js';
 
 const router = express.Router();
 
@@ -63,7 +64,7 @@ router.get('/:key', async (req, res) => {
 });
 
 // Save a setting (admin only)
-router.put('/:key', async (req, res) => {
+router.put('/:key', requireAdmin, async (req, res) => {
   const definition = getDefinition(req, res);
   if (!definition) return;
 
@@ -87,7 +88,7 @@ router.put('/:key', async (req, res) => {
 });
 
 // Go back to the default (admin only)
-router.delete('/:key', async (req, res) => {
+router.delete('/:key', requireAdmin, async (req, res) => {
   const definition = getDefinition(req, res);
   if (!definition) return;
 
