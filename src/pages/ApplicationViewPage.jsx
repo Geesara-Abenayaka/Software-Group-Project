@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Check, Eye, FileText, X } from 'lucide-react';
+import { Check, CreditCard, ExternalLink, Eye, FileText, X } from 'lucide-react';
 import '../styles/ApplicationViewPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import { PageLoader } from '../components/Loaders';
@@ -10,6 +10,7 @@ import StatusPill from '../components/StatusPill';
 import { toast } from '../utils/toast';
 import { formatDateTime } from '../utils/formatDate';
 import usePageTitle from '../utils/usePageTitle';
+import { describeCard, formatRupees } from '../utils/stripe';
 
 const fetchWithTimeout = async (url, timeoutMs = 8000) => {
   const controller = new AbortController();
@@ -459,8 +460,34 @@ function ApplicationViewPage() {
           </div>
 
           <div className="form-group view-only">
-            <label>Payment Confirmation / Bank Receipt</label>
-            {application.documents?.paymentConfirmation ? (
+            <label>{application.payment?.method === 'card' ? 'Application Fee' : 'Payment Confirmation / Bank Receipt'}</label>
+            {application.payment?.method === 'card' ? (
+              // Paid online by card: checked with Stripe when the application was submitted.
+              <div className="file-item-with-actions">
+                <span className="file-name view-payment">
+                  <CreditCard size={16} aria-hidden="true" />
+                  <span>
+                    Paid by card · {formatRupees(application.payment.amount)}
+                    {application.payment.cardLast4 && <> · {describeCard(application.payment)}</>}
+                    {application.payment.paidAt && <> · {formatDateTime(application.payment.paidAt)}</>}
+                    <span className="view-payment__ref">Stripe reference: {application.payment.stripePaymentIntentId}</span>
+                  </span>
+                </span>
+                {application.payment.receiptUrl && (
+                  <div className="file-actions">
+                    <a
+                      href={application.payment.receiptUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="file-action-btn view-btn"
+                      title="Open the Stripe receipt in a new tab"
+                    >
+                      <ExternalLink size={16} aria-hidden="true" /> Receipt
+                    </a>
+                  </div>
+                )}
+              </div>
+            ) : application.documents?.paymentConfirmation ? (
               <div className="file-item-with-actions">
                 <span className="file-name"><FileText size={16} aria-hidden="true" /> {application.documents.paymentConfirmation.fileName}</span>
                 <div className="file-actions">
