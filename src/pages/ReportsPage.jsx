@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { AlertTriangle, Inbox, RefreshCw } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
+import DailyChart from '../components/reports/DailyChart';
+import PaymentSplit from '../components/reports/PaymentSplit';
+import ProgramTable from '../components/reports/ProgramTable';
 import ReportFilters from '../components/reports/ReportFilters';
 import ReportTiles from '../components/reports/ReportTiles';
 import API_BASE_URL from '../utils/apiConfig';
@@ -214,6 +217,16 @@ function ReportsPage() {
             aria-busy={loading}
           >
             {(report || (loading && !failed)) && <ReportTiles totals={report ? totals : null} />}
+
+            {report && totals.applications > 0 && (
+              <>
+                <div className="report-grid">
+                  <PaymentSplit totals={totals} />
+                  <DailyChart byDay={report.byDay} from={range.from} to={range.to} today={today} />
+                </div>
+                <ProgramTable byProgram={report.byProgram} totals={totals} />
+              </>
+            )}
 
             {isEmpty && (
               <div className="report-card report-empty">

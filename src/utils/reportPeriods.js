@@ -106,9 +106,12 @@ export const bucketApplications = (byDay, { from, to }, today = todayInSriLanka(
       buckets.set(key, {
         key,
         count: 0,
-        label: unit === 'month'
-          ? formatDay(first, { month: 'short', year: 'numeric' })
-          : formatDay(first, { day: 'numeric', month: 'short' }),
+        // Weeks and months can span years, so their labels carry the year.
+        label: unit === 'day'
+          ? formatDay(first, { day: 'numeric', month: 'short' })
+          : unit === 'week'
+            ? formatDay(first, { day: 'numeric', month: 'short', year: 'numeric' })
+            : formatDay(first, { month: 'short', year: 'numeric' }),
         fullLabel: unit === 'day'
           ? formatDay(first)
           : unit === 'week'
