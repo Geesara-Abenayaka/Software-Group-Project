@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUp, ArrowUpDown, Download, FileText, Clock, CheckCircle
 import '../styles/SearchApplicationsPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import { formatReference } from '../utils/applicationReference';
+import { deleteConfirmMessage } from '../utils/applicationDelete';
 import AdminLayout from '../components/AdminLayout';
 import StatusPill from '../components/StatusPill';
 import useConfirm from '../utils/useConfirm';
@@ -247,10 +248,10 @@ function SearchApplicationsPage() {
     }
   };
 
-  const handleDeleteApplication = async (applicationId, fullName) => {
+  const handleDeleteApplication = async (applicationId, fullName, payment) => {
     const confirmed = await confirm({
       title: `Delete the application from ${fullName}?`,
-      message: "This can't be undone.",
+      message: deleteConfirmMessage(payment),
       confirmLabel: 'Delete application',
       danger: true
     });
@@ -543,7 +544,7 @@ function SearchApplicationsPage() {
                         <td>
                           <button 
                             className="delete-btn-search"
-                            onClick={() => handleDeleteApplication(app._id, app.fullName)}
+                            onClick={() => handleDeleteApplication(app._id, app.fullName, app.payment)}
                             title="Delete application"
                           >
                             <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">

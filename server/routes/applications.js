@@ -37,7 +37,8 @@ const ADMIN_LIST_FIELDS = [
   'createdAt',
   'updatedAt',
   'payment.method',
-  'payment.status'
+  'payment.status',
+  'payment.amount'
 ].join(' ');
 
 const APPLICATION_SUMMARY_FIELDS = [
@@ -57,7 +58,10 @@ const APPLICATION_SUMMARY_FIELDS = [
   'graduationDate',
   'submittedAt',
   'createdAt',
-  'updatedAt'
+  'updatedAt',
+  // So the delete confirm can mention a card payment
+  'payment.method',
+  'payment.amount'
 ].join(' ');
 
 // Create a new application

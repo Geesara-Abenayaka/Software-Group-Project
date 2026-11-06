@@ -6,6 +6,7 @@ import AdminLayout from '../components/AdminLayout';
 import StatusPill from '../components/StatusPill';
 import useConfirm from '../utils/useConfirm';
 import { toast } from '../utils/toast';
+import { deleteConfirmMessage } from '../utils/applicationDelete';
 
 function MarksPage() {
   const { confirm, confirmDialog } = useConfirm();
@@ -127,7 +128,8 @@ function MarksPage() {
               oaMarks: app.oaMarks || '-',
               writingMarks: app.writingMarks || '-',
               interviewMarks: app.interviewMarks || '-',
-              graduationDate: gradDate
+              graduationDate: gradDate,
+              payment: app.payment
             };
           });
         console.log('Filtered applications:', transformedData);
@@ -309,12 +311,12 @@ function MarksPage() {
     }));
   };
 
-  const handleDelete = async (appId, event) => {
+  const handleDelete = async (appId, event, payment) => {
     event.stopPropagation(); // Prevent row selection when clicking delete
-    
+
     const confirmed = await confirm({
       title: 'Delete this application?',
-      message: "This can't be undone.",
+      message: deleteConfirmMessage(payment),
       confirmLabel: 'Delete application',
       danger: true
     });
@@ -556,7 +558,7 @@ function MarksPage() {
                         <td>
                           <button 
                             className="delete-icon-btn"
-                            onClick={(e) => handleDelete(app._id, e)}
+                            onClick={(e) => handleDelete(app._id, e, app.payment)}
                             title="Delete application"
                             aria-label="Delete application"
                           >
