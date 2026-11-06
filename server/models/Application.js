@@ -93,10 +93,12 @@ const applicationSchema = new mongoose.Schema({
     paymentConfirmation: mongoose.Schema.Types.ObjectId    // Single file
   },
 
-  // Application fee paid online by card (Stripe). Set by the server after checking the payment with Stripe;
-  // applications paid at the bank have no `payment` and a paymentConfirmation receipt instead.
+  // How the application fee was paid. Never taken from the form:
+  // - card: set by the server after checking the payment with Stripe (status 'succeeded');
+  // - bank: set when an admin confirms or rejects the uploaded paymentConfirmation receipt
+  //   (status 'confirmed' or 'rejected'). A receipt nobody has checked yet has no `payment`.
   payment: {
-    method: { type: String, enum: ['card'] },
+    method: { type: String, enum: ['card', 'bank'] },
     status: String,
     stripePaymentIntentId: String,
     amount: Number,        // in rupees, e.g. 2000
@@ -107,7 +109,11 @@ const applicationSchema = new mongoose.Schema({
     paidAt: Date,
     // true for a real payment, false for a Stripe test payment. Payments saved before this field
     // existed have none; they were all made with test keys, and the reports treat them as test payments.
-    livemode: Boolean
+    livemode: Boolean,
+    // Bank receipts: the admin who checked it, when, and an optional note (e.g. why it was rejected)
+    reviewedBy: String,
+    reviewedAt: Date,
+    note: String
   },
 
   // Declaration

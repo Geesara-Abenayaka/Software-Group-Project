@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import mongoose from 'mongoose';
 import { Readable } from 'stream';
 
@@ -40,6 +41,8 @@ export async function saveFileToGridFS(filename, fileData, metadata = {}) {
     const uploadStream = bucket.openUploadStream(filename, {
       metadata: {
         uploadedAt: new Date(),
+        // Fingerprint of the file, so the same bank receipt uploaded with two applications can be found
+        sha256: crypto.createHash('sha256').update(buffer).digest('hex'),
         ...metadata
       }
     });

@@ -11,7 +11,8 @@ import {
 } from '../utils/gridfsService.js';
 import { parseGpa, isValidGpa, withGpaCategory, MAX_GPA } from '../utils/gpaCategory.js';
 import { getApplicationWindow } from '../utils/applicationWindow.js';
-import { isStripeConfigured, markPaymentUsed, verifyApplicationFeePayment } from '../utils/stripePayments.js';
+import { APPLICATION_FEE, isStripeConfigured, markPaymentUsed, verifyApplicationFeePayment } from '../utils/stripePayments.js';
+import { loadReceiptMatches } from '../utils/receiptMatches.js';
 
 const router = express.Router();
 
@@ -589,13 +590,19 @@ router.get('/:id/view', async (req, res) => {
       processedDocuments.transcript = await getFileInfo(documents.transcript);
     }
     
+    // Other applications that uploaded the same bank receipt (one bank payment pays one fee).
+    let receiptMatches = [];
     if (documents.paymentConfirmation) {
       processedDocuments.paymentConfirmation = await getFileInfo(documents.paymentConfirmation);
+      if (application.payment?.method !== 'card') {
+        receiptMatches = (await loadReceiptMatches()).get(String(application._id)) || [];
+      }
     }
 
     const lightweightApplication = {
       ...withGpaCategory(application),
-      documents: processedDocuments
+      documents: processedDocuments,
+      receiptMatches
     };
 
     return res.json({
@@ -704,6 +711,71 @@ router.patch('/:id/marks', async (req, res) => {
       message: 'Error updating marks',
       error: error.message
     });
+  }
+});
+
+// An admin checks an uploaded bank receipt against the bank statement.
+// Body: { action: 'confirm' | 'reject' | 'reset', note?, reviewedBy? }
+// confirm: the fee counts as paid and collected; reject: the application counts as not paid;
+// reset: back to "not checked yet".
+const PAYMENT_REVIEW_ACTIONS = ['confirm', 'reject', 'reset'];
+
+router.patch('/:id/payment', async (req, res) => {
+  const action = String(req.body?.action || '');
+  if (!PAYMENT_REVIEW_ACTIONS.includes(action)) {
+    return res.status(400).json({ success: false, message: 'The action must be confirm, reject or reset.' });
+  }
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(404).json({ success: false, message: 'Application not found' });
+  }
+
+  try {
+    const application = await Application.findById(req.params.id)
+      .select('payment.method documents.paymentConfirmation')
+      .lean();
+
+    if (!application) {
+      return res.status(404).json({ success: false, message: 'Application not found' });
+    }
+    if (application.payment?.method === 'card') {
+      return res.status(409).json({ success: false, message: 'This application was paid by card, so there is no bank receipt to check.' });
+    }
+    if (!application.documents?.paymentConfirmation) {
+      return res.status(409).json({ success: false, message: 'This application has no bank receipt to check.' });
+    }
+
+    const review = {
+      method: 'bank',
+      status: action === 'confirm' ? 'confirmed' : 'rejected',
+      currency: APPLICATION_FEE.currency.toUpperCase(),
+      reviewedBy: String(req.body?.reviewedBy || '').trim().slice(0, 200),
+      reviewedAt: new Date(),
+      note: String(req.body?.note || '').trim().slice(0, 500)
+    };
+    if (action === 'confirm') {
+      review.amount = APPLICATION_FEE.amount;
+    }
+
+    // The condition stops this from replacing a card payment saved at the same moment.
+    const updated = await Application.findOneAndUpdate(
+      { _id: req.params.id, 'payment.method': { $ne: 'card' } },
+      action === 'reset' ? { $unset: { payment: 1 } } : { $set: { payment: review } },
+      { new: true, projection: { payment: 1 } }
+    ).lean();
+
+    if (!updated) {
+      return res.status(409).json({ success: false, message: 'This application was paid by card, so there is no bank receipt to check.' });
+    }
+
+    const messages = {
+      confirm: 'Bank payment confirmed',
+      reject: 'Bank receipt rejected',
+      reset: 'Bank receipt marked as not checked'
+    };
+    return res.json({ success: true, message: messages[action], data: { payment: updated.payment || null } });
+  } catch (error) {
+    console.error('Error reviewing bank receipt:', error);
+    return res.status(500).json({ success: false, message: 'Could not save the receipt check. Please try again.' });
   }
 });
 
