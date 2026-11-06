@@ -8,14 +8,6 @@ import { formatDate } from '../utils/formatDate';
 import { errorMessage, readJson } from '../utils/readJson';
 import { toast } from '../utils/toast';
 
-const signedInEmail = () => {
-  try {
-    return JSON.parse(localStorage.getItem('user') || 'null')?.email || '';
-  } catch {
-    return '';
-  }
-};
-
 const STATES = {
   waiting: { Icon: Clock, text: () => 'Not checked yet' },
   confirmed: {
@@ -50,7 +42,8 @@ function ReceiptReview({ applicationId, payment, matches, onChange, compact = fa
       const response = await adminFetch(`${API_BASE_URL}/applications/${applicationId}/payment`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, note: action === 'reject' ? note.trim() : '', reviewedBy: signedInEmail() })
+        // The server records the signed-in admin as the one who checked it.
+        body: JSON.stringify({ action, note: action === 'reject' ? note.trim() : '' })
       });
       const body = await readJson(response, "Couldn't save the receipt check.");
       toast.success(body.message);

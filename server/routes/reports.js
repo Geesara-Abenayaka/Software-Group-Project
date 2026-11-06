@@ -5,6 +5,7 @@ import Program from '../models/Program.js';
 import { isDateString } from '../utils/applicationWindow.js';
 import { APPLICATION_FEE, getApplicationFeePayment, isStripeConfigured } from '../utils/stripePayments.js';
 import { classifyStripePayments, searchApplicationFeePayments } from '../utils/stripeCheck.js';
+import { requireAdmin } from '../utils/adminAuth.js';
 import { buildReport, PAYMENT_KEYS, reportPaymentKind } from '../utils/reportBuilder.js';
 import { loadReceiptMatches } from '../utils/receiptMatches.js';
 import { getStripeMode, toDateRange, toReference } from '../utils/reportRules.js';
@@ -12,6 +13,9 @@ import { getStripeMode, toDateRange, toReference } from '../utils/reportRules.js
 // Admin reports: how many applied, how many paid the fee, and how much the fees brought in.
 // The rules behind each number are in utils/reportRules.js and utils/reportBuilder.js.
 const router = express.Router();
+
+// Every report holds applicants' details or money: signed-in admins only.
+router.use(requireAdmin);
 
 const SUMMARY_FIELDS = [
   'program',
