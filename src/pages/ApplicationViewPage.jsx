@@ -7,6 +7,7 @@ import { PageLoader } from '../components/Loaders';
 import Breadcrumbs from '../components/Breadcrumbs';
 import { formatReference } from '../utils/applicationReference';
 import StatusPill from '../components/StatusPill';
+import ReceiptReview from '../components/ReceiptReview';
 import { toast } from '../utils/toast';
 import { formatDateTime } from '../utils/formatDate';
 import usePageTitle from '../utils/usePageTitle';
@@ -488,20 +489,29 @@ function ApplicationViewPage() {
                 )}
               </div>
             ) : application.documents?.paymentConfirmation ? (
-              <div className="file-item-with-actions">
-                <span className="file-name"><FileText size={16} aria-hidden="true" /> {application.documents.paymentConfirmation.fileName}</span>
-                <div className="file-actions">
-                  <a 
-                    href={`${API_BASE_URL}/applications/${applicationId}/file/${application.documents.paymentConfirmation.fileId}`} 
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="file-action-btn view-btn"
-                    title="Open in new tab"
-                  >
-                    <Eye size={16} aria-hidden="true" /> View
-                  </a>
+              <>
+                <div className="file-item-with-actions">
+                  <span className="file-name"><FileText size={16} aria-hidden="true" /> {application.documents.paymentConfirmation.fileName}</span>
+                  <div className="file-actions">
+                    <a
+                      href={`${API_BASE_URL}/applications/${applicationId}/file/${application.documents.paymentConfirmation.fileId}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="file-action-btn view-btn"
+                      title="Open in new tab"
+                    >
+                      <Eye size={16} aria-hidden="true" /> View
+                    </a>
+                  </div>
                 </div>
-              </div>
+                {/* An admin checks the receipt against the bank statement */}
+                <ReceiptReview
+                  applicationId={applicationId}
+                  payment={application.payment}
+                  matches={application.receiptMatches}
+                  onChange={(payment) => setApplication((current) => ({ ...current, payment }))}
+                />
+              </>
             ) : (
               <div className="document-status not-uploaded"><X size={16} aria-hidden="true" /> Not Uploaded</div>
             )}
