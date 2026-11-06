@@ -39,6 +39,7 @@ function ReportsPage() {
   // The application period saved in Settings: undefined while loading, null when none is saved.
   const [applicationPeriod, setApplicationPeriod] = useState(undefined);
   const [reloadCount, setReloadCount] = useState(0);
+  const [totalsVersion, setTotalsVersion] = useState(0);
   // 'payments' or 'pdf' while that download is being prepared
   const [exporting, setExporting] = useState('');
   // The last report received, with the request it answered, so a new filter keeps the old numbers on screen
@@ -67,7 +68,8 @@ function ReportsPage() {
     return params.toString();
   }, [range.from, range.to, program, showDemo]);
 
-  const requestKey = `${query}#${reloadCount}`;
+  // totalsVersion: the totals reload after a receipt is checked in the payment list (the list itself doesn't).
+  const requestKey = `${query}#${reloadCount}#${totalsVersion}`;
   const canRequest = settingsReady && !rangeError;
   // Loading also while Settings is read, because the default period depends on it.
   const loading = !rangeError && (!settingsReady || result.key !== requestKey);
@@ -308,7 +310,12 @@ function ReportsPage() {
             )}
 
             {report && totals.applications > 0 && (
-              <PaymentList baseQuery={query} refreshKey={reloadCount} liveMode={report.stripeMode === 'live'} />
+              <PaymentList
+                baseQuery={query}
+                refreshKey={reloadCount}
+                liveMode={report.stripeMode === 'live'}
+                onReceiptChecked={() => setTotalsVersion((version) => version + 1)}
+              />
             )}
 
             {isEmpty && (

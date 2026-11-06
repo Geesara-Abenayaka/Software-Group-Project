@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ExternalLink, SearchX } from 'lucide-react';
 import ReceiptMatches from './ReceiptMatches';
+import ReceiptReview from '../ReceiptReview';
 import API_BASE_URL from '../../utils/apiConfig';
 import { formatDate, formatDateTime } from '../../utils/formatDate';
 import { describeCard, formatCount, formatRupees } from '../../utils/formatMoney';
@@ -10,7 +11,30 @@ import { isBankMethod, PAYMENT_FILTERS, PAYMENT_METHOD_LABELS } from '../../util
 
 const PAGE_SIZE = 25;
 
-function PaymentCell({ row }) {
+// The row's receipt check in the shape ReceiptReview takes (null = not checked yet).
+const paymentOfRow = (row) => {
+  if (row.method === 'bankConfirmed') return { method: 'bank', status: 'confirmed' };
+  if (row.method === 'bankRejected') return { method: 'bank', status: 'rejected' };
+  return null;
+};
+
+// The row after an admin confirmed, rejected or undid its receipt check.
+const withPayment = (row, payment) => {
+  if (!payment) {
+    return { ...row, method: 'bankWaiting', amount: null, reviewedBy: '', reviewedAt: null, note: '' };
+  }
+  const confirmed = payment.status === 'confirmed';
+  return {
+    ...row,
+    method: confirmed ? 'bankConfirmed' : 'bankRejected',
+    amount: confirmed ? payment.amount : null,
+    reviewedBy: payment.reviewedBy || '',
+    reviewedAt: payment.reviewedAt || null,
+    note: payment.note || ''
+  };
+};
+
+function PaymentCell({ row, onPaymentChange }) {
   if (row.method === 'card' || row.method === 'testCard') {
     return (
       <>
@@ -39,6 +63,12 @@ function PaymentCell({ row }) {
             Download receipt
           </a>
         )}
+        <ReceiptReview
+          compact
+          applicationId={row._id}
+          payment={paymentOfRow(row)}
+          onChange={(payment) => onPaymentChange(row._id, payment)}
+        />
       </>
     );
   }
@@ -58,8 +88,10 @@ const reviewText = (row) => {
 /**
  * Every application in the report's period with how its fee was paid, newest first, 25 at a time.
  * baseQuery: the report's filters as a query string; refreshKey changes when the page's Refresh is pressed.
+ * onReceiptChecked: called after an admin confirms, rejects or undoes a receipt here, so the page can
+ * reload its totals. The row is updated where it is; the list itself isn't reloaded, so the admin keeps their place.
  */
-function PaymentList({ baseQuery, refreshKey, liveMode }) {
+function PaymentList({ baseQuery, refreshKey, liveMode, onReceiptChecked }) {
   const [method, setMethod] = useState('');
   const [searchText, setSearchText] = useState('');
   const [search, setSearch] = useState('');
@@ -110,6 +142,14 @@ function PaymentList({ baseQuery, refreshKey, liveMode }) {
   }, [baseQuery, method, search, pageNumber, listKey, requestKey]);
 
   const { rows, total, error } = result;
+
+  const handlePaymentChange = (applicationId, payment) => {
+    setResult((current) => ({
+      ...current,
+      rows: current.rows.map((row) => (row._id === applicationId ? withPayment(row, payment) : row))
+    }));
+    onReceiptChecked?.();
+  };
   const failed = Boolean(error) && !loading;
   const filters = [...PAYMENT_FILTERS, ...(liveMode ? [['testCard', PAYMENT_METHOD_LABELS.testCard]] : [])];
 
@@ -179,7 +219,7 @@ function PaymentList({ baseQuery, refreshKey, liveMode }) {
                 <td className="report-table__wrap">{row.fullName}</td>
                 <td>{row.nicNo}</td>
                 <td className="report-table__wrap">{row.programTitle || `Deleted program (${row.program})`}</td>
-                <td className="report-table__wrap report-pay-cell"><PaymentCell row={row} /></td>
+                <td className="report-table__wrap report-pay-cell"><PaymentCell row={row} onPaymentChange={handlePaymentChange} /></td>
                 <td className="cell-number">
                   {(row.method === 'card' || row.method === 'bankConfirmed') && formatRupees(row.amount)}
                   {row.method === 'testCard' && <span className="report-muted">{formatRupees(row.amount)} (test)</span>}
