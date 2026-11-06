@@ -1,10 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Download, User, Mail, Send, X } from 'lucide-react';
+import { Download, Inbox, User, Mail, Send, X } from 'lucide-react';
 import API_BASE_URL from '../utils/apiConfig';
 import '../styles/AdminDashboard.css';
 import '../styles/ApplicationDetailPage.css';
 import AdminLayout from '../components/AdminLayout';
+import Breadcrumbs from '../components/Breadcrumbs';
+import StatusPill from '../components/StatusPill';
+import useConfirm from '../utils/useConfirm';
+import { toast } from '../utils/toast';
 import { TableSkeleton } from '../components/Loaders';
 import useDelayedFlag from '../utils/useDelayedFlag';
 
@@ -36,6 +40,7 @@ const sortByCategoryPriority = (list) => {
 };
 
 function ApplicationDetailPage() {
+  const { confirm, confirmDialog } = useConfirm();
   const navigate = useNavigate();
   const { programId } = useParams();
   const [program, setProgram] = useState(null);
@@ -186,7 +191,7 @@ function ApplicationDetailPage() {
   };
 
   const handleExport = () => {
-    alert('Exporting applications data...');
+    toast.info("Export isn't available here yet. Use the Download tab to export applications.");
   };
 
   const getDefaultBulkTemplate = () => {
@@ -344,18 +349,23 @@ function ApplicationDetailPage() {
         const statusMessage = newStatus === 'approved' ? 'approved' : 
                             newStatus === 'rejected' ? 'rejected' : 
                             newStatus === 'under-review' ? 'marked as under review' : 'updated';
-        alert(`Application ${statusMessage} successfully!`);
+        toast.success(`Application ${statusMessage}`);
       } else {
-        alert('Failed to update application status: ' + result.message);
+        toast.error(`Couldn't update the status: ${result.message}`);
       }
     } catch (error) {
       console.error('Error updating application status:', error);
-      alert('Error updating application status');
+      toast.error("Couldn't update the status. Please try again.");
     }
   };
 
   const handleDeleteApplication = async (applicationId, fullName) => {
-    const confirmed = window.confirm(`Are you sure you want to delete the application for ${fullName}? This action cannot be undone.`);
+    const confirmed = await confirm({
+      title: `Delete the application from ${fullName}?`,
+      message: "This can't be undone.",
+      confirmLabel: 'Delete application',
+      danger: true
+    });
     
     if (!confirmed) {
       return;
@@ -369,15 +379,15 @@ function ApplicationDetailPage() {
       const result = await response.json();
 
       if (result.success) {
-        alert('Application deleted successfully!');
+        toast.success('Application deleted');
         // Refresh the applications list
         fetchProgramAndApplications();
       } else {
-        alert('Failed to delete application: ' + result.message);
+        toast.error(`Couldn't delete the application: ${result.message}`);
       }
     } catch (error) {
       console.error('Error deleting application:', error);
-      alert('Error deleting application');
+      toast.error("Couldn't delete the application. Please try again.");
     }
   };
 
@@ -392,19 +402,6 @@ function ApplicationDetailPage() {
     return 'cat-none';
   };
 
-  const getStatusClass = (status) => {
-    if (status === 'Approved') return 'status-approved';
-    if (status === 'Rejected') return 'status-rejected';
-    if (status === 'Under Review') return 'status-under-review';
-    return 'status-pending';
-  };
-
-  const getStatusIcon = (status) => {
-    if (status === 'Approved') return '✓';
-    if (status === 'Rejected') return '✕';
-    return '⏱';
-  };
-
   return (
     <AdminLayout>
 
@@ -414,10 +411,13 @@ function ApplicationDetailPage() {
 
           {/* Top bar: back + title + avatar */}
           <div className="detail-topbar">
-            <button className="detail-back-btn" onClick={() => navigate('/admin/applications')}>
-              ←
-            </button>
             <div className="detail-topbar-text">
+              <Breadcrumbs
+                items={[
+                  { label: 'Applications', to: '/admin/applications' },
+                  { label: program?.title || 'Program' }
+                ]}
+              />
               <h2 className="detail-topbar-title">{program?.title || 'Program'}</h2>
               <p className="detail-topbar-sub">Application Management</p>
             </div>
@@ -509,7 +509,12 @@ function ApplicationDetailPage() {
                   <TableSkeleton rows={8} columns={6} rowHeight={57} />
                 ) : filteredApplications.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="no-apps-msg">No applications found</td>
+                    <td colSpan="6" className="table-empty">
+                      <div className="table-empty__inner">
+                        <Inbox size={28} aria-hidden="true" />
+                        <p>{applications.length === 0 ? 'No applications for this program yet' : 'No applications match these filters'}</p>
+                      </div>
+                    </td>
                   </tr>
                 ) : (
                   filteredApplications.map((app) => (
@@ -523,7 +528,7 @@ function ApplicationDetailPage() {
                           {app.displayId}
                         </a>
                       </td>
-                      <td style={{ color: '#9ca3af' }}>{app.nic}</td>
+                      <td className="detail-nic">{app.nic}</td>
                       <td>{app.fullName}</td>
                       <td>{app.nameWithInitials}</td>
                       <td>
@@ -533,9 +538,7 @@ function ApplicationDetailPage() {
                         </span>
                       </td>
                       <td>
-                        <span className={`detail-status-pill ${getStatusClass(app.status)}`}>
-                          {getStatusIcon(app.status)} {app.status}
-                        </span>
+                        <StatusPill status={app.status} />
                       </td>
                     </tr>
                   ))
@@ -660,6 +663,7 @@ function ApplicationDetailPage() {
 
         </div>
       </div>
+      {confirmDialog}
     </AdminLayout>
   );
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   User,
   PlusCircle,
@@ -8,6 +9,10 @@ import {
 import '../styles/AdminDashboard.css';
 import API_BASE_URL from '../utils/apiConfig';
 import AdminLayout from '../components/AdminLayout';
+import AdminSummary from '../components/AdminSummary';
+import ProgramFormFields from '../components/ProgramFormFields';
+import useConfirm from '../utils/useConfirm';
+import { toast } from '../utils/toast';
 import { PageLoader } from '../components/Loaders';
 
 const createEmptyProgram = () => ({
@@ -52,14 +57,30 @@ const fromProgramForm = ({ eligibilityText, ...program }) => ({
   applicationDeadline: program.applicationDeadline || null
 });
 
+// The server answers a duplicate title or code with MongoDB's E11000 text in `error`;
+// show it under the field instead of a toast.
+const getDuplicateError = (data) => {
+  const text = String(data?.error || data?.message || '');
+  if (!/E11000|duplicate key/i.test(text)) return null;
+  return /title/i.test(text)
+    ? { title: 'Another program already has this title' }
+    : { shortCode: 'Another program already uses this code' };
+};
+
 function AdminDashboard() {
+  const { confirm, confirmDialog } = useConfirm();
+  const navigate = useNavigate();
   const [programs, setPrograms] = useState([]);
+  // Rows of /applications/summary/by-program; null while loading, 'error' if it failed
+  const [summary, setSummary] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editingProgram, setEditingProgram] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newProgram, setNewProgram] = useState(createEmptyProgram);
+  // Field errors in the Add / Edit modal, e.g. { shortCode: 'Another program already uses this code' }
+  const [programErrors, setProgramErrors] = useState({});
 
   useEffect(() => {
     fetchPrograms();
@@ -79,23 +100,23 @@ function AdminDashboard() {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 6000);
 
-        fetch(`${API_BASE_URL}/applications/summary`, { signal: controller.signal })
+        // Counts per programme (total, pending, approved, rejected) for the summary and the pending pills
+        fetch(`${API_BASE_URL}/applications/summary/by-program`, { signal: controller.signal })
           .then((response) => response.json())
-          .then((appsData) => {
-            if (!appsData?.success || !Array.isArray(appsData.data)) {
+          .then((summaryData) => {
+            if (!summaryData?.success || !Array.isArray(summaryData.data)) {
+              setSummary('error');
               return;
             }
 
-            setPrograms((currentPrograms) => {
-              return currentPrograms.map((program) => {
-                const pendingCount = appsData.data.filter(
-                  (app) => app.program === program.shortCode && app.status === 'pending'
-                ).length;
-                return { ...program, pendingCount };
-              });
-            });
+            setSummary(summaryData.data);
+            setPrograms((currentPrograms) => currentPrograms.map((program) => ({
+              ...program,
+              pendingCount: summaryData.data.find((row) => row.program === program.shortCode)?.pending || 0
+            })));
           })
           .catch((countError) => {
+            setSummary('error');
             if (countError?.name !== 'AbortError') {
               console.warn('Pending count fetch failed:', countError);
             }
@@ -122,7 +143,7 @@ function AdminDashboard() {
       const data = await response.json();
 
       if (!data.success) {
-        alert('Failed to load program details: ' + (data.message || 'Unknown error'));
+        toast.error(`Couldn't load the program details: ${data.message || 'unknown error'}`);
         return;
       }
 
@@ -133,31 +154,35 @@ function AdminDashboard() {
       setShowEditModal(true);
     } catch (err) {
       console.error('Error loading program details:', err);
-      alert('Failed to load program details: ' + err.message);
+      toast.error(`Couldn't load the program details: ${err.message}`);
     }
   };
 
   const handleCloseModal = () => {
     setShowEditModal(false);
     setEditingProgram(null);
+    setProgramErrors({});
   };
 
   const handleOpenAddModal = () => {
     setNewProgram(createEmptyProgram());
+    setProgramErrors({});
     setShowAddModal(true);
   };
 
   const handleCloseAddModal = () => {
     setShowAddModal(false);
     setNewProgram(createEmptyProgram());
+    setProgramErrors({});
   };
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setEditingProgram(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
+    setProgramErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
   const handleSpecializationChange = (index, field, value) => {
@@ -217,16 +242,22 @@ function AdminDashboard() {
       if (data.success) {
         // Update the local programs list
         setPrograms(programs.map(p => 
-          p._id === editingProgram._id ? data.data : p
+          // The saved program from the server has no pending count; keep the card's
+          p._id === editingProgram._id ? { ...data.data, pendingCount: p.pendingCount } : p
         ));
         handleCloseModal();
-        alert('Program updated successfully!');
+        toast.success('Program updated');
       } else {
-        alert('Failed to update program: ' + (data.message || 'Unknown error'));
+        const duplicate = getDuplicateError(data);
+        if (duplicate) {
+          setProgramErrors(duplicate);
+        } else {
+          toast.error(`Couldn't update the program: ${data.message || 'unknown error'}`);
+        }
       }
     } catch (err) {
       console.error('Error updating program:', err);
-      alert('Failed to update program: ' + err.message);
+      toast.error(`Couldn't update the program: ${err.message}`);
     }
   };
 
@@ -261,20 +292,32 @@ function AdminDashboard() {
 
       if (data.success) {
         // Add the new program to the local programs list
-        setPrograms([...programs, data.data]);
+        setPrograms([...programs, { ...data.data, pendingCount: 0 }]);
         handleCloseAddModal();
-        alert('Program added successfully!');
+        toast.success('Program added');
       } else {
-        alert('Failed to add program: ' + (data.message || 'Unknown error'));
+        const duplicate = getDuplicateError(data);
+        if (duplicate) {
+          setProgramErrors(duplicate);
+        } else {
+          toast.error(`Couldn't add the program: ${data.message || 'unknown error'}`);
+        }
       }
     } catch (err) {
       console.error('Error adding program:', err);
-      alert('Failed to add program: ' + err.message);
+      toast.error(`Couldn't add the program: ${err.message}`);
     }
   };
 
   const handleDeleteProgram = async (programId) => {
-    if (!confirm('Are you sure you want to delete this program? This action cannot be undone.')) {
+    const program = programs.find((item) => item._id === programId);
+    const confirmed = await confirm({
+      title: `Delete ${program?.title || 'this program'}?`,
+      message: "Applications for it will no longer show a program title. This can't be undone.",
+      confirmLabel: 'Delete program',
+      danger: true
+    });
+    if (!confirmed) {
       return;
     }
 
@@ -288,22 +331,23 @@ function AdminDashboard() {
       if (data.success) {
         // Remove the program from the local programs list
         setPrograms(programs.filter(p => p._id !== programId));
-        alert('Program deleted successfully!');
+        toast.success('Program deleted');
       } else {
-        alert('Failed to delete program: ' + (data.message || 'Unknown error'));
+        toast.error(`Couldn't delete the program: ${data.message || 'unknown error'}`);
       }
     } catch (err) {
       console.error('Error deleting program:', err);
-      alert('Failed to delete program: ' + err.message);
+      toast.error(`Couldn't delete the program: ${err.message}`);
     }
   };
 
   const handleNewProgramInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
     setNewProgram(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
+    setProgramErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
   const handleNewProgramSpecializationChange = (index, field, value) => {
@@ -343,6 +387,14 @@ function AdminDashboard() {
             </div>
           </div>
 
+          {!loading && !error && (
+            <AdminSummary
+              programs={programs}
+              summary={summary}
+              onOpenProgram={(program) => navigate(`/admin/applications/${program.shortCode}`)}
+            />
+          )}
+
           {loading ? (
             <PageLoader message="Loading programs…" />
           ) : error ? (
@@ -372,7 +424,9 @@ function AdminDashboard() {
                     </div>
                     <div className="program-status-block">
                       <span className="program-code-badge">{program.shortCode}</span>
-                      <span className={`pending-badge-pill ${program.pendingCount > 0 ? 'pending-red' : 'pending-gray'}`}>
+                      {program.level && <span className="program-level-badge">{program.level}</span>}
+                      {program.isProposed && <span className="badge badge--proposed program-proposed-badge">Proposed</span>}
+                      <span className={`pending-badge-pill ${program.pendingCount > 0 ? 'pending-some' : 'pending-none'}`}>
                         {program.pendingCount} Pending
                       </span>
                     </div>
@@ -450,112 +504,28 @@ function AdminDashboard() {
       {/* Edit Program Modal */}
       {showEditModal && editingProgram && (
         <div className="modal-overlay" onClick={handleCloseModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="modal-content program-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="edit-program-heading"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="modal-header">
-              <h2>Edit Program</h2>
-              <button className="close-modal-btn" onClick={handleCloseModal}>×</button>
+              <h2 id="edit-program-heading">Edit Program</h2>
+              <button className="close-modal-btn" onClick={handleCloseModal} aria-label="Close">×</button>
             </div>
 
             <div className="modal-body">
-              <div className="form-group-modal">
-                <label>Program Title</label>
-                <input
-                  type="text"
-                  name="title"
-                  value={editingProgram.title}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="form-group-modal">
-                <label>Short Code</label>
-                <input
-                  type="text"
-                  name="shortCode"
-                  value={editingProgram.shortCode}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div className="form-group-modal">
-                <label>Description</label>
-                <textarea
-                  name="description"
-                  value={editingProgram.description}
-                  onChange={handleInputChange}
-                  rows="3"
-                />
-              </div>
-
-              <div className="form-group-modal">
-                <label>Detailed Description</label>
-                <textarea
-                  name="detailedDescription"
-                  value={editingProgram.detailedDescription || ''}
-                  onChange={handleInputChange}
-                  rows="5"
-                />
-              </div>
-
-              <div className="form-group-modal">
-                <label>Deadline</label>
-                <input
-                  type="text"
-                  name="deadline"
-                  value={editingProgram.deadline}
-                  onChange={handleInputChange}
-                  placeholder="e.g., March 31, 2024"
-                />
-              </div>
-
-              <div className="form-group-modal">
-                <label>Selection Exams / Interviews</label>
-                <input
-                  type="text"
-                  name="selectionExams"
-                  value={editingProgram.selectionExams || ''}
-                  onChange={handleInputChange}
-                  placeholder="e.g., 08th and 09th November 2026"
-                />
-              </div>
-
-              <div className="form-group-modal">
-                <label>Specializations</label>
-                {editingProgram.specializations && editingProgram.specializations.map((spec, index) => (
-                  <div key={index} className="specialization-input-group">
-                    <input
-                      type="text"
-                      value={spec.name}
-                      onChange={(e) => handleSpecializationChange(index, 'name', e.target.value)}
-                      placeholder="Specialization name"
-                    />
-                    <button 
-                      type="button"
-                      className="remove-spec-btn"
-                      onClick={() => removeSpecialization(index)}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-                <button 
-                  type="button"
-                  className="add-spec-btn"
-                  onClick={addSpecialization}
-                >
-                  + Add Specialization
-                </button>
-              </div>
-
-              <div className="form-group-modal">
-                <label>Resources Count</label>
-                <input
-                  type="number"
-                  name="resourcesCount"
-                  value={editingProgram.resourcesCount}
-                  onChange={handleInputChange}
-                />
-              </div>
+              <ProgramFormFields
+                idPrefix="edit-program"
+                program={editingProgram}
+                errors={programErrors}
+                onChange={handleInputChange}
+                onSpecializationChange={handleSpecializationChange}
+                onAddSpecialization={addSpecialization}
+                onRemoveSpecialization={removeSpecialization}
+              />
             </div>
 
             <div className="modal-footer">
@@ -573,118 +543,28 @@ function AdminDashboard() {
       {/* Add Program Modal */}
       {showAddModal && (
         <div className="modal-overlay" onClick={handleCloseAddModal}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="modal-content program-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="add-program-heading"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="modal-header">
-              <h2>Add New Program</h2>
-              <button className="close-modal-btn" onClick={handleCloseAddModal}>×</button>
+              <h2 id="add-program-heading">Add New Program</h2>
+              <button className="close-modal-btn" onClick={handleCloseAddModal} aria-label="Close">×</button>
             </div>
 
             <div className="modal-body">
-              <div className="form-group-modal">
-                <label>Program Title *</label>
-                <input
-                  type="text"
-                  name="title"
-                  value={newProgram.title}
-                  onChange={handleNewProgramInputChange}
-                  required
-                />
-              </div>
-
-              <div className="form-group-modal">
-                <label>Short Code *</label>
-                <input
-                  type="text"
-                  name="shortCode"
-                  value={newProgram.shortCode}
-                  onChange={handleNewProgramInputChange}
-                  placeholder="e.g., MSC-CS"
-                  required
-                />
-              </div>
-
-              <div className="form-group-modal">
-                <label>Description *</label>
-                <textarea
-                  name="description"
-                  value={newProgram.description}
-                  onChange={handleNewProgramInputChange}
-                  rows="3"
-                  required
-                />
-              </div>
-
-              <div className="form-group-modal">
-                <label>Detailed Description</label>
-                <textarea
-                  name="detailedDescription"
-                  value={newProgram.detailedDescription}
-                  onChange={handleNewProgramInputChange}
-                  rows="5"
-                />
-              </div>
-
-              <div className="form-group-modal">
-                <label>Deadline *</label>
-                <input
-                  type="text"
-                  name="deadline"
-                  value={newProgram.deadline}
-                  onChange={handleNewProgramInputChange}
-                  placeholder="e.g., March 31, 2024"
-                  required
-                />
-              </div>
-
-              <div className="form-group-modal">
-                <label>Selection Exams / Interviews</label>
-                <input
-                  type="text"
-                  name="selectionExams"
-                  value={newProgram.selectionExams}
-                  onChange={handleNewProgramInputChange}
-                  placeholder="e.g., 08th and 09th November 2026"
-                />
-              </div>
-
-              <div className="form-group-modal">
-                <label>Specializations</label>
-                {newProgram.specializations && newProgram.specializations.map((spec, index) => (
-                  <div key={index} className="specialization-input-group">
-                    <input
-                      type="text"
-                      value={spec.name}
-                      onChange={(e) => handleNewProgramSpecializationChange(index, 'name', e.target.value)}
-                      placeholder="Specialization name"
-                    />
-                    <button 
-                      type="button"
-                      className="remove-spec-btn"
-                      onClick={() => removeNewProgramSpecialization(index)}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-                <button 
-                  type="button"
-                  className="add-spec-btn"
-                  onClick={addNewProgramSpecialization}
-                >
-                  + Add Specialization
-                </button>
-              </div>
-
-              <div className="form-group-modal">
-                <label>Resources Count</label>
-                <input
-                  type="number"
-                  name="resourcesCount"
-                  value={newProgram.resourcesCount}
-                  onChange={handleNewProgramInputChange}
-                  min="0"
-                />
-              </div>
+              <ProgramFormFields
+                idPrefix="add-program"
+                program={newProgram}
+                errors={programErrors}
+                onChange={handleNewProgramInputChange}
+                onSpecializationChange={handleNewProgramSpecializationChange}
+                onAddSpecialization={addNewProgramSpecialization}
+                onRemoveSpecialization={removeNewProgramSpecialization}
+              />
             </div>
 
             <div className="modal-footer">
@@ -698,6 +578,7 @@ function AdminDashboard() {
           </div>
         </div>
       )}
+      {confirmDialog}
     </AdminLayout>
   );
 }

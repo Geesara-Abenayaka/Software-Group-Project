@@ -37,6 +37,8 @@
   --success: #15803d;  --success-bg: #dcfce7;
   --warning: #b45309;  --warning-bg: #fef3c7;
   --danger: #991b1b;   --danger-bg: #fee2e2;
+  --danger-solid: #dc2626;      /* delete buttons: bright red, never mistaken for the maroon primary */
+  --danger-solid-dark: #b91c1c; /* hover */
   --info: #1e40af;     --info-bg: #dbeafe;
 
   /* Shape */
@@ -48,6 +50,12 @@
   --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.12);
   --focus-ring: 0 0 0 3px rgba(139, 26, 26, 0.35);
+
+  /* Admin tables */
+  --table-head-bg: var(--surface-muted);
+  --table-head-ink: var(--ink-soft);
+  --table-row-border: var(--border-subtle);
+  --table-row-hover-bg: var(--surface-muted);
 
   /* Form fields */
   --input-border: var(--border-strong);
@@ -158,6 +166,9 @@ body {
 .btn--quiet { background: transparent; color: var(--ink-muted); }
 .btn--quiet:hover:not(:disabled) { background: var(--surface-muted); color: var(--ink); }
 
+.btn--danger { background: var(--danger-solid); color: var(--on-brand); }
+.btn--danger:hover:not(:disabled) { background: var(--danger-solid-dark); }
+
 .btn--sm { min-height: 36px; padding: 6px 12px; font-size: var(--text-sm); }
 
 .btn:disabled {
@@ -171,6 +182,75 @@ body {
   outline: none;
   box-shadow: var(--focus-ring);
 }
+
+/* Breadcrumbs (admin application pages) */
+.breadcrumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ink-muted);
+  font-size: 13px;
+}
+
+.breadcrumbs li {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.breadcrumbs a {
+  border-radius: var(--radius-sm);
+  color: var(--brand-text);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.breadcrumbs a:hover {
+  text-decoration: underline;
+}
+
+.breadcrumbs a:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.breadcrumbs__separator {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+/* Application status, the same on every admin page: soft background, dark text, a dot and the word */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-muted);
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.status-pill::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-pill--pending { background: var(--warning-bg); color: var(--warning); }
+.status-pill--under-review { background: var(--info-bg); color: var(--info); }
+.status-pill--approved { background: var(--success-bg); color: var(--success); }
+.status-pill--rejected { background: var(--danger-bg); color: var(--danger); }
 
 /* Messages inside a form: soft background, dark text and an icon, never colour alone */
 .form-alert {

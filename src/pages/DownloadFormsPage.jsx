@@ -5,6 +5,7 @@ import 'jspdf-autotable';
 import '../styles/DownloadFormsPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import AdminLayout from '../components/AdminLayout';
+import { toast } from '../utils/toast';
 import { Skeleton } from '../components/Loaders';
 import useDelayedFlag from '../utils/useDelayedFlag';
 
@@ -414,11 +415,11 @@ function DownloadFormsPage() {
     try {
       // Validation
       if (selectedPrograms.length === 0) {
-        alert('Please select at least one program');
+        toast.info('Select at least one program');
         return;
       }
       if (selectedFields.length === 0) {
-        alert('Please select at least one data field');
+        toast.info('Select at least one data field');
         return;
       }
 
@@ -427,7 +428,7 @@ function DownloadFormsPage() {
       const data = await response.json();
 
       if (!data.success) {
-        alert('Failed to fetch applications');
+        toast.error("Couldn't load the applications. Please try again.");
         return;
       }
 
@@ -448,7 +449,7 @@ function DownloadFormsPage() {
       }
 
       if (applications.length === 0) {
-        alert('No applications found matching the selected criteria');
+        toast.info('No applications match the selected programs and filters');
         return;
       }
 
@@ -458,7 +459,7 @@ function DownloadFormsPage() {
         const doc = generateDetailedPDF(applications);
         const fileName = `Detailed_Applications_${new Date().toISOString().split('T')[0]}.pdf`;
         doc.save(fileName);
-        alert(`Successfully downloaded ${applications.length} detailed application(s)`);
+        toast.success(`Downloaded ${applications.length} detailed application(s)`);
         return;
       }
 
@@ -506,11 +507,11 @@ function DownloadFormsPage() {
       const fileName = `Application_Report_${new Date().toISOString().split('T')[0]}.pdf`;
       doc.save(fileName);
 
-      alert(`Successfully downloaded ${applications.length} applications`);
+      toast.success(`Downloaded ${applications.length} application(s)`);
     } catch (error) {
       console.error('Error downloading list:', error);
       console.error('Error details:', error.message);
-      alert(`Error generating PDF: ${error.message}\nPlease check the console for details.`);
+      toast.error(`Couldn't create the PDF: ${error.message}`);
     }
   };
 
@@ -521,7 +522,7 @@ function DownloadFormsPage() {
       const data = await response.json();
 
       if (!data.success) {
-        alert('Failed to fetch applications');
+        toast.error("Couldn't load the applications. Please try again.");
         return;
       }
 
@@ -529,7 +530,7 @@ function DownloadFormsPage() {
       const approvedApps = data.data.filter(app => app.status === 'approved');
 
       if (approvedApps.length === 0) {
-        alert('No approved applications found');
+        toast.info('No approved applications yet');
         return;
       }
 
@@ -538,11 +539,11 @@ function DownloadFormsPage() {
       const fileName = `Approved_Candidates_Detailed_${new Date().toISOString().split('T')[0]}.pdf`;
       doc.save(fileName);
 
-      alert(`Successfully downloaded ${approvedApps.length} approved application(s) with full details`);
+      toast.success(`Downloaded ${approvedApps.length} approved application(s) with full details`);
     } catch (error) {
       console.error('Error downloading approved list:', error);
       console.error('Error details:', error.message);
-      alert(`Error generating PDF: ${error.message}\nPlease check the console for details.`);
+      toast.error(`Couldn't create the PDF: ${error.message}`);
     }
   };
 

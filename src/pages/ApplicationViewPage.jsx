@@ -3,6 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom';
 import '../styles/ApplicationViewPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import { PageLoader } from '../components/Loaders';
+import Breadcrumbs from '../components/Breadcrumbs';
+import { formatReference } from '../utils/applicationReference';
+import StatusPill from '../components/StatusPill';
+import { toast } from '../utils/toast';
 
 const fetchWithTimeout = async (url, timeoutMs = 8000) => {
   const controller = new AbortController();
@@ -85,13 +89,13 @@ function ApplicationViewPage() {
         const statusMessage = newStatus === 'approved' ? 'approved' : 
                             newStatus === 'rejected' ? 'rejected' : 
                             newStatus === 'under-review' ? 'marked as under review' : 'updated';
-        alert(`Application ${statusMessage} successfully!`);
+        toast.success(`Application ${statusMessage}`);
       } else {
-        alert('Failed to update application status: ' + result.message);
+        toast.error(`Couldn't update the status: ${result.message}`);
       }
     } catch (error) {
       console.error('Error updating application status:', error);
-      alert('Error updating application status');
+      toast.error("Couldn't update the status. Please try again.");
     }
   };
 
@@ -114,11 +118,6 @@ function ApplicationViewPage() {
     );
   }
 
-  const getStatusDisplay = (status) => {
-    if (status === 'under-review') return 'Under Review';
-    return status.charAt(0).toUpperCase() + status.slice(1);
-  };
-
   const getTitleDisplay = (title) => {
     const titleMap = {
       'mr': 'Mr',
@@ -136,9 +135,13 @@ function ApplicationViewPage() {
       <div className="admin-header-fixed">
         <div className="admin-header-content">
           <div className="header-left">
-            <button className="back-btn-header" onClick={() => navigate(-1)}>
-              ← Back
-            </button>
+            <Breadcrumbs
+              items={[
+                { label: 'Applications', to: '/admin/applications' },
+                { label: program?.title || application.program, to: `/admin/applications/${application.program}` },
+                { label: formatReference(application._id) }
+              ]}
+            />
           </div>
           <div className="header-right">
             <div className="status-update-bar">
@@ -153,9 +156,7 @@ function ApplicationViewPage() {
                 <option value="approved">Approved</option>
                 <option value="rejected">Rejected</option>
               </select>
-              <span className={`status-badge-header status-${application.status}`}>
-                {getStatusDisplay(application.status)}
-              </span>
+              <StatusPill status={application.status} />
             </div>
           </div>
         </div>

@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { GraduationCap, ClipboardList, Search, Download, BarChart2, Settings, LogOut, User } from 'lucide-react';
 import uomLogo from '../assets/uom-logo.png';
 import '../styles/AdminDashboard.css';
+import '../styles/admin-tables.css';
 
 const NAV_ITEMS = [
   { to: '/admin/dashboard', label: 'Programs', icon: GraduationCap },

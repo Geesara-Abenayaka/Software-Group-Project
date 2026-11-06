@@ -1,9 +1,14 @@
 import { useState, useEffect } from 'react';
+import { Inbox } from 'lucide-react';
 import '../styles/MarksPage.css';
 import API_BASE_URL from '../utils/apiConfig';
 import AdminLayout from '../components/AdminLayout';
+import StatusPill from '../components/StatusPill';
+import useConfirm from '../utils/useConfirm';
+import { toast } from '../utils/toast';
 
 function MarksPage() {
+  const { confirm, confirmDialog } = useConfirm();
   const [selectedCourse, setSelectedCourse] = useState(() => {
     // Restore selected course from localStorage or default to 'All'
     return localStorage.getItem('selectedCourse') || 'All';
@@ -307,7 +312,13 @@ function MarksPage() {
   const handleDelete = async (appId, event) => {
     event.stopPropagation(); // Prevent row selection when clicking delete
     
-    if (!window.confirm('Are you sure you want to delete this application?')) {
+    const confirmed = await confirm({
+      title: 'Delete this application?',
+      message: "This can't be undone.",
+      confirmLabel: 'Delete application',
+      danger: true
+    });
+    if (!confirmed) {
       return;
     }
 
@@ -326,26 +337,26 @@ function MarksPage() {
         setSelectedApplication(null);
         setSelectedApplicationId(null);
         
-        alert('Application deleted successfully!');
+        toast.success('Application deleted');
       } else {
-        alert('Error deleting application: ' + result.message);
+        toast.error(`Couldn't delete the application: ${result.message}`);
       }
     } catch (error) {
       console.error('Error deleting application:', error);
-      alert('Error deleting application. Please try again.');
+      toast.error("Couldn't delete the application. Please try again.");
     }
   };
 
   const handleSave = async () => {
     // Check if an application is selected by ID
     if (!selectedApplicationId) {
-      alert('Please enter a valid NIC number of a submitted application');
+      toast.info('Enter the NIC number of a submitted application');
       return;
     }
 
     // Check for validation errors
     if (marksErrors.oaMarks || marksErrors.writingMarks || marksErrors.interviewMarks) {
-      alert('Please fix the validation errors before saving');
+      toast.info('Fix the highlighted marks before saving');
       return;
     }
 
@@ -355,13 +366,13 @@ function MarksPage() {
 
   const handleUpdate = async () => {
     if (!selectedApplicationId) {
-      alert('Please select an application from the table to update');
+      toast.info('Select an application in the table first');
       return;
     }
 
     // Check for validation errors
     if (marksErrors.oaMarks || marksErrors.writingMarks || marksErrors.interviewMarks) {
-      alert('Please fix the validation errors before updating');
+      toast.info('Fix the highlighted marks before updating');
       return;
     }
 
@@ -401,13 +412,13 @@ function MarksPage() {
           graduationDate: ''
         });
 
-        alert('Marks updated successfully!');
+        toast.success('Marks updated');
       } else {
-        alert('Error updating marks: ' + result.message);
+        toast.error(`Couldn't update the marks: ${result.message}`);
       }
     } catch (error) {
       console.error('Error updating marks:', error);
-      alert('Error updating marks. Please try again.');
+      toast.error("Couldn't update the marks. Please try again.");
     }
   };
 
@@ -461,9 +472,9 @@ function MarksPage() {
                   <th>NIC</th>
                   <th>Surname</th>
                   <th>Other Names</th>
-                  <th>O/A Marks</th>
-                  <th>Writing Marks</th>
-                  <th>Interview Marks</th>
+                  <th className="cell-number">O/A Marks</th>
+                  <th className="cell-number">Writing Marks</th>
+                  <th className="cell-number">Interview Marks</th>
                   <th>Graduation Date</th>
                   <th>Action</th>
                 </tr>
@@ -471,8 +482,11 @@ function MarksPage() {
               <tbody>
                 {filteredApplications.length === 0 ? (
                   <tr>
-                    <td colSpan="10" className="no-data">
-                      No data available in table
+                    <td colSpan="10" className="table-empty">
+                      <div className="table-empty__inner">
+                        <Inbox size={28} aria-hidden="true" />
+                        <p>No applications to mark yet</p>
+                      </div>
                     </td>
                   </tr>
                 ) : (
@@ -521,13 +535,13 @@ function MarksPage() {
                         style={{ cursor: 'pointer' }}
                       >
                         <td>{app.program || '-'}</td>
-                        <td>{app.status}</td>
+                        <td><StatusPill status={app.status} /></td>
                         <td>{app.nic}</td>
                         <td>{app.surname}</td>
                         <td>{app.otherNames}</td>
-                        <td>{app.oaMarks}</td>
-                        <td>{app.writingMarks}</td>
-                        <td>{app.interviewMarks}</td>
+                        <td className="cell-number">{app.oaMarks}</td>
+                        <td className="cell-number">{app.writingMarks}</td>
+                        <td className="cell-number">{app.interviewMarks}</td>
                         <td>{app.graduationDate}</td>
                         <td>
                           <button 
@@ -708,6 +722,7 @@ function MarksPage() {
           </div>
         </main>
       </div>
+      {confirmDialog}
     </AdminLayout>
   );
 }

@@ -13,6 +13,7 @@ import DownloadFormsPage from './pages/DownloadFormsPage'
 import MarksPage from './pages/MarksPage'
 import SettingsPage from './pages/SettingsPage'
 import FloatingAssistant from './components/FloatingAssistant'
+import ToastHost from './components/ToastHost'
 
 import './App.css'
 
@@ -45,6 +46,7 @@ function AppRoutes() {
       </div>
 
       {!hideChatbot && <FloatingAssistant />}
+      <ToastHost />
     </>
   )
 }
