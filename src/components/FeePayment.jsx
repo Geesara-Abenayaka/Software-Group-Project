@@ -40,6 +40,7 @@ function FeePayment({
             {cardAvailable
               ? 'Pay the processing fee online by card, or pay at the bank and upload the receipt.'
               : 'Pay the processing fee at the bank and upload the receipt.'}
+            {' '}The fee is non-refundable.
           </p>
         </div>
         <p className="fee-card__amount">
