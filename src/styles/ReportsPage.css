@@ -280,7 +280,9 @@ main.admin-main-full.report-main {
 }
 
 .report-split__part--card { background: var(--brand); }
-.report-split__part--bank { background: var(--warning); }
+.report-split__part--bank-confirmed { background: var(--success); }
+.report-split__part--bank-waiting { background: var(--warning); }
+.report-split__part--bank-rejected { background: var(--danger-solid); }
 .report-split__part--none { background: var(--muted); }
 .report-split__part--test { background: var(--info); }
 
@@ -591,6 +593,33 @@ table.report-table--payments td {
 .report-pay__sub {
   color: var(--ink-muted);
   font-size: 13px;
+}
+
+.report-pay__status {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.report-pay__status--bankConfirmed { color: var(--success); }
+.report-pay__status--bankWaiting { color: var(--warning); }
+.report-pay__status--bankRejected { color: var(--danger); }
+
+/* The same receipt file was uploaded with another application (Reports list and application page) */
+.receipt-match {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 2px;
+  color: var(--danger);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.receipt-match svg {
+  flex-shrink: 0;
+  margin-top: 3px;
 }
 
 .report-pay__link {

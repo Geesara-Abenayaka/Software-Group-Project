@@ -3,7 +3,8 @@ import Application from '../models/Application.js';
 import Program from '../models/Program.js';
 import { isDateString } from '../utils/applicationWindow.js';
 import { APPLICATION_FEE } from '../utils/stripePayments.js';
-import { buildReport, reportPaymentKind } from '../utils/reportBuilder.js';
+import { buildReport, PAYMENT_KEYS, reportPaymentKind } from '../utils/reportBuilder.js';
+import { loadReceiptMatches } from '../utils/receiptMatches.js';
 import { getStripeMode, toDateRange, toReference } from '../utils/reportRules.js';
 
 // Admin reports: how many applied, how many paid the fee, and how much the fees brought in.
@@ -25,7 +26,6 @@ const SUMMARY_FIELDS = [
 
 const PAYMENT_LIST_FIELDS = 'program fullName nicNo submittedAt payment documents.paymentConfirmation';
 
-const PAYMENT_METHODS = ['card', 'bank', 'none', 'testCard'];
 
 const FEE = { amount: APPLICATION_FEE.amount, currency: APPLICATION_FEE.currency.toUpperCase() };
 
@@ -114,11 +114,15 @@ router.get('/summary', async (req, res) => {
   }
 });
 
-const toPaymentRow = (application, liveMode, programTitles) => {
+const BANK_METHODS = ['bankConfirmed', 'bankWaiting', 'bankRejected'];
+
+const toPaymentRow = (application, liveMode, programTitles, receiptMatches) => {
   const method = reportPaymentKind(application, liveMode);
   const payment = application.payment || {};
   const isCard = method === 'card' || method === 'testCard';
+  const isBank = BANK_METHODS.includes(method);
   const receiptFileId = application.documents?.paymentConfirmation;
+  const reviewed = method === 'bankConfirmed' || method === 'bankRejected';
 
   return {
     _id: String(application._id),
@@ -129,18 +133,30 @@ const toPaymentRow = (application, liveMode, programTitles) => {
     programTitle: programTitles.get(application.program) || '',
     submittedAt: application.submittedAt || null,
     method,
-    amount: isCard ? Number(payment.amount) || 0 : null,
+    // Card payments and confirmed receipts carry the amount collected; other rows have none.
+    amount: isCard || method === 'bankConfirmed' ? Number(payment.amount) || 0 : null,
     paidAt: isCard ? payment.paidAt || null : null,
     cardBrand: isCard ? payment.cardBrand || '' : '',
     cardLast4: isCard ? payment.cardLast4 || '' : '',
     stripePaymentIntentId: isCard ? payment.stripePaymentIntentId || '' : '',
     receiptUrl: isCard ? payment.receiptUrl || '' : '',
-    receiptFileId: method === 'bank' && receiptFileId ? String(receiptFileId) : ''
+    receiptFileId: isBank && receiptFileId ? String(receiptFileId) : '',
+    reviewedBy: reviewed ? payment.reviewedBy || '' : '',
+    reviewedAt: reviewed ? payment.reviewedAt || null : null,
+    note: reviewed ? payment.note || '' : '',
+    // Other applications that uploaded the same receipt file
+    receiptMatches: isBank ? receiptMatches.get(String(application._id)) || [] : []
   };
 };
 
+// What ?method= accepts: one payment column, or 'bank' for every bank receipt.
+const METHOD_FILTERS = {
+  ...Object.fromEntries(PAYMENT_KEYS.map((key) => [key, [key]])),
+  bank: BANK_METHODS
+};
+
 // One row per application in the period, with how its fee was paid. Newest first.
-// GET /api/reports/payments?from&to&program&hideDemo&method=card|bank|none|testCard&q=perera&page=1&limit=25
+// GET /api/reports/payments?from&to&program&hideDemo&method=card|bank|bankWaiting|...&q=perera&page=1&limit=25
 // limit=all returns every row (for the CSV export).
 router.get('/payments', async (req, res) => {
   const filters = readFilters(req.query);
@@ -148,7 +164,7 @@ router.get('/payments', async (req, res) => {
     return res.status(400).json({ success: false, message: filters.error });
   }
 
-  const method = PAYMENT_METHODS.includes(req.query.method) ? req.query.method : '';
+  const method = Object.hasOwn(METHOD_FILTERS, req.query.method) ? req.query.method : '';
   const search = String(req.query.q || '').trim().toLowerCase();
   const returnAll = req.query.limit === 'all';
   const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 25, 1), 200);
@@ -164,9 +180,12 @@ router.get('/payments', async (req, res) => {
     const liveMode = getStripeMode() === 'live';
     const programTitles = new Map(allPrograms.map((program) => [program.shortCode, program.title]));
 
-    let rows = applications.map((application) => toPaymentRow(application, liveMode, programTitles));
+    const hasReceipts = applications.some((application) => application.documents?.paymentConfirmation);
+    const receiptMatches = hasReceipts ? await loadReceiptMatches() : new Map();
+
+    let rows = applications.map((application) => toPaymentRow(application, liveMode, programTitles, receiptMatches));
     if (method) {
-      rows = rows.filter((row) => row.method === method);
+      rows = rows.filter((row) => METHOD_FILTERS[method].includes(row.method));
     }
     if (search) {
       rows = rows.filter((row) => [row.fullName, row.nicNo, row.reference]

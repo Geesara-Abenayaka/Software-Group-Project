@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ExternalLink, SearchX } from 'lucide-react';
+import ReceiptMatches from './ReceiptMatches';
 import API_BASE_URL from '../../utils/apiConfig';
 import { formatDate, formatDateTime } from '../../utils/formatDate';
 import { describeCard, formatCount, formatRupees } from '../../utils/formatMoney';
 import { errorMessage, readJson } from '../../utils/readJson';
-import { PAYMENT_METHOD_LABELS } from '../../utils/reportRows';
+import { isBankMethod, PAYMENT_FILTERS, PAYMENT_METHOD_LABELS } from '../../utils/reportRows';
 
 const PAGE_SIZE = 25;
 
@@ -26,11 +27,13 @@ function PaymentCell({ row }) {
     );
   }
 
-  if (row.method === 'bank') {
+  if (isBankMethod(row.method)) {
     return (
       <>
         <span className="report-pay">Bank receipt</span>
-        <span className="report-pay__sub">Not confirmed</span>
+        <span className={`report-pay__status report-pay__status--${row.method}`}>{reviewText(row)}</span>
+        {row.method === 'bankRejected' && row.note && <span className="report-pay__sub">“{row.note}”</span>}
+        <ReceiptMatches matches={row.receiptMatches} />
         {row.receiptFileId && (
           <a className="report-link report-pay__link" href={`${API_BASE_URL}/applications/${row._id}/file/${row.receiptFileId}`}>
             Download receipt
@@ -42,6 +45,15 @@ function PaymentCell({ row }) {
 
   return <span className="report-muted">No payment on record</span>;
 }
+
+// "Confirmed by admin@uom.lk, 5 November 2026"
+const reviewText = (row) => {
+  const who = row.reviewedBy ? ` by ${row.reviewedBy}` : '';
+  const when = row.reviewedAt ? `, ${formatDate(row.reviewedAt)}` : '';
+  if (row.method === 'bankConfirmed') return `Confirmed${who}${when}`;
+  if (row.method === 'bankRejected') return `Rejected${who}${when}`;
+  return 'Not checked yet';
+};
 
 /**
  * Every application in the report's period with how its fee was paid, newest first, 25 at a time.
@@ -99,7 +111,7 @@ function PaymentList({ baseQuery, refreshKey, liveMode }) {
 
   const { rows, total, error } = result;
   const failed = Boolean(error) && !loading;
-  const methods = ['card', 'bank', 'none', ...(liveMode ? ['testCard'] : [])];
+  const filters = [...PAYMENT_FILTERS, ...(liveMode ? [['testCard', PAYMENT_METHOD_LABELS.testCard]] : [])];
 
   return (
     <section className="report-card report-card--table report-card--payments" aria-labelledby="report-payments-title">
@@ -110,8 +122,8 @@ function PaymentList({ baseQuery, refreshKey, liveMode }) {
             <label htmlFor="report-method">Payment</label>
             <select id="report-method" value={method} onChange={(event) => setMethod(event.target.value)}>
               <option value="">All</option>
-              {methods.map((key) => (
-                <option key={key} value={key}>{PAYMENT_METHOD_LABELS[key]}</option>
+              {filters.map(([key, label]) => (
+                <option key={key} value={key}>{label}</option>
               ))}
             </select>
           </div>
@@ -169,12 +181,12 @@ function PaymentList({ baseQuery, refreshKey, liveMode }) {
                 <td className="report-table__wrap">{row.programTitle || `Deleted program (${row.program})`}</td>
                 <td className="report-table__wrap report-pay-cell"><PaymentCell row={row} /></td>
                 <td className="cell-number">
-                  {row.method === 'card' && formatRupees(row.amount)}
+                  {(row.method === 'card' || row.method === 'bankConfirmed') && formatRupees(row.amount)}
                   {row.method === 'testCard' && <span className="report-muted">{formatRupees(row.amount)} (test)</span>}
-                  {(row.method === 'bank' || row.method === 'none') && (
+                  {['bankWaiting', 'bankRejected', 'none'].includes(row.method) && (
                     <>
                       <span aria-hidden="true">—</span>
-                      <span className="sr-only">{row.method === 'bank' ? 'Not confirmed' : 'None'}</span>
+                      <span className="sr-only">{PAYMENT_METHOD_LABELS[row.method]}</span>
                     </>
                   )}
                 </td>

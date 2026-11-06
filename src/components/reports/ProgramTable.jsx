@@ -89,8 +89,8 @@ function ProgramTable({ byProgram, totals }) {
       </div>
 
       <p className="report-card__note">
-        Pending includes under review and shortlisted. Collected is card payments only; bank receipts are not confirmed,
-        so they are not added here.
+        Pending includes under review and shortlisted. Bank receipt counts receipts confirmed or not checked yet;
+        a rejected receipt counts as not paid. Collected is card payments plus confirmed bank receipts.
       </p>
     </section>
   );

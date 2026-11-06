@@ -43,7 +43,13 @@ test('payment kinds', () => {
   // Saved before livemode was stored: made with test keys.
   assert.equal(paymentKindOf(application({ payment: cardPayment({ livemode: undefined }) })), 'card-test');
   assert.equal(paymentKindOf(application({ payment: cardPayment({ status: 'processing' }) })), 'none');
-  assert.equal(paymentKindOf(application({ documents: { paymentConfirmation: 'abc123' } })), 'bank');
+  assert.equal(paymentKindOf(application({ documents: { paymentConfirmation: 'abc123' } })), 'bank-waiting');
+  assert.equal(paymentKindOf(application({
+    documents: { paymentConfirmation: 'abc123' }, payment: { method: 'bank', status: 'confirmed', amount: 2000 }
+  })), 'bank-confirmed');
+  assert.equal(paymentKindOf(application({
+    documents: { paymentConfirmation: 'abc123' }, payment: { method: 'bank', status: 'rejected' }
+  })), 'bank-rejected');
   assert.equal(paymentKindOf(application({ documents: {} })), 'none');
   assert.equal(paymentKindOf(application()), 'none');
 });
@@ -80,7 +86,9 @@ test('totals: card, bank, none, paid, income and the bank estimate', () => {
   });
 
   assert.equal(report.totals.applications, 4);
-  assert.deepEqual(report.totals.payment, { card: 2, bank: 1, none: 1, testCard: 0 });
+  assert.deepEqual(report.totals.payment, {
+    card: 2, bankConfirmed: 0, bankWaiting: 1, bankRejected: 0, none: 1, testCard: 0
+  });
   assert.equal(report.totals.paid, 3);
   assert.equal(report.totals.cardIncome, 4000);
   assert.equal(report.totals.bankExpected, 2000);
@@ -174,14 +182,40 @@ test('programs: every program has a row, a deleted program gets its own, and row
   assert.equal(cs.applications, 1);
   assert.equal(cs.cardIncome, 2000);
   assert.equal(ds.applications, 0);
-  assert.deepEqual({ program: deleted.program, deleted: deleted.deleted, bank: deleted.payment.bank },
-    { program: 'OLD-PROG', deleted: true, bank: 1 });
+  assert.deepEqual({ program: deleted.program, deleted: deleted.deleted, waiting: deleted.payment.bankWaiting },
+    { program: 'OLD-PROG', deleted: true, waiting: 1 });
 
   const sum = (key) => report.byProgram.reduce((total, row) => total + row[key], 0);
-  assert.equal(sum('applications'), report.totals.applications);
-  assert.equal(sum('paid'), report.totals.paid);
-  assert.equal(sum('cardIncome'), report.totals.cardIncome);
-  assert.equal(sum('bankExpected'), report.totals.bankExpected);
+  for (const key of ['applications', 'paid', 'cardIncome', 'bankIncome', 'income', 'bankExpected']) {
+    assert.equal(sum(key), report.totals[key], key);
+  }
+});
+
+test('bank receipts: confirmed ones are collected money, waiting ones expected, rejected ones not paid', () => {
+  const receipt = { paymentConfirmation: 'file' };
+  const report = buildReport({
+    applications: [
+      application({ nicNo: '1', payment: cardPayment() }),
+      application({ nicNo: '2', documents: receipt, payment: { method: 'bank', status: 'confirmed', amount: 2000 } }),
+      application({ nicNo: '3', documents: receipt, payment: { method: 'bank', status: 'confirmed' } }),
+      application({ nicNo: '4', documents: receipt }),
+      application({ nicNo: '5', documents: receipt, payment: { method: 'bank', status: 'rejected' } }),
+      application({ nicNo: '6' })
+    ],
+    programs: PROGRAMS,
+    fee: FEE,
+    liveMode: true
+  });
+
+  const { totals } = report;
+  assert.deepEqual(totals.payment, { card: 1, bankConfirmed: 2, bankWaiting: 1, bankRejected: 1, none: 1, testCard: 0 });
+  assert.equal(totals.paid, 4, 'card + confirmed + waiting');
+  assert.equal(totals.cardIncome, 2000);
+  assert.equal(totals.bankIncome, 4000, 'a confirmed receipt without an amount counts at the current fee');
+  assert.equal(totals.income, 6000);
+  assert.equal(totals.bankExpected, 2000, 'only the receipt still waiting');
+  const { paid, payment, applications } = totals;
+  assert.equal(paid + payment.bankRejected + payment.none + payment.testCard, applications);
 });
 
 test('GPA categories use the best GPA', () => {

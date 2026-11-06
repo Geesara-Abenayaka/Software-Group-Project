@@ -77,16 +77,26 @@ const summaryLines = (totals) => [
   ['Applied to 2 or more programs', totals.multiProgramApplicants],
   ['Fee paid', totals.paid],
   ['Paid by card', totals.payment.card],
-  ['Paid by bank receipt (not confirmed)', totals.payment.bank],
+  ['Bank receipt, confirmed', totals.payment.bankConfirmed],
+  ['Bank receipt, not checked yet', totals.payment.bankWaiting],
+  ['Bank receipt, rejected (not paid)', totals.payment.bankRejected],
   ['No payment on record', totals.payment.none]
+];
+
+// [label, rupees]: what was collected, and what the receipts not checked yet would add.
+const moneyLines = (totals) => [
+  ['Fees collected', totals.income],
+  ['  by card', totals.cardIncome],
+  ['  by confirmed bank receipts', totals.bankIncome],
+  ['Expected from bank receipts not checked yet', totals.bankExpected]
 ];
 
 // context: { periodLabel, programLabel }
 export const buildSummaryCsv = (report, context) => {
   const { totals } = report;
   const programHeader = [
-    ...PROGRAM_COLUMNS.map((column) => (column.money ? `${column.label} by card (Rs.)` : column.label)),
-    'Expected from bank receipts (Rs.)',
+    ...PROGRAM_COLUMNS.map((column) => (column.money ? `${column.label} (Rs.)` : column.label)),
+    'Expected from receipts not checked yet (Rs.)',
     'Program code'
   ];
   const programLine = (row, code) => [
@@ -103,12 +113,11 @@ export const buildSummaryCsv = (report, context) => {
     ['Demo programs', demoProgramsText(report)],
     ['Generated', formatDateTime(report.generatedAt)],
     ...notesFor(report).map((note) => ['Note', note]),
-    ['Note', 'The fee is not refunded when an application is rejected. Refunds and disputes made in Stripe are not included.'],
+    ['Note', 'Collected is card payments plus bank receipts an admin has confirmed. The fee is not refunded when an application is rejected. Refunds and disputes made in Stripe are not included.'],
     [],
     ['Summary'],
     ...summaryLines(totals),
-    ['Fees collected by card (Rs.)', totals.cardIncome],
-    ['Expected from bank receipts (Rs.)', totals.bankExpected],
+    ...moneyLines(totals).map(([label, value]) => [`${label} (Rs.)`, value]),
     [],
     ['By program'],
     programHeader,
@@ -125,7 +134,10 @@ export const buildSummaryCsv = (report, context) => {
 
 // rows: data from GET /api/reports/payments?limit=all
 export const buildPaymentsCsv = (rows) => toCsv([
-  ['Submitted', 'Reference', 'Full name', 'NIC', 'Program', 'Payment', 'Amount (Rs.)', 'Paid at', 'Card', 'Stripe payment ID', 'Stripe receipt'],
+  [
+    'Submitted', 'Reference', 'Full name', 'NIC', 'Program', 'Payment', 'Amount (Rs.)', 'Paid at', 'Card',
+    'Stripe payment ID', 'Stripe receipt', 'Receipt checked by', 'Checked on', 'Note', 'Same receipt file as'
+  ],
   ...rows.map((row) => {
     const isCard = row.method === 'card' || row.method === 'testCard';
     return [
@@ -134,12 +146,18 @@ export const buildPaymentsCsv = (rows) => toCsv([
       row.fullName,
       { value: row.nicNo, keepAsText: true },
       row.programTitle || `Deleted program (${row.program})`,
-      row.method === 'bank' ? 'Bank receipt (not confirmed)' : PAYMENT_METHOD_LABELS[row.method],
-      isCard ? row.amount : '',
+      PAYMENT_METHOD_LABELS[row.method],
+      isCard || row.method === 'bankConfirmed' ? row.amount : '',
       isCard ? sriLankaDateTime(row.paidAt) : '',
-      isCard && row.method === 'card' ? describeCard(row) : '',
+      row.method === 'card' ? describeCard(row) : '',
       row.stripePaymentIntentId,
-      row.receiptUrl
+      row.receiptUrl,
+      row.reviewedBy,
+      sriLankaDateTime(row.reviewedAt),
+      row.note,
+      (row.receiptMatches || [])
+        .map((match) => `${match.reference}${match.exact ? '' : ' (possibly)'}`)
+        .join('; ')
     ];
   })
 ]);
@@ -220,8 +238,7 @@ export const downloadReportPdf = async (report, context) => {
     head: [['Summary', '']],
     body: [
       ...summaryLines(totals).map(([label, value]) => [label, formatCount(value)]),
-      ['Fees collected by card', formatRupees(totals.cardIncome)],
-      ['Expected from bank receipts (not confirmed)', formatRupees(totals.bankExpected)]
+      ...moneyLines(totals).map(([label, value]) => [label, formatRupees(value)])
     ],
     columnStyles: { 1: { halign: 'right', cellWidth: 45 } }
   });
@@ -269,7 +286,7 @@ export const downloadReportPdf = async (report, context) => {
   doc.setFontSize(8);
   doc.setTextColor(75, 85, 99);
   doc.text(
-    pdfText('Pending includes under review and shortlisted. Collected is card payments only. The fee is not refunded when an application is rejected; refunds and disputes made in Stripe are not included.'),
+    pdfText('Pending includes under review and shortlisted. A rejected bank receipt counts as not paid. Collected is card payments plus bank receipts an admin has confirmed. The fee is not refunded when an application is rejected; refunds and disputes made in Stripe are not included.'),
     margin,
     noteY,
     { maxWidth: pageWidth - margin * 2 }

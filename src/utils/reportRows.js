@@ -15,9 +15,14 @@ export const toProgramRow = (row) => ({
   pending: pendingOf(row.status),
   rejected: row.status.rejected,
   card: row.payment.card,
-  bank: row.payment.bank,
-  none: row.payment.none,
+  // Bank receipts that count as paid: confirmed, or not checked yet
+  bank: row.payment.bankConfirmed + row.payment.bankWaiting,
+  bankWaiting: row.payment.bankWaiting,
+  // Not paid: no payment at all, or a rejected receipt
+  none: row.payment.none + row.payment.bankRejected,
+  income: row.income,
   cardIncome: row.cardIncome,
+  bankIncome: row.bankIncome,
   bankExpected: row.bankExpected
 });
 
@@ -30,7 +35,7 @@ export const PROGRAM_COLUMNS = [
   { key: 'card', label: 'Paid by card' },
   { key: 'bank', label: 'Bank receipt' },
   { key: 'none', label: 'Not paid' },
-  { key: 'cardIncome', label: 'Collected', money: true }
+  { key: 'income', label: 'Collected', money: true }
 ];
 
 const STATUS_LABELS = [
@@ -60,7 +65,21 @@ export const categoryItems = (categories) => CATEGORY_LABELS
 
 export const PAYMENT_METHOD_LABELS = {
   card: 'Card',
-  bank: 'Bank receipt',
+  bankConfirmed: 'Bank receipt, confirmed',
+  bankWaiting: 'Bank receipt, not checked yet',
+  bankRejected: 'Bank receipt, rejected',
   none: 'No payment on record',
   testCard: 'Test card payment'
 };
+
+// The payment list's filter: every bank receipt first, then each kind.
+export const PAYMENT_FILTERS = [
+  ['card', 'Card'],
+  ['bank', 'All bank receipts'],
+  ['bankWaiting', 'Bank receipt, not checked yet'],
+  ['bankConfirmed', 'Bank receipt, confirmed'],
+  ['bankRejected', 'Bank receipt, rejected'],
+  ['none', 'No payment on record']
+];
+
+export const isBankMethod = (method) => method === 'bankConfirmed' || method === 'bankWaiting' || method === 'bankRejected';

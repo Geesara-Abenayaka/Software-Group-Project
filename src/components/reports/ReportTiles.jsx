@@ -24,8 +24,12 @@ function ReportTiles({ totals }) {
     );
   }
 
-  const { applications, uniqueApplicants, multiProgramApplicants, paid, payment, cardIncome, bankExpected } = totals;
+  const {
+    applications, uniqueApplicants, multiProgramApplicants, paid, payment, income, cardIncome, bankIncome, bankExpected
+  } = totals;
   const paidShare = applications ? Math.round((paid / applications) * 100) : 0;
+  const bankReceipts = payment.bankConfirmed + payment.bankWaiting;
+  const notPaid = payment.none + payment.bankRejected;
 
   const tiles = [
     {
@@ -50,17 +54,23 @@ function ReportTiles({ totals }) {
       extra: applications ? `${paidShare}%` : '',
       Icon: CreditCard,
       notes: [
-        `${formatCount(payment.card)} by card · ${formatCount(payment.bank)} by bank receipt`,
-        `${formatCount(payment.none)} not paid`
+        `${formatCount(payment.card)} by card · ${formatCount(bankReceipts)} by bank receipt`,
+        payment.bankRejected > 0
+          ? `${formatCount(notPaid)} not paid (${formatCount(payment.bankRejected)} receipt${payment.bankRejected === 1 ? '' : 's'} rejected)`
+          : `${formatCount(notPaid)} not paid`
       ]
     },
     {
       label: 'Fees collected',
-      value: formatRupees(cardIncome),
+      value: formatRupees(income),
       Icon: Banknote,
       notes: [
-        'Paid by card',
-        payment.bank > 0 ? `+ ${formatRupees(bankExpected)} expected from bank receipts` : ''
+        bankIncome > 0
+          ? `${formatRupees(cardIncome)} by card · ${formatRupees(bankIncome)} by confirmed bank receipts`
+          : 'Paid by card',
+        payment.bankWaiting > 0
+          ? `+ ${formatRupees(bankExpected)} expected from ${formatCount(payment.bankWaiting)} receipt${payment.bankWaiting === 1 ? '' : 's'} not checked yet`
+          : ''
       ]
     }
   ];

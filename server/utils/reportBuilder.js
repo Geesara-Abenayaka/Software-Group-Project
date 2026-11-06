@@ -7,6 +7,17 @@ import { normalizeNic, normalizeStatus, paymentKindOf, STATUS_KEYS, toSriLankaDa
 
 export const CATEGORY_KEYS = ['Category 1', 'Category 2', 'Category 3', NO_GPA_CATEGORY];
 
+// The payment columns, in the order the page shows them.
+export const PAYMENT_KEYS = ['card', 'bankConfirmed', 'bankWaiting', 'bankRejected', 'none', 'testCard'];
+
+const KIND_TO_KEY = {
+  card: 'card',
+  'bank-confirmed': 'bankConfirmed',
+  'bank-waiting': 'bankWaiting',
+  'bank-rejected': 'bankRejected',
+  none: 'none'
+};
+
 // The payment column an application counts in. With test keys, test card payments are the only card
 // payments there are, so they count as card (the page says it is test mode). With live keys they are
 // kept apart as 'testCard' and left out of the money.
@@ -15,33 +26,39 @@ export const reportPaymentKind = (application, liveMode) => {
   if (kind === 'card-test') {
     return liveMode ? 'testCard' : 'card';
   }
-  return kind;
+  return KIND_TO_KEY[kind];
 };
 
 const emptyCounts = () => ({
   applications: 0,
   status: Object.fromEntries(STATUS_KEYS.map((key) => [key, 0])),
-  payment: { card: 0, bank: 0, none: 0, testCard: 0 },
+  payment: Object.fromEntries(PAYMENT_KEYS.map((key) => [key, 0])),
   paid: 0,
   cardIncome: 0,
+  bankIncome: 0,
+  income: 0,
   bankExpected: 0
 });
 
-const addApplication = (row, application, kind) => {
+const addApplication = (row, application, key, feeAmount) => {
   row.applications += 1;
   row.status[normalizeStatus(application.status)] += 1;
-  row.payment[kind] += 1;
-  if (kind === 'card') {
-    // The amount saved with the payment, so a later fee change doesn't change old income.
+  row.payment[key] += 1;
+  // The amount saved with the payment, so a later fee change doesn't change old income.
+  if (key === 'card') {
     row.cardIncome += Number(application.payment?.amount) || 0;
+  } else if (key === 'bankConfirmed') {
+    row.bankIncome += Number(application.payment?.amount) || feeAmount;
   }
 };
 
-// Paid = card + bank receipt. Bank money isn't confirmed, so it is an estimate at the current fee.
+// Paid = card + bank receipts not rejected. Money collected = card + confirmed receipts.
+// Receipts nobody has checked yet are an estimate at the current fee.
 const finish = (row, feeAmount) => ({
   ...row,
-  paid: row.payment.card + row.payment.bank,
-  bankExpected: row.payment.bank * feeAmount
+  paid: row.payment.card + row.payment.bankConfirmed + row.payment.bankWaiting,
+  income: row.cardIncome + row.bankIncome,
+  bankExpected: row.payment.bankWaiting * feeAmount
 });
 
 /**
@@ -59,11 +76,11 @@ export const buildReport = ({ applications, programs, fee, liveMode = false }) =
   const categories = Object.fromEntries(CATEGORY_KEYS.map((key) => [key, 0]));
 
   for (const application of applications) {
-    const kind = reportPaymentKind(application, liveMode);
+    const key = reportPaymentKind(application, liveMode);
 
     const programRow = rowsByProgram.get(application.program) || emptyCounts();
-    addApplication(totals, application, kind);
-    addApplication(programRow, application, kind);
+    addApplication(totals, application, key, feeAmount);
+    addApplication(programRow, application, key, feeAmount);
     rowsByProgram.set(application.program, programRow);
 
     if (application.submittedAt) {

@@ -5,15 +5,27 @@ import { formatCount, formatRupees } from '../../utils/formatMoney';
  * so the colours are never the only way to read it.
  */
 function PaymentSplit({ totals }) {
-  const { payment, cardIncome, bankExpected } = totals;
+  const { payment, cardIncome, bankIncome, bankExpected } = totals;
 
   const parts = [
     { key: 'card', label: 'Card', count: payment.card, detail: `${formatRupees(cardIncome)} collected` },
     {
-      key: 'bank',
-      label: 'Bank receipt',
-      count: payment.bank,
-      detail: payment.bank > 0 ? `not confirmed · ${formatRupees(bankExpected)} expected` : 'not confirmed'
+      key: 'bank-confirmed',
+      label: 'Bank receipt, confirmed',
+      count: payment.bankConfirmed,
+      detail: `${formatRupees(bankIncome)} collected`
+    },
+    {
+      key: 'bank-waiting',
+      label: 'Bank receipt, not checked yet',
+      count: payment.bankWaiting,
+      detail: payment.bankWaiting > 0 ? `${formatRupees(bankExpected)} expected` : ''
+    },
+    {
+      key: 'bank-rejected',
+      label: 'Bank receipt, rejected',
+      count: payment.bankRejected,
+      detail: payment.bankRejected > 0 ? 'counted as not paid' : ''
     },
     { key: 'none', label: 'No payment on record', count: payment.none, detail: '' }
   ];
@@ -53,7 +65,8 @@ function PaymentSplit({ totals }) {
       </ul>
 
       <p className="report-card__note">
-        The fee is not refunded when an application is rejected. Refunds and disputes made in Stripe are not shown here.
+        Collected is card payments plus bank receipts an admin has confirmed. The fee is not refunded when an
+        application is rejected. Use "Check with Stripe" below for refunds and disputes made in Stripe.
       </p>
     </section>
   );

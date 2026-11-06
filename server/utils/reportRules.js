@@ -38,15 +38,19 @@ export const normalizeStatus = (status) => {
 
 export const normalizeNic = (nic) => String(nic || '').trim().toUpperCase();
 
-// How an application's fee was paid: 'card' (a live Stripe payment), 'card-test' (a Stripe test payment),
-// 'bank' (a bank receipt was uploaded) or 'none'.
+// How an application's fee was paid:
+// 'card' (a live Stripe payment), 'card-test' (a Stripe test payment),
+// 'bank-confirmed' / 'bank-rejected' (an admin checked the bank receipt), 'bank-waiting' (a receipt nobody
+// has checked yet) or 'none'.
 // Card payments saved before `livemode` was stored have none; they were all made with test keys.
 export const paymentKindOf = (application) => {
   const payment = application?.payment;
   if (payment?.method === 'card' && payment.status === 'succeeded') {
     return payment.livemode === true ? 'card' : 'card-test';
   }
-  return application?.documents?.paymentConfirmation ? 'bank' : 'none';
+  if (payment?.method === 'bank' && payment.status === 'confirmed') return 'bank-confirmed';
+  if (payment?.method === 'bank' && payment.status === 'rejected') return 'bank-rejected';
+  return application?.documents?.paymentConfirmation ? 'bank-waiting' : 'none';
 };
 
 // 'live' or 'test' from the Stripe key in server/.env, 'off' without one.

@@ -9,6 +9,15 @@ import { toast } from '../utils/toast';
 import { Skeleton } from '../components/Loaders';
 import useDelayedFlag from '../utils/useDelayedFlag';
 
+// How the application fee was paid, for the exports.
+const feeStatusText = (app) => {
+  if (app.payment?.method === 'card') return 'Paid by card';
+  if (app.payment?.method === 'bank') {
+    return app.payment.status === 'rejected' ? 'Bank receipt rejected' : 'Bank receipt confirmed';
+  }
+  return app.documents?.paymentConfirmation ? 'Uploaded' : 'Not Uploaded';
+};
+
 function DownloadFormsPage() {
   const [programs, setPrograms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -108,7 +117,7 @@ function DownloadFormsPage() {
       'NIC Document Status': app.documents?.nic ? 'Uploaded' : 'Not Uploaded',
       'Employer Letter Status': app.documents?.employerLetter ? 'Uploaded' : 'Not Uploaded',
       'Transcript Status': app.documents?.transcript ? 'Uploaded' : 'Not Uploaded',
-      'Payment Confirmation Status': app.payment?.method === 'card' ? 'Paid by card' : app.documents?.paymentConfirmation ? 'Uploaded' : 'Not Uploaded',
+      'Payment Confirmation Status': feeStatusText(app),
       'Program': programs.find(p => p.shortCode === app.program)?.title || app.program,
       'Status': app.status.charAt(0).toUpperCase() + app.status.slice(1).replace('-', ' '),
       'Submission Date': new Date(app.submittedAt).toLocaleDateString(),
@@ -389,8 +398,8 @@ function DownloadFormsPage() {
         { label: 'NIC', status: app.documents?.nic },
         { label: 'Employer Letter', status: app.documents?.employerLetter },
         { label: 'Transcript', status: app.documents?.transcript },
-        app.payment?.method === 'card'
-          ? { label: 'Payment Confirmation', status: true, text: 'Paid by card' }
+        app.payment?.method === 'card' || app.payment?.method === 'bank'
+          ? { label: 'Payment Confirmation', status: app.payment.status !== 'rejected', text: feeStatusText(app) }
           : { label: 'Payment Confirmation', status: app.documents?.paymentConfirmation }
       ];
       
