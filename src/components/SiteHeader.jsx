@@ -6,9 +6,18 @@ import uomLogo from '../assets/uom-logo.png';
 function SiteHeader({ subtitle = 'Postgraduate Management Information System', showAdminLogin = false }) {
   const navigate = useNavigate();
 
+  // Focus the page content without changing the URL: following "#main" adds a history entry
+  // without the router state, and the application form then loses its programme.
+  const skipToMain = (event) => {
+    const main = document.getElementById('main');
+    if (!main) return;
+    event.preventDefault();
+    main.focus();
+  };
+
   return (
     <header className="header">
-      <a href="#main" className="skip-link">Skip to main content</a>
+      <a href="#main" className="skip-link" onClick={skipToMain}>Skip to main content</a>
       <div className="header-content">
         <Link to="/" className="header-brand">
           {/* alt="" because the university name is visible text in the same link */}
