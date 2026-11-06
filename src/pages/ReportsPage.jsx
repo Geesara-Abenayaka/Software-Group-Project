@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { AlertTriangle, Inbox, RefreshCw } from 'lucide-react';
+import { AlertTriangle, Download, FileText, Inbox, Printer, RefreshCw } from 'lucide-react';
 import AdminLayout from '../components/AdminLayout';
+import { ButtonSpinner } from '../components/Loaders';
 import BreakdownBars from '../components/reports/BreakdownBars';
 import DailyChart from '../components/reports/DailyChart';
 import PaymentList from '../components/reports/PaymentList';
@@ -21,6 +22,8 @@ import {
   todayInSriLanka
 } from '../utils/reportPeriods';
 import { errorMessage, readJson } from '../utils/readJson';
+import { buildPaymentsCsv, buildSummaryCsv, downloadFile, downloadReportPdf, reportFileName } from '../utils/reportExport';
+import { toast } from '../utils/toast';
 import { categoryItems, statusItems } from '../utils/reportRows';
 import useDelayedFlag from '../utils/useDelayedFlag';
 
@@ -36,6 +39,8 @@ function ReportsPage() {
   // The application period saved in Settings: undefined while loading, null when none is saved.
   const [applicationPeriod, setApplicationPeriod] = useState(undefined);
   const [reloadCount, setReloadCount] = useState(0);
+  // 'payments' or 'pdf' while that download is being prepared
+  const [exporting, setExporting] = useState('');
   // The last report received, with the request it answered, so a new filter keeps the old numbers on screen
   // (dimmed) until the new ones arrive.
   const [result, setResult] = useState({ key: null, data: null, error: '' });
@@ -126,11 +131,63 @@ function ReportsPage() {
 
   const reload = () => setReloadCount((count) => count + 1);
 
+  // Downloads describe the numbers on screen (report.filters), not filters still loading.
+  const exportScope = () => {
+    const { from, to, program: code, hideDemo } = report.filters;
+    const params = new URLSearchParams();
+    if (from) params.set('from', from);
+    if (to) params.set('to', to);
+    if (code) params.set('program', code);
+    if (hideDemo) params.set('hideDemo', '1');
+    return {
+      range: { from: from || '', to: to || '' },
+      code: code || '',
+      query: params.toString(),
+      context: {
+        periodLabel: describeRange({ from: from || '', to: to || '' }),
+        programLabel: code ? programs.find((item) => item.shortCode === code)?.title || code : 'All programs'
+      }
+    };
+  };
+
+  const downloadSummaryCsv = () => {
+    const scope = exportScope();
+    downloadFile(buildSummaryCsv(report, scope.context), reportFileName('summary', scope.range, scope.code, 'csv'), 'text/csv;charset=utf-8');
+  };
+
+  const downloadPaymentsCsv = async () => {
+    const scope = exportScope();
+    setExporting('payments');
+    try {
+      const response = await fetch(`${API_BASE_URL}/reports/payments?${scope.query}&limit=all`);
+      const body = await readJson(response, "Couldn't load the payment list.");
+      downloadFile(buildPaymentsCsv(body.data), reportFileName('payments', scope.range, scope.code, 'csv'), 'text/csv;charset=utf-8');
+    } catch (error) {
+      toast.error(errorMessage(error, "Couldn't download the payment list."));
+    } finally {
+      setExporting('');
+    }
+  };
+
+  const downloadPdf = async () => {
+    const scope = exportScope();
+    setExporting('pdf');
+    try {
+      await downloadReportPdf(report, { ...scope.context, fileName: reportFileName('summary', scope.range, scope.code, 'pdf') });
+    } catch (error) {
+      console.error('Could not create the report PDF:', error);
+      toast.error("Couldn't create the PDF. Please try again.");
+    } finally {
+      setExporting('');
+    }
+  };
+
   const programTitle = program
     ? programs.find((item) => item.shortCode === program)?.title || program
     : 'All programs';
   const totals = report?.totals || null;
   const isEmpty = Boolean(report) && !loading && totals.applications === 0;
+  const canExport = Boolean(report) && !loading && !exporting;
   const failed = Boolean(result.error) && !loading;
 
   return (
@@ -141,6 +198,24 @@ function ReportsPage() {
             <div>
               <h1 className="page-heading">Reports</h1>
               <p className="report-subtitle">Applications, fee payments and fees collected.</p>
+            </div>
+            <div className="report-actions">
+              <button type="button" className="btn btn--secondary btn--sm" onClick={downloadSummaryCsv} disabled={!canExport}>
+                <Download size={16} aria-hidden="true" />
+                Summary (CSV)
+              </button>
+              <button type="button" className="btn btn--secondary btn--sm" onClick={downloadPaymentsCsv} disabled={!canExport}>
+                {exporting === 'payments' ? <ButtonSpinner /> : <Download size={16} aria-hidden="true" />}
+                Payment list (CSV)
+              </button>
+              <button type="button" className="btn btn--secondary btn--sm" onClick={downloadPdf} disabled={!canExport}>
+                {exporting === 'pdf' ? <ButtonSpinner /> : <FileText size={16} aria-hidden="true" />}
+                PDF
+              </button>
+              <button type="button" className="btn btn--quiet btn--sm" onClick={() => window.print()} disabled={!report || loading}>
+                <Printer size={16} aria-hidden="true" />
+                Print
+              </button>
             </div>
           </div>
 

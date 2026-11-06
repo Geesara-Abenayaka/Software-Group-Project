@@ -52,7 +52,7 @@ const CATEGORY_LABELS = [
   ['Category 1', 'GPA 3.7 or above'],
   ['Category 2', 'GPA 3.3 to 3.69'],
   ['Category 3', 'GPA below 3.3'],
-  ['No GPA', 'No GPA given']
+  ['No GPA', '']
 ];
 
 export const categoryItems = (categories) => CATEGORY_LABELS
