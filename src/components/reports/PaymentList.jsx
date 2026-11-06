@@ -102,7 +102,7 @@ function PaymentList({ baseQuery, refreshKey, liveMode }) {
   const methods = ['card', 'bank', 'none', ...(liveMode ? ['testCard'] : [])];
 
   return (
-    <section className="report-card report-card--table" aria-labelledby="report-payments-title">
+    <section className="report-card report-card--table report-card--payments" aria-labelledby="report-payments-title">
       <div className="report-card__head">
         <h2 id="report-payments-title" className="report-card__title">Payments</h2>
         <div className="report-list-filters">

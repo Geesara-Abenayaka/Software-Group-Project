@@ -688,3 +688,129 @@ table.report-table--payments td {
     grid-template-columns: 1fr;
   }
 }
+
+/* Print: the numbers and tables in black on white, without the admin header, tabs, filters or buttons.
+   Scoped to the Reports page (this stylesheet loads with every page). The payment list is left out:
+   it holds personal details and only part of it is loaded; the Payment list CSV has all of it. */
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  body:has(.report-main),
+  body:has(.report-main) .admin-app {
+    min-height: 0;
+    background: #fff;
+  }
+
+  body:has(.report-main) .admin-header,
+  body:has(.report-main) .admin-navbar,
+  body:has(.report-main) .skip-link,
+  body:has(.report-main) .toast-host,
+  .report-actions,
+  .report-filters,
+  .report-refresh,
+  .report-alert,
+  .report-card--payments,
+  .report-empty .btn {
+    display: none !important;
+  }
+
+  main.admin-main-full.report-main {
+    max-width: none;
+    padding: 0;
+    overflow: visible;
+  }
+
+  .report-main .page-heading {
+    font-size: 20px;
+  }
+
+  .report-main * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .report-body--updating {
+    opacity: 1;
+  }
+
+  .report-status-line {
+    margin-bottom: 10px;
+  }
+
+  .report-banner {
+    padding: 6px 10px;
+  }
+
+  .summary-tiles.report-tiles {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .report-main .summary-tile,
+  .report-card {
+    box-shadow: none;
+    border-color: #bbb;
+    break-inside: avoid;
+  }
+
+  .report-main .summary-tile {
+    padding: 10px 12px;
+  }
+
+  .report-main .summary-tile__value {
+    font-size: 20px;
+  }
+
+  .report-main .summary-tile__icon {
+    display: none;
+  }
+
+  .report-card {
+    padding: 12px 14px;
+    margin-bottom: 10px;
+  }
+
+  .report-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 10px;
+  }
+
+  .report-columns {
+    height: 110px;
+  }
+
+  .report-table-wrap {
+    overflow: visible;
+    margin: 0;
+    padding: 0;
+  }
+
+  table.report-table {
+    font-size: 11px;
+  }
+
+  table.report-table th,
+  table.report-table td {
+    padding: 5px 6px;
+    white-space: normal;
+  }
+
+  table.report-table tbody th {
+    min-width: 0;
+  }
+
+  table.report-table thead th {
+    position: static;
+  }
+
+  .report-main .th-sort svg {
+    display: none;
+  }
+
+  .report-link {
+    color: inherit;
+    text-decoration: none;
+  }
+}
